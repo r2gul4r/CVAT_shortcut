@@ -39,212 +39,183 @@ python tools/package-extension.py
 
 검사는 예시 CVAT 화면·모의 Chrome API와 별도 Chrome 프로필을 사용합니다. 기존 브라우저 프로필이나 회사 CVAT 데이터에 접근하지 않습니다. 실제 배포 CVAT 설치본의 호환성 검증과는 구분합니다. `tests/.browser-profiles/`는 Git에서 제외합니다.
 
-## 이전 개발 기록
+## 구현·업데이트 이력
 
-아래 및 `store/`, `INSTALLATION-STATUS.md`, `releases/0.1.1/`에는 이전 버전의 개발·배포 준비 기록이 포함되어 있습니다. 현재 소스와 배포본은 위의 2.1.4 경로를 사용하세요.
+첫 구현부터 현재까지 **오래된 순서 → 최신 순서**로 정리했습니다. 날짜는 한국 시간 기준 개발 기록과 패키징 기록을 따르며, Chrome 웹스토어 심사 완료일·공개일을 뜻하지 않습니다. 같은 날짜의 항목도 작업 순서대로 배치했습니다.
 
-## 2.1.2 · 라벨 선택창 복구 (2026-10-11)
+### 2026-10-02 · 1.0.0 — 첫 단축키 확장 구현
 
-‘라벨 선택창 복구’는 최소화·위치·크기·투명도를 기본값으로 되돌리고 숨김 스타일을 초기화합니다. 복구 응답에서 라벨창의 연결 여부, 화면 범위, 실제 클릭 가능한 표시 상태를 확인합니다. 구버전 코드가 남은 탭에는 RELOAD 안내를, 표시 실패에는 OFF/HIDDEN/COVERED 등 고정된 확인 코드를 표시합니다. 라벨·단축키 설정은 복구 대상으로 삼지 않습니다.
+- Chrome Manifest V3 기반으로 AI Tools와 Draw new mask 메뉴를 여는 단축키를 구현했습니다.
+- 팝업에서 각 단축키를 지정·변경·해제하고, 설정을 기기에 저장하도록 했습니다.
+- 현재 CVAT 탭에서 확장을 켜거나 일시정지할 수 있도록 했습니다.
+- 초기 단축키는 미지정 상태로 두고, 페이지를 새로고침하면 해당 탭에서 다시 활성화하도록 했습니다.
 
-요소 전체화면에서는 전체화면 요소 밖의 UI가 z-index와 관계없이 가려졌습니다. 실제 Chrome requestFullscreen으로 문제를 재현했으며, 이제 라벨창을 전체화면 요소 안으로 옮기고 해제할 때 원래 문서 루트로 되돌립니다. 전체화면 진입·해제, 숨김 스타일 복구, 팝업의 표시 실패 안내를 검사했습니다. 이는 재현된 코드 문제의 수정이며 사용자 CVAT에서 발생한 원인은 아직 확정하지 않았습니다.
+### 2026-10-02 · 1.2.0 — 메뉴 열기에서 실제 도구 시작까지
 
-## 2.1.1 · N 연동 실패 수정 (2026-10-09)
+- AI 단축키가 메뉴를 연 뒤 **Interact**까지, 새 마스크 단축키가 메뉴를 연 뒤 **Shape**까지 실행하도록 확장했습니다.
+- 메뉴가 준비될 때까지 기다린 뒤 실행하고, 연속 입력으로 중복 실행되지 않도록 처리했습니다.
+- 활성 마스크 캔버스에서 수정키와 마우스 휠로 브러쉬·지우개 크기를 조절하는 기능을 추가했습니다.
+- 이때는 Alt 또는 Ctrl + 휠을 지원했고, 한 단계에 5px씩 조절했습니다. 이후 1.3.1에서 조합과 조절 폭을 변경했습니다.
 
-CVAT Workspace.STANDARD의 실제 값은 대소문자를 구분하는 `Standard`입니다. 2.1.0은 이를 `standard`로 검사해서 기본 작업 공간에서도 N 시작을 차단했습니다. 테스트 화면도 잘못된 값을 사용했습니다. 공개 CVAT enum에 맞게 테스트 화면을 먼저 수정해 N 관련 21개 실패를 재현한 뒤, 연결 판별을 수정했습니다. 2D 기본 작업 공간에서 선택 라벨로 N을 시작하고 기존 도구·모델·설정을 유지합니다.
+### 2026-10-02 · 1.3.0 — 새 객체의 기본 라벨 지정
 
-N 연결을 확인하지 못하면 안내에 고정된 확인 코드(STORE, WORKSPACE, BRIDGE 등)를 표시합니다. 이 코드는 실패 단계만 나타내며 작업 ID·라벨 값·이미지·객체·예외 내용은 포함하지 않습니다. 기존 V/B 경로와 그리는 중의 N 완료 동작은 유지합니다. 업데이트 후 확장을 새로고침하고 CVAT 작업을 저장한 뒤 페이지도 새로고침하여 ‘이 CVAT 탭에서 사용’을 다시 눌러야 합니다.
+- 팝업에 새 객체에 사용할 기본 라벨 이름을 직접 입력하고 저장하는 기능을 추가했습니다.
+- AI·새 마스크 도구를 시작하기 전에 지정한 라벨을 선택하고, 선택 결과를 확인하도록 했습니다.
+- 정확히 일치하는 라벨이 없거나 이름이 중복되면 임의의 다른 라벨로 시작하지 않도록 했습니다.
+- AI 모델과 다른 도구 옵션은 유지하고, 기존 객체의 라벨은 변경하지 않도록 했습니다.
 
-검증: 실제 `Standard` 값과 공개 Mousetrap을 사용하는 Chrome 합성 회귀, Node 라벨 로직, 별도 Chrome MAIN/ISOLATED 실행 환경 검사를 수행합니다. 상세 결과는 배포 패키지의 별도 validation-2.1.1.json에 있습니다. 실제 사용자 CVAT 설치본의 실행 결과는 아직 확인되지 않았습니다.
+### 2026-10-02 · 1.3.1 — 브러쉬 휠 조절 개선
 
-## 2.1.0 · N 이전 도구와 선택 라벨 연동 (2026-10-09)
+- 브러쉬 크기 조절을 **Alt + 휠 / Shift + 휠**로 변경했습니다.
+- Ctrl + 휠과 터치패드 핀치는 기존 확대·축소 동작으로 남겼습니다. 이전에 저장된 Ctrl + 휠 설정은 Alt로 이전했습니다.
+- 조절 폭을 한 단계에 **5px → 1px**로 줄여 미세하게 조절할 수 있도록 했습니다.
+- 작은 터치패드 입력을 누적하고, Shift + 휠이 가로 방향 입력으로 들어오는 경우도 처리했습니다.
 
-오버레이·팝업·라벨 단축키로 선택한 다음 객체 라벨을 AI·새 마스크 단축키뿐 아니라 CVAT의 기본 N 이전 도구 호출에도 적용합니다. 새 객체를 시작하기 직전에 라벨 ID만 갱신하고 이전 도구, 객체 종류, AI 모델, 점 개수와 그리기 옵션을 보존합니다. 그리는 중이나 기존 객체 편집 중 N은 CVAT의 완료·종료 동작과 현재 라벨을 유지합니다. Shift+N과 확장프로그램에 직접 지정한 N 단축키도 기존 우선순위를 유지합니다.
+### 2026-10-02 · 1.4.0 — Mac 키 표시와 배포 준비
 
-팝업에서 명시적으로 활성화한 탭에만 native-repeat.js를 MAIN world로 먼저 주입하고 common.js/overlay.js/content.js를 ISOLATED world로 주입합니다. 동기 DOM 요청/응답으로 현재 선택 이름만 전달합니다. 공개 CVAT 코드의 REMEMBER_OBJECT reducer는 이전 drawing 설정을 초기화하므로 전체 기억된 설정을 보존한 payload와 updateCurrentControl:false를 사용합니다. 원래 N 키 이벤트가 CVAT로 전달되며 키 재전송, Esc, 도구 시작 API 호출은 추가하지 않습니다.
+- Mac에서는 Alt를 **Option**, Meta를 **Cmd**로 표시하고 Ctrl과 Cmd를 구분하도록 했습니다.
+- 브라우저·운영체제가 사용하는 키 조합을 지정하면 충돌 가능성을 안내하도록 했습니다.
+- Cmd + 휠 등 기본 브라우저 입력을 유지하고, Mac 키 입력을 모의한 검사를 추가했습니다.
+- 확장 아이콘과 웹스토어 업로드용 ZIP, 설치·권한·개인정보 처리 안내 자료를 준비했습니다.
 
-이 연결은 공식 확장 API가 아닌 React Redux Provider의 내부 구조를 사용합니다. 현재 작업 ID, 2D standard workspace, idle canvas, N 매핑, 라벨 이름·ID·도형 호환성을 확인합니다. 준비 중이거나 구조를 확인하지 못하면 새로운 N 호출을 차단하고 안내하며 기존 AI·새 마스크 단축키는 유지합니다. drawing/edit 종료 경로는 연결을 사용할 수 없어도 그대로 통과합니다. 이미 저장된 객체 데이터·이미지·픽셀을 읽거나 전송하지 않으며 Chrome 권한도 그대로입니다.
+### 2026-10-02 · 1.4.1 — 단축키 이벤트 충돌 보완
 
-검증: Chrome 합성 회귀 411개, Node 라벨 로직 12개, 실제 Chrome MAIN/ISOLATED 실행 환경 전달 5개로 총 428개 통과. 합성 CVAT DOM/React/Redux와 공개 Mousetrap의 N/V/B 입력 계약을 확인했습니다. 실제 배포 CVAT 설치본의 호환성 및 웹스토어 제출은 검증 범위에 포함되지 않습니다.
+- 확장이 처리하기로 한 키를 CVAT의 일반 키 처리보다 먼저 받을 수 있도록 이벤트 처리 위치를 변경했습니다.
+- 키를 길게 누를 때의 반복 입력과 키 해제까지 처리해, 확장 실행 후 같은 입력이 CVAT에 다시 전달되는 경우를 줄였습니다.
+- Ctrl·Shift·Alt·Cmd 해제는 전달해 보조키가 눌린 상태로 남지 않도록 했습니다.
+- 입력창·한글 조합·지원하지 않는 화면에서의 예외 처리와 수동 확인 가이드를 보완했습니다.
+- 별도로 준비했던 **0.1.1 스토어용 번호는 취소**하고 개발판과 같은 1.4.1 이름·버전을 사용하기로 했습니다. `releases/0.1.1/`은 취소된 준비 기록입니다.
 
-## 2.0.0 · 이동 가능한 라벨 선택 오버레이 (2026-10-09)
+### 2026-10-07 · 1.5.0 — 한글 UI와 내장 가이드
 
-닫기/최소화: ×는 cvatLabelOverlayEnabled=false를 저장하여 팝업 스위치와 동기화합니다. −는 launcher 상태로 최소화하며 버튼 드래그와 클릭 복원을 구분합니다. 기존 collapsed 상태는 launcher로 이관합니다. 작은 버튼은 방향키 이동도 지원합니다.
+- 확장 팝업과 사용자 안내 메시지를 한글화했습니다.
+- 팝업에 **적용 가이드 · 기능 설명** 버튼을 추가해 설치·업데이트·활성화·사용법을 볼 수 있도록 했습니다.
+- CVAT의 기본 휠 버튼 드래그 이동과 문제 해결 방법을 안내했습니다.
+- 기존 단축키 설정과 권한을 유지했습니다. 한글화 대상은 확장프로그램 UI입니다.
 
-크기 조절: 네 변과 네 모서리에서 포인터 드래그 및 방향키 조절. 반대편 가장자리를 고정한 채 크기를 조절하며 방향에 따라 커서를 표시합니다. 너비·높이는 기존 오버레이 설정에 저장되며 이전 설정은 248×480으로 시작합니다. 일반 최소 크기는 220×320이며 화면 밖으로 넘지 않도록 제한합니다. CSS Grid가 너비에 따라 열 수를 정하고 라벨 목록만 스크롤합니다. 확대/축소, 입력 차단, 중단/숨김 후 복원, 잘못된 크기 값을 검증했습니다.
+### 2026-10-08 · 1.6.0 — 이 탭의 라벨 선택
 
-팝업의 라벨 선택창 사용 옵션은 별도 cvatLabelOverlayEnabled 키로 저장합니다. 끄면 런처까지 숨기며 단축키는 계속 동작합니다. 위치/투명도 설정은 유지합니다. 리뷰에서 확인한 슬라이더 마우스 조절 후 포커스 잔류, 보조키 해제 차단, 비활성화/중단 후 입력 차단 잔류를 수정하고 회귀 검사에 추가했습니다.
+- 기본 라벨 이름을 매번 직접 입력하는 불편을 줄이기 위해 **이 탭의 라벨 선택** 기능을 추가했습니다.
+- 현재 작업에 등록된 전체 클래스 목록을 읽고, 아직 사용하지 않은 클래스도 표시하도록 했습니다.
+- Overview의 합계 행은 제외하고, 목록에서 라벨을 선택하면 다음 객체의 기본 라벨로 저장하도록 했습니다.
+- 목록 새로고침, 이름 중복 확인, 목록을 읽지 못했을 때의 직접 입력 경로를 마련했습니다.
+- 작업별 라벨 목록은 저장하지 않고, 선택한 이름만 기존 설정에 저장하도록 했습니다.
 
-overlay.js를 content.js 앞에 주입합니다. Shadow DOM으로 스타일과 UI를 분리하고, window capture에서 오버레이의 포인터/클릭/휠을 처리하여 캔버스 입력을 차단합니다. CVAT에서 시작한 스트로크의 해제 이벤트는 원래 document 핸들러로 전달합니다. 제목 드래그 및 방향키 이동, 접기, 작은 런처로 숨기기, 팝업에서 재표시를 지원합니다. 위치/표시 상태는 별도 cvatLabelOverlayV1 키에 저장해 기본 라벨이나 도구 전환을 취소하지 않습니다.
+### 2026-10-08 · 1.6.1 — 라벨 대표색 표시
 
-선택은 기존 다음 객체 기본 라벨 저장 경로를 공유합니다. 현재 작업 클래스 목록만 읽고, 실제 이미지와 주석은 읽지 않습니다. 목록/선택/단축키 상태를 500ms마다 비교하고 변경된 경우만 목록을 갱신합니다. 일시정지 시 창과 갱신 타이머를 제거하며, 지원되지 않는 주소에서는 표시하지 않습니다. 기존 권한은 유지됩니다.
+- CVAT 라벨의 대표색을 읽어 색상칩으로 표시했습니다.
+- 선택한 라벨의 색상 표시와 **대표색으로 선택** 목록을 추가했습니다.
+- 색상 항목을 눌러도 같은 라벨 선택·저장 절차를 사용하도록 했습니다.
+- 색상을 읽지 못한 경우 임의의 색을 만들지 않고, Labels 탭을 열어 새로고침하도록 안내했습니다.
 
-투명도: 창 맨 아래 슬라이더에서 0~70%를 5% 단위로 조절하고 cvatLabelOverlayV1.transparency에 저장합니다. 기본 0%이며 잘못된 저장 값은 범위를 제한합니다. 마우스와 키보드 입력이 캔버스/라벨 단축키에 전달되지 않습니다.
+### 2026-10-08 · 1.7.0 — 다른 도구에서 단축키로 바로 전환
 
-검증: 합성 Chrome 374개 + Node 로직 12개. 실제 데모에서 슬라이더 클릭/드래그/방향키 및 새로고침 후 값 복원을 확인했습니다. 로컬 데모에서 실제 브라우저 클릭·드래그·접기·복원·단축키 및 위치 복원을 확인했습니다. 데모는 common.js/overlay.js를 그대로 포함하고 CVAT 연결만 예시 구현을 사용합니다. 실제 회사 CVAT 설치본 검증·스토어 제출은 수행하지 않았습니다.
+- AI·새 마스크 단축키 실행 앞에 **Esc**를 전달하도록 했습니다.
+- 활성 도구가 해제된 것을 확인한 뒤 메뉴 열기 → 라벨 선택 → Interact 또는 Shape 실행으로 이어지도록 했습니다.
+- 사용자가 직접 Esc를 누르지 않아도 다른 도구로 전환할 수 있게 했습니다.
+- 키를 계속 누르고 있거나 전환이 이미 진행 중이면 중복 실행하지 않도록 했습니다.
+- 이 동작은 현재 작업을 완료하는 기능이 아니라 Esc에 따른 취소·전환입니다. 진행 중인 그리기가 취소될 수 있습니다.
 
-## 1.9.0 · 라벨 선택 단축키와 CVAT 우선 처리 (2026-10-09)
+### 2026-10-08 · 1.7.1 — 색상과 이름을 하나의 선택 목록으로 통합
 
-라벨별 키 지정/변경/해제를 추가했습니다. 라벨 선택은 다음 AI·새 마스크 객체의 기본 라벨만 저장하며 기존 CVAT 객체나 그리기 세션을 변경하지 않습니다. 선택한 이름과 키만 로컬에 저장하고 작업별 라벨 목록·색상은 저장하지 않습니다. 설정은 Chrome 프로필의 탭들이 공유하며, 실행 시 현재 작업의 전체 클래스 목록에서 정확한 이름과 중복 여부를 다시 확인합니다.
+- 라벨 드롭다운과 별도 색상 선택 UI를 하나의 목록으로 합쳤습니다.
+- 각 행에 **색상칩 + 라벨 이름**을 함께 표시하고, 선택한 행을 강조했습니다.
+- 선택 즉시 저장, 목록 새로고침, 직접 입력 대체 경로는 유지했습니다.
 
-등록된 키는 지원되는 작업 화면의 window capture 단계에서 먼저 소유합니다. 준비/쿨다운/마우스 누름/라벨 누락 때문에 실행하지 못해도 CVAT로 넘어가지 않으며 keypress, 반복, keyup도 차단합니다. 글자 입력·IME·대화상자·일시정지는 예외입니다. Space pan도 기존 스트로크 중에는 Space를 예약하면서 스트로크를 유지합니다. Chrome/OS 단축키, 또는 확장보다 먼저 실행된 동일 window capture 리스너의 효과를 취소할 수 있다는 보장은 하지 않습니다.
+### 2026-10-08 · 1.7.2 — 도구 창만 열리고 실행되지 않는 오류 수정
 
-비동기 저장 전에 다음 도구가 새 라벨을 사용할 수 있도록 즉시 선택값을 유지하고, 연속 저장은 순서대로 처리합니다. 라벨만 변경되는 storage 이벤트는 이미 시작된 도구 전환을 취소하지 않습니다. 단축키·기타 설정 변경은 기존 취소 처리를 유지합니다.
+- AI와 새 마스크 모두 메뉴만 열리고 Interact·Shape까지 진행되지 않는 현상을 조사했습니다.
+- CVAT가 메뉴를 열면서 보내는 버튼 없는 마우스 이벤트를 실제 왼쪽 버튼 누름으로 잘못 기록하던 처리를 수정했습니다.
+- 버튼 없는 알림은 무시하고, 실제 마우스 버튼을 누른 상태만 추적하도록 했습니다.
+- AI·마스크 메뉴의 같은 이벤트를 재현해 실행이 중단되는 문제를 검사했습니다.
 
-검증: 격리 Chrome 합성 검사 326개, Node 로직 12개 통과. 실제 공개 Mousetrap으로 keydown/keypress/keyup 충돌을 재현했습니다. 팝업은 예시 클래스와 모의 Chrome API를 사용하는 로컬 Chrome 화면에서 1/2 지정과 표시를 확인하고 가이드 이미지를 캡처했습니다. 회사 CVAT 화면·이미지·객체에 접근하거나 실제 설치본에 적용하지 않았습니다. 웹스토어 제출도 수행하지 않았습니다.
+### 2026-10-08 · 1.7.3 — 실제 확장 화면을 넣은 적용 가이드
 
-## 1.8.0 · Space + 왼쪽 드래그 화면 이동 (2026-10-08)
+- 가이드를 **업데이트 → 확장 켜기 → 라벨 선택 → 단축키 지정 → 작업 중 사용** 순서로 쉽게 다시 작성했습니다.
+- 실제 확장 코드를 예시 라벨·모의 API와 함께 실행한 로컬 시연 화면을 캡처해 이미지 5장을 넣었습니다.
+- ZIP 설치와 웹스토어 업데이트 방법을 구분하고, V·B는 직접 지정하는 예시 키임을 설명했습니다.
+- 이미지를 확장에 포함해 오프라인에서도 가이드를 볼 수 있도록 했습니다.
+- 도구 기능 코드는 1.7.2와 동일하게 유지했습니다.
 
-브러쉬를 켠 채 Space를 누르고 왼쪽 드래그하면 CVAT의 기본 가운데 버튼 이동을 호출합니다. Esc나 도구 재선택 없이 이동하며, 마우스와 Space를 놓으면 계속 그릴 수 있습니다. 팝업에서 켜고 끌 수 있고 기본값은 켜짐입니다. 기존 Space 도구 단축키는 우선 유지하며 팝업에서 충돌 안내를 표시합니다.
+### 2026-10-08 · 1.8.0 — Space를 누른 채 화면 이동
 
-실제 왼쪽 pointer/mouse 이벤트는 window capture에서 차단하고, CVAT 캔버스 루트에 가운데 버튼 mouse 이벤트를 전달합니다. 이미지에 CSS 이동을 적용하지 않습니다. Space를 먼저 놓으면 native mouseup을 전달하고 기존 왼쪽 누름의 나머지 이벤트를 차단합니다. 입력/IME, 도구상자·대화상자, 기존 드로잉 중 진입, 창 포커스 상실, 취소, 설정 변경, 작업 이동 및 캔버스 제거를 처리합니다. 가이드에 사용 순서와 실제 확장 팝업 이미지가 추가되었습니다.
-
-검증: 격리 Chrome 합성 화면 304개, Node 라벨 로직 12개 통과. Space 이동 관련 32개는 공개 canvasView.ts의 native drag 이벤트 계약을 재현합니다. 회사 CVAT의 실제 이미지·주석 및 설치 확장에는 접근/적용하지 않았고, 배포 CVAT와의 통합 검증은 아직 하지 않았습니다.
-
-## 1.7.3 · 화면으로 따라 하는 적용 가이드 (2026-10-08)
-
-가이드를 업데이트 적용 → 확장 켜기 → 라벨 선택 → 단축키 지정 → 작업 중 사용 순서로 다시 썼습니다. 실제 확장 HTML/CSS/JS를 Chrome에서 실행하고 예시 라벨 및 모의 Chrome API를 사용하는 로컬 시연 상태를 캡처한 이미지 5장을 포함합니다. AI V와 브러쉬 B는 사용자가 지정하는 예시이며 고정 기본값이 아님을 설명합니다. ZIP 설치와 웹스토어 업데이트는 별도 안내합니다. 모든 가이드 이미지가 확장에 포함되어 오프라인에서 볼 수 있습니다. 기능 코드는 1.7.2와 동일합니다.
-
-## 1.7.2 · 도구 창만 열리고 실행되지 않는 오류 수정 (2026-10-08)
-
-CVAT의 팝오버 표시 처리에서 buttons=0인 합성 mousedown을 보냅니다. 기존 마우스 상태 추적이 이를 buttons || 1로 처리해 왼쪽 버튼을 누르는 중으로 기록했고, 1.7.0의 실행 전 확인 조건에 걸려 Interact/Shape를 누르기 전에 중단될 수 있었습니다. 버튼 없는 알림은 무시하고 실제 buttons 값이 있는 누름만 기록하도록 수정했습니다. 이 알림으로 기존 실제 누름 상태를 지우지도 않습니다.
-
-AI/마스크 각각 같은 이벤트를 재현한 검사는 수정 전 실패, 수정 후 통과했습니다. 전체 합성 브라우저 검사 270개 및 Node 로직 검사 12개 통과. 실제 사용자 탭에서는 도구 메뉴와 라벨 선택창 구조 및 B로 창만 열리는 상태를 확인했습니다. 수정 파일을 사용자의 설치본에 적용한 뒤 실제 Interact/Shape 실행까지 검증한 것은 아닙니다.
-
-## 1.7.1 · 라벨 선택 UI 통합 (2026-10-08)
-
-라벨 드롭다운과 별도 선택 색상 표시를 제거했습니다. 색상칩과 이름이 함께 있는 단일 목록에서 선택하고, 선택된 행은 강조 테두리와 aria-pressed로 표시합니다. 선택 즉시 저장, 목록 새로고침, 직접 입력 대체 경로 및 Esc 후 도구 전환은 유지합니다. 합성 브라우저 검사 266개 및 로직 검사 12개 통과.
-
-## 1.7.0 · Esc 후 도구 전환 (2026-10-08)
-
-지정된 AI/새 마스크 단축키를 누르면 수정키 없는 Escape keydown/keyup을 먼저 전달하고, 활성 도구와 편집 도구상자가 해제된 것을 확인한 뒤 기존 기본 라벨 선택 및 Interact/Shape 동작을 실행합니다. 같은 도구 단축키를 새로 누른 경우에도 취소 후 다시 시작합니다. 키를 누르고 있는 동안의 자동 반복은 재실행하지 않습니다.
-
-진행 중인 그리기·편집은 직접 Esc를 누른 것처럼 취소될 수 있습니다. 확장이 Finish/Save나 활성 도구 아이콘을 눌러 작업을 완료하지는 않습니다. CVAT가 합성 Escape를 처리하지 않거나 상태가 바뀌지 않으면 1.2초 후 안내하고 멈춥니다. 취소가 끝난 뒤 메뉴·라벨 준비는 별도의 1.2초 범위를 사용합니다. 입력/IME, 대화상자, 마우스 버튼을 누른 상태에서는 시작하지 않습니다. 대기 중 사용자 Esc, 설정·탭·작업·포커스 변경은 전환을 중단합니다.
-
-검증: Chrome 합성 검사 266개 통과. 실제 Mousetrap 1.6.5 취소 바인딩을 포함하지만 Chrome 확장 API와 CVAT 상태 처리는 합성이며 실제 CVAT 버전의 통합 검증은 포함하지 않습니다. 아래 과거 버전의 'active tool/edit blocks activation' 설명은 이 버전에서 위 동작으로 대체되었습니다.
-
-## 1.6.1 · 라벨 대표색 표시 (2026-10-08)
-
-현재 작업의 라벨 색상칩을 읽어 선택한 라벨 옆과 ‘대표색으로 선택’ 목록에 표시합니다. 색상이 있는 항목을 누르면 기존 목록 선택과 같은 확인 절차를 거쳐 이름만 저장합니다. 색을 읽지 못한 경우 임의의 색을 지정하지 않고 색상 정보 없음으로 표시합니다. CVAT 오른쪽 Labels 탭을 열고 목록 새로고침으로 다시 읽을 수 있습니다. 색상도 전체 목록과 함께 일시적으로만 처리하며 저장하거나 전송하지 않습니다.
-
-검증: 합성 Chrome DOM 검사 252개 및 Node 로직 검사 12개 통과. Chrome 확장 API는 대역이며 실제 CVAT와 실제 Mac 기기 검증은 포함하지 않습니다.
-
-## 1.6.0 · 이 탭의 라벨 선택 (2026-10-08)
-
-확장을 켜면 현재 CVAT 작업에 등록된 전체 클래스 목록을 읽습니다. 사용하지 않은 클래스도 표시하며 Overview의 합계 행은 제외합니다. 팝업에서 선택하면 기존 기본 라벨 설정에 이름만 저장합니다. 단축키와 휠 설정은 유지됩니다. 같은 이름이 여러 개면 선택을 막고, 목록을 읽지 못하면 Info → Overview를 연 뒤 목록 새로고침 또는 직접 입력을 사용할 수 있습니다.
-
-목록은 현재 탭에서 그때그때 읽으며 저장하거나 전송하지 않습니다. 선택 직전에 탭 주소와 최신 목록을 다시 확인합니다. 선택한 이름은 기존과 같이 모든 탭의 두 단축키가 공유합니다. 새 작업에서 해당 이름을 사용할 수 없으면 임의의 라벨로 바꾸지 않습니다. 업데이트 후 CVAT 작업을 저장하고 페이지를 새로고침한 뒤 확장을 다시 켜세요.
-
-## 1.5.0 · 한글 UI 및 내장 가이드 (2026-10-07)
-
-- 팝업과 사용자 안내 메시지 한글화. 상단 ‘적용 가이드 · 기능 설명’에서 내장 guide.html을 새 탭으로 엽니다.
-- 설치·업데이트·활성화·기능별 사용법·CVAT 기본 휠 버튼 드래그·문제 해결 안내를 제공합니다.
-- 기존 설정 키와 권한은 그대로 유지합니다. 한글화 범위는 확장 UI이며 CVAT 자체 UI는 변경하지 않습니다.
-- 기존 합성 검사 232개 통과. 실제 CVAT 및 실제 Mac 기기 검증은 포함하지 않습니다.
-- 업데이트: 작업 저장 → 기존 확장 폴더 파일 갱신 → Chrome 확장 새로고침 → CVAT 새로고침 → 이 CVAT 탭에서 사용.
-# CVAT Sidebar Shortcuts — 1.4.1
-
-A small, dependency-free Chrome Manifest V3 extension with locally configurable tool shortcuts and mask-brush wheel sizing.
-
-- **AI tool → Assign / Change / Clear**: open the AI Tools popup, select and verify the configured default label, then click **Interact** once.
-- **New mask (Brush tool) → Assign / Change / Clear**: open Draw new mask, select and verify that default label, then click its mask **Shape** once.
-- **Default label for new objects**: enter the exact CVAT label name and click **Save**. The initial value is `obstacle`, matching the label name supplied in the user's UI description; set `object` if that is the actual CVAT label name.
-- **Brush size**: choose **Alt + wheel** (default) or **Shift + wheel**, and enable/disable it in the popup. Older saved Ctrl-wheel selections migrate to Alt; other settings stay saved.
-
-Both keyboard shortcuts begin **Unassigned**. The popup records a physical key plus optional Ctrl/Alt/Shift/Meta modifiers. Escape cancels recording. A duplicate between the two keyboard assignments is rejected and the existing assignment stays intact. Settings use `chrome.storage.local`; reopening the popup or restarting Chrome retains them. The storage key is unchanged from 1.0.0, so upgrading preserves your existing shortcuts.
-
-The two new-object shortcuts intentionally select the configured default label before starting. They preserve the AI model, bounding-box toggle, and other options. They do not switch AI tabs, press detector/automatic annotation, draw a stroke, save/continue a mask, finish a drawing, or relabel an existing annotation. **Interact** enters CVAT's normal interactive mode; subsequent user interactions use CVAT's existing model configuration and processing. Missing/hidden/disabled/ambiguous buttons or labels stop activation with local feedback.
-
-The extension waits at most **1.2 seconds**, checking every 50 ms for one visible matching popup and button. It cancels if settings, focus, the route, or tool context change. Repeated keydown, pending activation, and a brief 250 ms cooldown prevent double execution. Active drawing and the shared mask-editing toolbox block AI/Shape activation so a shortcut cannot interrupt or finish your current mask.
-
-## Reload the installed extension
-
-The parent reports that the user installed an earlier version and confirmed both shortcuts opened the menus. The source in the same `extension/` directory is now **1.4.1**. This agent has not opened Chrome UI or company CVAT pages to apply the update.
-
-1. Finish/save your current CVAT work using its normal controls before refreshing the job.
-2. Open `chrome://extensions`, find **CVAT Sidebar Shortcuts**, and click its **Reload** icon. Keep the existing installation; do not remove/reinstall it.
-3. **Refresh the CVAT job tab** to discard the old content script. Reloading only the extension is insufficient for an already open page.
-4. Open the extension popup and click **Enable for this CVAT tab**. Your existing shortcut assignments should still be shown.
-5. In the extension popup, confirm **Default label for new objects** (initially `obstacle`), or enter the exact intended name such as `object` and click **Save**. Choose your AI model/options normally in CVAT, then use the assigned key to select the default class and start.
-6. In the popup's **Brush size** section, select Alt or Shift. With the Brush or Eraser active, place the pointer over the mask canvas and turn the wheel up/down.
-
-After an ordinary job reload, a browser restart, or a new tab, Enable again; shortcut choices and wheel preferences remain saved. Chrome/Windows-reserved keys may never reach the extension. Choose keys that do not conflict with your CVAT/browser shortcuts.
-
-Any agent-assisted visible Chrome test or desktop capture still requires advance notice and confirmation that confidential images are closed. No company page inspection or desktop capture was used for this update. Developer mode, permissions, and managed browser policy were not changed.
-
-### 빠른 업데이트 / 사용 안내
-
-CVAT 작업을 정상적으로 저장한 뒤 `chrome://extensions`에서 **CVAT Sidebar Shortcuts** 카드의 새로고침 아이콘을 누르세요. **CVAT 탭도 새로고침**한 다음 팝업에서 **Enable for this CVAT tab**을 누르면 됩니다. 기존 단축키와 휠 설정은 유지됩니다. **Default label for new objects**의 초기값은 `obstacle`입니다. 실제 라벨 이름이 `object`라면 입력하고 **Save**를 누르세요. 두 단축키는 해당 라벨을 정확히 선택·확인한 뒤 **Interact / Shape**를 누릅니다. 모델과 다른 옵션은 유지하며, 기존 마스크의 라벨은 바꾸지 않습니다.
-
-브러쉬 크기는 팝업의 **Brush size**에서 **Alt + wheel** 또는 **Shift + wheel**을 선택하세요. 브러쉬/지우개가 활성화된 상태에서 마스크 캔버스 위에 포인터를 놓고 휠을 올리면 커지고 내리면 작아집니다. 새 마스크와 기존 마스크 편집은 같은 크기 컨트롤을 사용하므로 둘 다 지원합니다.
-
-
-## Windows and Mac Chrome
-
-On macOS, Alt is shown as Option and Meta as Cmd; Ctrl remains a separate modifier. Binding storage uses physical KeyboardEvent.code and exact modifier bits, so Option-generated letters do not change the key position. Unknown codes and IME/Dead key input are ignored. Likely browser/OS shortcut conflicts show a nonblocking advisory; some reserved shortcuts never reach the popup/page. Cmd release also recovers a binding if its letter keyup was absent. Ctrl/Cmd wheel and pinch stay native and clear partial sizing accumulation. The Mac behavior is simulated here and still needs actual Mac solo testing.
-
-The Store ZIP has manifest.json at its root and contains only runtime files/icons. Extract it to a folder for a fresh local Mac test. Update an existing installation using its current extension folder to preserve identity/settings. See [Korean installation/usage](store/INSTALL-KO.md), [Store listing text](store/STORE-LISTING-KO.md), [privacy draft](store/PRIVACY-KO.md), and [readiness/blockers](store/READINESS.md). No upload or publication has occurred.
-
-## CVAT shortcut conflicts and manual pilot
-
-Version 1.4.1 moves handled keyboard/wheel interception to window capture. It stops an accepted press, its safe held repeats, and its normal nonmodifier release before the reviewed CVAT document-bubble Mousetrap handlers. Modifier releases still pass through so CVAT can clear its modifier state. Failures after a press is accepted do not replay the key to CVAT. Failed extension-owned label selection restores only the focus it took. Input/IME events, unsupported/disabled contexts, and fresh presses while drawing/editing remain unclaimed and can retain CVAT's own behavior.
-
-The extension does not discover CVAT's current or custom bindings. Its duplicate check covers only its two assignments; reserved-key advisories cover likely Chrome/OS conflicts only. Compare your keys with CVAT Settings/Shortcuts and avoid overlap. Earlier same-window capture actions cannot be undone; earlier cancellation is respected. Actual installed CVAT and native OS gesture behavior still need a pilot check. See [public event audit](reference/shortcut-conflicts.md) and the [Korean manual pilot checklist](store/PILOT-KO.md).
-
-## Exact default-label selection
-
-The saved label name is shared by both new-annotation shortcuts. Matching is exact and case-sensitive; `object`, `Object`, and `obstacle` are distinct names. The extension opens only the label selector in the correct tool popup, follows its combobox's `aria-controls` to the owned listbox, and requires exactly one enabled option whose CVAT `data-label` equals the configured name. It verifies the selected label and dropdown closure before starting. It does not guess synonyms, fall back to `person`, or select labels from unrelated dropdowns.
-
-If the name is missing, duplicated, disabled, or cannot be confirmed within the existing 1.2-second activation bound, no tool starts and local feedback explains the failure. Editing an existing mask blocks these new-object shortcuts; its label is left unchanged. Existing hotkeys and wheel preferences survive saving/changing the default label and upgrading from earlier versions.
-
-## Brush-size wheel behavior
-
-CVAT's public `BrushTools` component shares its size state and input between mask **DRAW** and existing-mask **EDIT** modes. The extension changes only this existing numeric DOM input through normal input/change events, letting CVAT update its own brush configuration. It does not call canvas APIs, read pixels, use React internals, synthesize pointer strokes, or toggle editing mode.
-
-- Wheel up increases and down decreases by **1 pixel per normalized wheel step**, within **1–500 pixels** and any narrower DOM min/max bounds. CVAT itself has a minimum of 1; the extension's 500-pixel maximum is a conservative wheel-control limit. Manually entered sizes outside this range are left unchanged.
-- Fractional trackpad deltas accumulate instead of changing size on every tiny event. Pixel, line, and page wheel modes are normalized; one event is capped at ten size steps.
-- Only a visible shared mask toolbox, one active Brush/Eraser, one enabled size input, and a pointer hit inside the mask canvas qualify. Polygon mode, inactive/hidden controls, toolbox scrolling, fields, dialogs, IME, other routes, and other modifiers retain their usual behavior.
-- Size changes are blocked while a mouse button is down, so an ongoing painting stroke is not resized.
-- **Ctrl + wheel stays native**, including touchpad pinch and Ctrl combined with other modifiers. It is no longer a brush-size option. A saved Ctrl choice is treated as Alt immediately and persisted as Alt when the popup opens, preserving the enabled/disabled setting and other preferences.
-- Shift-wheel events reported on the horizontal axis use their dominant direction once: negative motion increases and positive motion decreases the size. Ordinary horizontal scrolling and wheel input outside the active mask canvas remain unchanged.
-- Use the checkbox to disable this feature immediately. Your existing CVAT Alt+right-drag size control remains available.
-
-If a customized or older CVAT version lacks these reviewed DOM controls, wheel handling stays inactive. Installed behavior of this update still needs user verification; no confidential CVAT data was used to test it.
-
-## Fresh installation, if needed
-
-Open `chrome://extensions` in a safe window and choose **Load unpacked**, selecting:
-
-`C:\git\cvat_shortcut\extension`
-
-If Developer mode is off, obtain explicit approval before enabling it. Stop if managed policy blocks unpacked extensions; use the organization's approved process and do not bypass browser policy. Unexpected permission/security prompts require approval. This extension needs no all-sites access, file-URL access, or incognito access.
-
-## Permissions and privacy
-
-Only `activeTab`, `scripting`, and `storage` are declared, unchanged from 1.0.0. The explicit Enable button injects only into that tab, in Chrome's isolated world. There are no host permissions, automatic content-script matches, background worker, extension network requests, analytics, external resources, or library dependencies. The popup CSP blocks connections.
-
-The extension checks the job path, sidebar/popup/toolbox classes, typing focus, visibility/disabled states, pointer geometry, the single brush-size numeric input, and label names in the correct popup's selector/listbox. It never reads image pixels, image URLs, canvas contents, annotation text, screenshots, files, credentials, or model responses. It stores shortcut/wheel preferences and the user-configured default label name locally and does not log/send page data. Normal CVAT interactive inference, when you later use that mode, follows CVAT's existing deployment and data-handling configuration.
-
-## Synthetic validation
-
-Run from this folder:
-
-```powershell
-node .\tests\run-tests.mjs
-```
-
-Node 24 and installed Chrome are sufficient; no npm dependencies are needed. Override `CVAT_TEST_CHROME` only to point at an approved existing Chrome executable if necessary.
-
-The runner serves dummy DOM on `127.0.0.1` and launches separate headless Chrome profiles under `tests/.browser-profiles`, with background networking/sync/extensions disabled and external name resolution blocked. It does not connect to a running browser, read the user's profile, inspect current tabs, capture the desktop, or access a CVAT server. Chrome's browser sandbox remains enabled. This Windows execution sandbox blocks Chrome child processes; the successful runs use approved execution outside that outer sandbox with the same isolated test arguments.
-
-**232 synthetic checks passed, 0 failed** in Windows Chrome **154.0.8037.93**: 134 Windows checks (57 activation, 21 popup, 33 wheel, 23 event-conflict) and 98 Mac metadata/input simulation checks (57 activation, 8 Mac popup, 33 wheel). Static manifest/permission/syntax/network-image API checks also passed. Chrome extension APIs and CVAT controls are mocked. The Mac suites run on Windows with simulated platform metadata/input; they are not actual Mac browser/hardware, installed-extension, or company-CVAT tests.
-
-See [test-results.json](tests/test-results.json), [source-review.md](reference/source-review.md), and [INSTALLATION-STATUS.md](INSTALLATION-STATUS.md). The current ZIP is `cvat-sidebar-shortcuts-1.4.1-store.zip`; older ZIPs retain their earlier behavior.
-
-## Files
-
-- `extension/`: load-unpacked source (five source/UI files plus manifest and four generated generic PNG icons).
-- `tests/`: image-free synthetic fixtures, API mocks, runner, and JSON evidence.
-- `reference/`: public source review and public brush/canvas source snapshots.
-
-Uninstall through Chrome's normal Remove action if requested. No CVAT server settings or files are modified.
+- 브러쉬를 사용하는 중 **Space + 왼쪽 드래그**로 화면을 이동하는 기능을 추가했습니다.
+- CVAT의 기본 가운데 버튼 이동 동작을 이용해, 브러쉬를 해제하거나 다시 선택하지 않고 이동하도록 했습니다.
+- Space와 마우스를 놓으면 이어서 그릴 수 있도록 하고, 팝업에서 기능을 켜고 끌 수 있게 했습니다.
+- 키·마우스를 놓는 순서, 창 포커스 상실, 이미 진행 중인 스트로크, 작업 화면 변경에 따른 입력 정리를 보완했습니다.
+- 가이드에 Space 이동 사용법과 관련 팝업 화면을 추가했습니다.
+
+### 2026-10-09 · 1.9.0 — 라벨 선택 단축키와 우선 처리
+
+- 확장프로그램에서 사용하는 **다음 객체의 라벨**을 단축키로 선택할 수 있도록 했습니다.
+- 라벨별 단축키 지정·변경·해제를 추가하고, 선택한 라벨을 다음 AI·새 마스크 시작에 적용했습니다.
+- 등록한 확장 단축키를 먼저 처리하고, 키 반복·해제도 함께 관리하도록 했습니다.
+- 라벨을 바꾼 직후 도구를 실행해도 새 선택을 사용할 수 있도록 저장 전 선택값을 즉시 반영했습니다.
+- 기존 객체나 현재 그리는 객체의 라벨을 바꾸는 CVAT 자체 기능과는 별도로 동작하도록 했습니다.
+
+### 2026-10-09 · 2.0.0 — 이동·크기 조절 가능한 라벨 오버레이
+
+- 확장 팝업을 계속 열지 않아도 작업 화면에서 라벨을 선택할 수 있는 **라벨 선택 오버레이**를 만들었습니다.
+- 제목을 드래그해 이동하고, 색상칩과 이름을 눌러 다음 객체의 라벨을 선택하도록 했습니다. 지정한 라벨 단축키도 함께 표시했습니다.
+- 하단에 **투명도 0~70%** 조절을 추가하고, 위치·크기·투명도·최소화 상태를 저장하도록 했습니다.
+- 예시 라벨 6개를 사용하는 데모를 만들고, 팝업에 **라벨 선택창 사용** 켜기·끄기를 추가했습니다. 실제 확장은 해당 작업의 전체 라벨을 표시합니다.
+- 창을 줄이면 목록에 스크롤이 생기고, 넓히면 2열·3열 등으로 자동 배치되는 반응형 목록을 구현했습니다.
+- 창의 네 변과 네 모서리 어디서든 크기를 조절하도록 했습니다.
+- **×는 완전히 끄기**, **−는 작은 버튼으로 최소화**로 구분하고, 최소화된 버튼도 드래그로 움직일 수 있도록 수정했습니다.
+- 오버레이 조작이 CVAT 캔버스 입력으로 전달되는 문제와 슬라이더·포커스·보조키 해제 처리를 보완했습니다.
+
+### 2026-10-09 · 2.1.0 — N으로 이전 도구를 불러올 때 선택 라벨 적용
+
+- 오버레이·팝업·라벨 단축키로 선택한 라벨을 **CVAT 기본 N 이전 도구 호출**에도 적용했습니다.
+- 새 객체를 시작하기 직전에 다음 라벨만 바꾸고, 이전 도구·객체 종류·AI 모델·그리기 옵션은 보존하도록 했습니다.
+- 그리기·편집 중에는 현재 객체의 라벨을 유지하고 CVAT의 기존 N 완료·종료 처리로 넘기도록 했습니다.
+- CVAT 상태와 선택 라벨의 호환성을 확인할 수 없는 경우 시작을 중단하고 안내하도록 했습니다.
+- 이 연결은 CVAT 내부 상태 구조를 이용하므로 CVAT 버전에 따른 호환성 확인이 필요합니다.
+
+### 2026-10-09 · 2.1.1 — N 라벨 연동 실패 수정
+
+- CVAT 기본 작업 공간의 이름을 `standard`로 비교하던 오류를 실제 값인 **`Standard`**로 수정했습니다.
+- 기본 작업 공간에서도 N 시작이 차단되던 조건을 바로잡고, 같은 잘못된 값을 사용하던 테스트도 수정했습니다.
+- 연동 실패 시 STORE·WORKSPACE·BRIDGE 등의 고정된 확인 코드를 표시하도록 했습니다.
+- 오류 안내에 작업 ID·이미지 이름·라벨 값 등 작업 데이터를 포함하지 않도록 했습니다.
+
+### 2026-10-11 · 2.1.2 — 오버레이 복구와 전체화면 표시 수정
+
+- 팝업에 **라벨 선택창 복구**를 제공해 위치·크기·투명도·최소화 상태를 기본값으로 되돌리도록 했습니다.
+- 숨김 스타일도 초기화하되, 선택 라벨과 단축키 설정은 유지하도록 했습니다.
+- CVAT 요소 전체화면에서는 오버레이를 전체화면 요소 안으로 옮기고, 해제하면 문서 루트로 되돌리도록 했습니다.
+- 복구 결과의 실제 표시 상태를 확인하고, 구버전 코드가 남은 탭에는 RELOAD 안내를 표시하도록 했습니다.
+- 이후 사용 중 창이 반쯤 화면 밖에 남는 문제가 보고되어 2.1.3에서 위치 보정을 추가로 수정했습니다.
+
+### 2026-10-11 · 2.1.3 — 화면 밖으로 잘리는 오버레이 수정
+
+- 화면상의 실제 좌표와 CSS 위치 좌표를 섞어 계산하던 부분을 수정했습니다.
+- 현재 보이는 화면 영역과 오버레이의 실제 크기를 기준으로 창 전체가 화면 안에 들어오도록 위치·크기를 보정했습니다.
+- CSS 확대, 상위 요소의 위치·배율 변화, 확대된 화면 영역, 브라우저 창 크기 변경, 저장된 화면 밖 좌표를 처리했습니다.
+- 이미 열린 창도 화면 변화에 따라 다시 보정하도록 했습니다.
+- 창이 일부만 보여도 정상 표시로 판단하던 상태 검사를 수정했습니다.
+- 별도 Chrome 환경과 모의 CVAT 화면을 사용한 전체 검사 **443개**를 통과했습니다.
+
+### 2026-10-11 · 2.1.4 — 배포 버전명 변경
+
+- 요청한 배포 번호에 맞춰 **2.1.3 → 2.1.4**로 변경했습니다.
+- `manifest.json`, 팝업, 가이드의 버전 표기와 배포 ZIP 이름을 갱신했습니다.
+- 22개 패키지 파일을 비교해 위 세 파일의 버전 문자열만 달라졌는지 확인했습니다.
+- 기능 코드는 2.1.3과 같습니다. **N 중복 지정 시 시작·완료를 구분하는 수정은 포함하지 않았습니다.**
+
+### 2026-10-12 · 작업 폴더 이전과 GitHub 저장소 등록
+
+- 작업 폴더를 **`C:\git\cvat_shortcut`**으로 옮겼습니다.
+- [r2gul4r/CVAT_shortcut](https://github.com/r2gul4r/CVAT_shortcut)의 `main` 브랜치에 소스·테스트·가이드·2.1.4 배포 ZIP을 커밋하고 푸시했습니다.
+- 현재 소스에서 ZIP을 생성하고 파일 해시를 확인하는 `tools/package-extension.py`를 추가했습니다.
+- 브라우저 테스트 프로필과 임시 파일은 Git에서 제외하고, 배포 ZIP과 소스의 바이트 일치를 확인했습니다.
+- 이동한 경로에서 검사 **443개**를 다시 실행해 통과했습니다. 확장 기능과 버전은 2.1.4로 유지했습니다.
+
+## 현재 확인 사항
+
+- **N 중복 지정 처리: 보류.** 확장 AI·새 마스크 단축키를 N으로 지정하면 CVAT의 N 완료 동작과 충돌할 수 있습니다. 시작·완료를 상태별로 구분하는 방안은 계획만 검토했으며 현재 코드에 적용하지 않았습니다.
+- **확장 단축키 우선 처리의 범위:** Chrome·운영체제가 먼저 사용하는 키까지 우선권을 보장하지는 않습니다. 입력창·한글 조합·대화상자에서는 별도 예외 처리를 적용합니다.
+- **검증 범위:** 예시 화면과 모의 API, 별도 Chrome 실행 환경 기준입니다. Mac 검사는 Windows에서 입력·플랫폼 정보를 모의한 것이며, 실제 Mac 기기나 모든 CVAT 설치본의 동작을 보증하는 검사는 아닙니다.
+- **이전 자료:** `store/`와 `INSTALLATION-STATUS.md`에는 초기 배포 준비 기록이 남아 있습니다. 현재 설치와 패키징은 이 README 상단의 2.1.4 안내를 사용하세요.
+
+검사 결과: [브라우저 회귀 검사](tests/test-results.json) · [라벨 로직 검사](tests/label-logic-results.json) · [Chrome 실행 환경 검사](tests/world-results.json)

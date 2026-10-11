@@ -1,0 +1,83 @@
+{
+  "version": "0.1.1",
+  "file": "cvat-sidebar-shortcuts-0.1.1-store.zip",
+  "bytes": 17222,
+  "sha256": "8ed953061a60f14b7d0902b1c8c833a1a20ddbcd6b0cf6c942913ae47253a588",
+  "manifestAtRoot": true,
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "hostPermissions": [],
+  "automaticInjection": false,
+  "networkOrImageReadingAPIs": false,
+  "hardcodedURLLiterals": [],
+  "secretPatternMatches": [],
+  "companyImagesOrCapturedData": "None; all bundled files are authored extension code or generated generic icons",
+  "testFilesIncluded": false,
+  "documentationIncluded": false,
+  "files": [
+    {
+      "name": "manifest.json",
+      "bytes": 700,
+      "sha256": "0b2c98e807d629506212e32e50ad3ecb3afa12374080f5d8343bc45f75d2e5e8"
+    },
+    {
+      "name": "common.js",
+      "bytes": 5035,
+      "sha256": "442af1b6701313ff4e725b68bcd70765a43c65dcb7e7dd33b9af4bb5795b2f28"
+    },
+    {
+      "name": "content.js",
+      "bytes": 21621,
+      "sha256": "365ffbc6e5c478d325e0da3819f6d0ae2aac313317e6b2e81961206060815439"
+    },
+    {
+      "name": "popup.html",
+      "bytes": 3247,
+      "sha256": "b5a5a973611772484562dd75a7fc5b3cd7278954ed54efa574eed4049f65486e"
+    },
+    {
+      "name": "popup.css",
+      "bytes": 1731,
+      "sha256": "3bc0258655c6df92498770cca634db0d09854678d252d3971b963c27b749df81"
+    },
+    {
+      "name": "popup.js",
+      "bytes": 8636,
+      "sha256": "64699e31bca957538371171848ef6b4450d62a6da21bb19232ed637852dec37b"
+    },
+    {
+      "name": "icons/icon16.png",
+      "bytes": 311,
+      "sha256": "6b6437127225c6d588f3c11a1c338c1af10d28230359e7551aa01c33c8d6451d"
+    },
+    {
+      "name": "icons/icon32.png",
+      "bytes": 544,
+      "sha256": "c4e96401186e81a0f3c33ffdca82dd200d45d228d0314e8bc1ccb1292cec12ef"
+    },
+    {
+      "name": "icons/icon48.png",
+      "bytes": 759,
+      "sha256": "6b35533b363408dcb1e6e6a7079694b6169c8900feb63ba058f507c44265be22"
+    },
+    {
+      "name": "icons/icon128.png",
+      "bytes": 1578,
+      "sha256": "65bfb0863869ea0e42c36122296d3e938474022bd820846ffa46d0db5ae7bf10"
+    }
+  ],
+  "sourceDevelopmentVersion": "1.4.1",
+  "runtimeFilesMatchSource": true,
+  "onlyManifestVersionChanged": true,
+  "developmentManifestUnchanged": true,
+  "sourceTests": {
+    "passed": 232,
+    "failed": 0,
+    "testedAt": "2026-10-02T02:21:45.993Z",
+    "limitation": "Existing 1.4.1 synthetic evidence reused because runtime files are byte-identical. No actual Mac or installed CVAT validation."
+  },
+  "archiveVerification": "PASS: independent .NET decompression/hash verification for 10 entries; ZIP-root manifest version 0.1.1; development version remains 1.4.1"
+}

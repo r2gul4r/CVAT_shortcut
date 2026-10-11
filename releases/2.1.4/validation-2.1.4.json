@@ -1,0 +1,1985 @@
+{
+  "beforeFix": {
+    "testedAt": "2026-10-10T23:29:17.440Z",
+    "suite": "Real Chrome MAIN/isolated world communication",
+    "environment": "Dedicated ephemeral headless Chrome; actual execution-world separation; Chrome APIs and CVAT/React state mocked; no user browser or company data",
+    "passed": 8,
+    "failed": 4,
+    "results": [
+      {
+        "name": "MAIN and isolated globals are distinct",
+        "passed": true
+      },
+      {
+        "name": "Native N crosses isolated-to-MAIN request/ack and starts once with the selected label",
+        "passed": true
+      },
+      {
+        "name": "All remembered options survive actual world separation",
+        "passed": true
+      },
+      {
+        "name": "During drawing the next label changes only extension storage and native N finishes the current label",
+        "passed": true
+      },
+      {
+        "name": "The next native N starts with the new label without leftover request elements",
+        "passed": true
+      },
+      {
+        "name": "Label palette remains reachable during real element fullscreen and after exit",
+        "passed": true
+      },
+      {
+        "name": "Popup recovery repairs hidden styles and restores a visible default panel",
+        "passed": true
+      },
+      {
+        "name": "Status distinguishes an intentionally closed palette from a visible one",
+        "passed": true
+      },
+      {
+        "name": "Recovery keeps the complete panel onscreen under inherited CSS zoom",
+        "passed": false,
+        "error": "{\"left\":555,\"top\":10,\"right\":865,\"bottom\":525,\"vx\":0,\"vy\":0,\"vw\":762,\"vh\":428}"
+      },
+      {
+        "name": "Recovery accounts for a transformed fixed-position containing block",
+        "passed": false,
+        "error": "{\"left\":627.6687622070312,\"top\":54.599998474121094,\"right\":925.268798828125,\"bottom\":548.9999923706055,\"vx\":0,\"vy\":0,\"vw\":747,\"vh\":413}"
+      },
+      {
+        "name": "A zoomed visual viewport fits the whole palette rather than just its title",
+        "passed": false,
+        "error": "{\"left\":492,\"top\":8,\"right\":740,\"bottom\":420,\"vx\":0,\"vy\":0,\"vw\":381,\"vh\":214}"
+      },
+      {
+        "name": "Visibility status does not call a half-clipped palette visible",
+        "passed": false,
+        "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'visible'\n- 'outside'\n"
+      }
+    ]
+  },
+  "browser": {
+    "testedAt": "2026-10-10T23:33:35.384Z",
+    "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
+    "staticChecks": "passed",
+    "passed": 416,
+    "failed": 0,
+    "suites": [
+      {
+        "suite": "content",
+        "passed": 71,
+        "failed": 0,
+        "results": [
+          {
+            "name": "No fixed/default shortcuts and saved settings key remains V1",
+            "passed": true
+          },
+          {
+            "name": "Duplicate assignment rejected without replacing existing settings",
+            "passed": true
+          },
+          {
+            "name": "Option-generated characters use physical codes and do not guess missing codes",
+            "passed": true
+          },
+          {
+            "name": "Cmd stays distinct from Ctrl and recovers if letter keyup is missing",
+            "passed": true
+          },
+          {
+            "name": "AI opens its sidebar popup and clicks Interact exactly once",
+            "passed": true
+          },
+          {
+            "name": "Brush opens new-mask popup and clicks its Shape exactly once",
+            "passed": true
+          },
+          {
+            "name": "Already open AI popup starts without toggling its sidebar icon",
+            "passed": true
+          },
+          {
+            "name": "Already open mask popup starts without toggling its sidebar icon",
+            "passed": true
+          },
+          {
+            "name": "Already correct default labels, model, and bounding-box options are preserved",
+            "passed": true
+          },
+          {
+            "name": "AI switches person to exact obstacle before one Interact start",
+            "passed": true
+          },
+          {
+            "name": "Brush switches person to exact obstacle before one Shape start",
+            "passed": true
+          },
+          {
+            "name": "Configured object label is selected for both shortcuts",
+            "passed": true
+          },
+          {
+            "name": "Missing default label stops rather than falling back to person",
+            "passed": true
+          },
+          {
+            "name": "Duplicate exact label names stop without choosing either",
+            "passed": true
+          },
+          {
+            "name": "Disabled matching label stops without changing label or starting",
+            "passed": true
+          },
+          {
+            "name": "Unrelated dropdown's obstacle cannot satisfy this popup's missing label",
+            "passed": true
+          },
+          {
+            "name": "Delayed dropdown and selection are verified before Interact",
+            "passed": true
+          },
+          {
+            "name": "A click that fails to select the label never starts and is not repeated",
+            "passed": true
+          },
+          {
+            "name": "User typing in label dropdown cancels pending activation",
+            "passed": true
+          },
+          {
+            "name": "Invalid saved default-label setting fails closed",
+            "passed": true
+          },
+          {
+            "name": "Repeated keydowns and competing shortcut during readiness run once",
+            "passed": true
+          },
+          {
+            "name": "Brief cooldown prevents duplicate execution before React marks tool active",
+            "passed": true
+          },
+          {
+            "name": "Held-key auto-repeat is ignored before opening any menu",
+            "passed": true
+          },
+          {
+            "name": "Exact modifiers and unrelated keys pass through; pre-cancelled registered key still runs",
+            "passed": true
+          },
+          {
+            "name": "Reassigned key stops old binding and starts with new binding",
+            "passed": true
+          },
+          {
+            "name": "Cleared binding stops interception immediately",
+            "passed": true
+          },
+          {
+            "name": "Typing fields and editable descendants are ignored",
+            "passed": true
+          },
+          {
+            "name": "Focused input and open shadow-root typing field are ignored",
+            "passed": true
+          },
+          {
+            "name": "IME/composition, keyCode 229, dead keys, and AltGraph are ignored",
+            "passed": true
+          },
+          {
+            "name": "Dialogs remain untouched and active brush switches to AI after Escape",
+            "passed": true
+          },
+          {
+            "name": "A fresh same-tool shortcut cancels then restarts once",
+            "passed": true
+          },
+          {
+            "name": "Modified shortcut sends unmodified Escape before switching AI to brush",
+            "passed": true
+          },
+          {
+            "name": "Delayed cancellation waits for idle before opening the next tool",
+            "passed": true
+          },
+          {
+            "name": "Unresponsive Escape fails closed without clicking the active tool or saving",
+            "passed": true
+          },
+          {
+            "name": "Existing-mask editing is canceled before a new tool starts",
+            "passed": true
+          },
+          {
+            "name": "Typing, pointer-down and unmatched keys do not send Escape",
+            "passed": true
+          },
+          {
+            "name": "Job navigation during cancellation prevents a start in the new job",
+            "passed": true
+          },
+          {
+            "name": "A user's Escape cancels a pending tool switch",
+            "passed": true
+          },
+          {
+            "name": "CVAT's buttonless popover mousedown does not block AI Interact",
+            "passed": true
+          },
+          {
+            "name": "CVAT's buttonless popover mousedown does not block mask Shape",
+            "passed": true
+          },
+          {
+            "name": "Disabled sidebar tool is ignored with static feedback",
+            "passed": true
+          },
+          {
+            "name": "Missing, hidden, off-screen, or duplicate sidebar tools are ignored",
+            "passed": true
+          },
+          {
+            "name": "Missing sidebar or unrelated SPA route cannot intercept keys",
+            "passed": true
+          },
+          {
+            "name": "Delayed popup and delayed start button are awaited within the bound",
+            "passed": true
+          },
+          {
+            "name": "Missing popup times out without any follow-up or generic button click",
+            "passed": true
+          },
+          {
+            "name": "Hidden Interact is not replaced by visible generic/wrong-popup buttons",
+            "passed": true
+          },
+          {
+            "name": "Brush selects only mask Shape, never a generic or other-shape button",
+            "passed": true
+          },
+          {
+            "name": "Missing mask Shape does not click a global lookalike",
+            "passed": true
+          },
+          {
+            "name": "Disabled Interact never falls back to a different enabled button",
+            "passed": true
+          },
+          {
+            "name": "Disabled or loading mask Shape is not clicked",
+            "passed": true
+          },
+          {
+            "name": "Disabled popup ancestor prevents starting",
+            "passed": true
+          },
+          {
+            "name": "Duplicate visible start buttons fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden duplicate buttons are ignored; one visible matching button starts once",
+            "passed": true
+          },
+          {
+            "name": "Multiple visible matching popovers fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden Interactors pane never invokes detector/automatic annotation",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels if settings are cleared/reassigned",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels when popup pauses the tab",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels if typing focus changes",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels if another drawing becomes active",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels for a new dialog or unrelated route",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels on window blur or compositionstart",
+            "passed": true
+          },
+          {
+            "name": "Closing a popup while awaiting its button cancels the start",
+            "passed": true
+          },
+          {
+            "name": "Corrupt duplicate settings fail closed; non-local changes are ignored",
+            "passed": true
+          },
+          {
+            "name": "Reinjection keeps one listener set and starts exactly once",
+            "passed": true
+          },
+          {
+            "name": "Storage read failures keep shortcuts paused; re-enable recovers",
+            "passed": true
+          },
+          {
+            "name": "Catalog includes unused classes and rejects incomplete lists",
+            "passed": true
+          },
+          {
+            "name": "Overview excludes its total row and flags duplicate names",
+            "passed": true
+          },
+          {
+            "name": "Catalog names remain text and empty names fail closed",
+            "passed": true
+          },
+          {
+            "name": "Catalog reads CVAT representative colors from the class swatch",
+            "passed": true
+          },
+          {
+            "name": "Color parsing accepts literal RGB and rejects URLs and invalid values",
+            "passed": true
+          },
+          {
+            "name": "Only HTTP(S) CVAT job paths are eligible",
+            "passed": true
+          }
+        ],
+        "totalClicks": {
+          "ai": 42,
+          "brush": 10,
+          "interact": 24,
+          "shape": 8,
+          "wrong": 0,
+          "save": 0,
+          "inference": 0,
+          "optionChanges": 5
+        },
+        "platformValidation": "Windows Chrome synthetic DOM"
+      },
+      {
+        "suite": "popup",
+        "passed": 42,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Popup starts with unassigned keys and Assign/Clear controls",
+            "passed": true
+          },
+          {
+            "name": "Popup overlay toggle saves independently from shortcuts and geometry",
+            "passed": true
+          },
+          {
+            "name": "Popup overlay toggle rolls back display after failed save",
+            "passed": true
+          },
+          {
+            "name": "Popup overlay toggle follows changes from other tabs",
+            "passed": true
+          },
+          {
+            "name": "Assign captures a chosen shortcut and saves to local storage",
+            "passed": true
+          },
+          {
+            "name": "Duplicate warning retains previous settings and capture stays open",
+            "passed": true
+          },
+          {
+            "name": "Change replaces chosen key, repeated-key recording is ignored",
+            "passed": true
+          },
+          {
+            "name": "Modifier-only and IME key events do not create assignments",
+            "passed": true
+          },
+          {
+            "name": "Escape cancels without changing bindings",
+            "passed": true
+          },
+          {
+            "name": "Popup ignores a composition session even if a key event omits isComposing",
+            "passed": true
+          },
+          {
+            "name": "Clear removes saved shortcut and restores Assign",
+            "passed": true
+          },
+          {
+            "name": "Popup enable explicitly injects the MAIN adapter before isolated controls in the same tab, and can pause",
+            "passed": true
+          },
+          {
+            "name": "MAIN adapter injection failure retains existing tool shortcuts and reports N limitation",
+            "passed": true
+          },
+          {
+            "name": "Palette recovery requests geometry reset and reports verified visibility",
+            "passed": true
+          },
+          {
+            "name": "A covered palette reports its failure instead of claiming recovery",
+            "passed": true
+          },
+          {
+            "name": "An old tab without palette status requests a page reload",
+            "passed": true
+          },
+          {
+            "name": "Unsupported CVAT controls produce feedback",
+            "passed": true
+          },
+          {
+            "name": "Injection failure is reported without bypassing 브라우저 정책",
+            "passed": true
+          },
+          {
+            "name": "Storage write failure preserves old binding and reports failure",
+            "passed": true
+          },
+          {
+            "name": "Saving exact default label preserves hotkeys and wheel settings",
+            "passed": true
+          },
+          {
+            "name": "Empty default label is rejected without changing saved setting",
+            "passed": true
+          },
+          {
+            "name": "Failed default-label write leaves the old preference intact",
+            "passed": true
+          },
+          {
+            "name": "Brush wheel defaults to enabled Alt and modifier choice persists locally",
+            "passed": true
+          },
+          {
+            "name": "Wheel enable/disable is saved and preserves shortcut assignments",
+            "passed": true
+          },
+          {
+            "name": "Failed wheel-option write reports failure and keeps saved preference",
+            "passed": true
+          },
+          {
+            "name": "Reopening popup retains saved local settings",
+            "passed": true
+          },
+          {
+            "name": "Unrelated website cannot be enabled or injected",
+            "passed": true
+          },
+          {
+            "name": "Enable lists unused classes and selects the saved name",
+            "passed": true
+          },
+          {
+            "name": "One unified list shows each class color and selection",
+            "passed": true
+          },
+          {
+            "name": "Clicking a colored row saves the class through the same checked path",
+            "passed": true
+          },
+          {
+            "name": "Refresh displays a changed representative color without saving it",
+            "passed": true
+          },
+          {
+            "name": "Choosing a class saves only its name and preserves other preferences",
+            "passed": true
+          },
+          {
+            "name": "Refresh marks missing saved labels and disables duplicate names",
+            "passed": true
+          },
+          {
+            "name": "A class removed after display cannot be saved",
+            "passed": true
+          },
+          {
+            "name": "Catalog failure permits manual entry and pause clears the list",
+            "passed": true
+          },
+          {
+            "name": "Changing jobs prevents a stale selection from saving",
+            "passed": true
+          },
+          {
+            "name": "Focused manual paste survives unrelated settings updates",
+            "passed": true
+          },
+          {
+            "name": "Space pan checkbox persists without changing label or shortcut settings",
+            "passed": true
+          },
+          {
+            "name": "Space tool shortcut shows pan conflict guidance",
+            "passed": true
+          },
+          {
+            "name": "Label key assign, conflict rejection, change and clear preserve other settings",
+            "passed": true
+          },
+          {
+            "name": "Label key rejects stale job and failed storage writes",
+            "passed": true
+          },
+          {
+            "name": "Opening popup migrates saved Ctrl wheel to Alt without changing other settings",
+            "passed": true
+          }
+        ],
+        "platformValidation": "Windows Chrome synthetic DOM"
+      },
+      {
+        "suite": "wheel",
+        "passed": 33,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Old saved settings migrate to enabled Alt wheel without losing chosen hotkeys",
+            "passed": true
+          },
+          {
+            "name": "Alt wheel up/down adjusts shared controlled size by one without zoom",
+            "passed": true
+          },
+          {
+            "name": "Existing-mask editing with Cursor uses the same size control",
+            "passed": true
+          },
+          {
+            "name": "The shared size control also works for active Eraser",
+            "passed": true
+          },
+          {
+            "name": "Ctrl wheel and pinch remain native under either supported modifier",
+            "passed": true
+          },
+          {
+            "name": "Cmd wheel, unmodified trackpad scroll, and horizontal Option swipe stay native",
+            "passed": true
+          },
+          {
+            "name": "Native pinch or Cmd gesture clears a partial size step",
+            "passed": true
+          },
+          {
+            "name": "Shift vertical wheel changes creation and editing sizes by exactly one",
+            "passed": true
+          },
+          {
+            "name": "Shift horizontal wheel uses the dominant direction once, including Eraser",
+            "passed": true
+          },
+          {
+            "name": "Shift horizontal fractional, line, page, and bounded steps normalize consistently",
+            "passed": true
+          },
+          {
+            "name": "Shift horizontal scrolling remains native outside an active eligible canvas",
+            "passed": true
+          },
+          {
+            "name": "Ordinary wheel, wrong modifier, and extra modifiers preserve zoom/scroll",
+            "passed": true
+          },
+          {
+            "name": "Disabled wheel setting preserves normal wheel immediately",
+            "passed": true
+          },
+          {
+            "name": "No visible brush toolbox leaves normal wheel alone",
+            "passed": true
+          },
+          {
+            "name": "Polygon/ambiguous active tools do not change brush size",
+            "passed": true
+          },
+          {
+            "name": "Wheel outside mask surface or over toolbox preserves normal scrolling",
+            "passed": true
+          },
+          {
+            "name": "Pointer coordinates outside canvas or covered by a panel fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden canvas or missing CVAT canvas ancestry is ignored",
+            "passed": true
+          },
+          {
+            "name": "Typing fields and focused input prevent wheel resizing",
+            "passed": true
+          },
+          {
+            "name": "Composition/IME and modal context prevent wheel resizing",
+            "passed": true
+          },
+          {
+            "name": "A pressed mouse button blocks size changes during painting",
+            "passed": true
+          },
+          {
+            "name": "Wheel never synthesizes pointer/mouse strokes or save/continue clicks",
+            "passed": true
+          },
+          {
+            "name": "Extension range clamps to 1–500 and preserves active context at limits",
+            "passed": true
+          },
+          {
+            "name": "Narrower DOM min/max bounds are respected",
+            "passed": true
+          },
+          {
+            "name": "Malformed or manually out-of-range sizes are left unchanged",
+            "passed": true
+          },
+          {
+            "name": "Trackpad fractional deltas accumulate; line/page wheel modes work",
+            "passed": true
+          },
+          {
+            "name": "Horizontal/zero/noncancelable/already handled wheel events are preserved",
+            "passed": true
+          },
+          {
+            "name": "Disabled, readonly, and hidden size controls are ignored",
+            "passed": true
+          },
+          {
+            "name": "Duplicate visible size inputs/toolboxes fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden duplicate size input is ignored",
+            "passed": true
+          },
+          {
+            "name": "Paused tab and unrelated CVAT route do not resize",
+            "passed": true
+          },
+          {
+            "name": "Uncanceled existing-mask toolbox blocks AI/Shape starts after Escape request",
+            "passed": true
+          },
+          {
+            "name": "Blur clears the fractional wheel session",
+            "passed": true
+          }
+        ],
+        "totalEvents": {
+          "updates": 31,
+          "ordinaryWheel": 61,
+          "pointerEvents": 0,
+          "saves": 0,
+          "starts": 0
+        },
+        "platformValidation": "Windows Chrome synthetic DOM"
+      },
+      {
+        "suite": "popup-mac",
+        "passed": 8,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Simulated Mac labels Option/Cmd without remapping saved modifier bits",
+            "passed": true
+          },
+          {
+            "name": "Option character capture stores its physical key code",
+            "passed": true
+          },
+          {
+            "name": "Cmd capture and duplicate warning preserve exact bindings",
+            "passed": true
+          },
+          {
+            "name": "Ctrl stays separate from Cmd on simulated Mac",
+            "passed": true
+          },
+          {
+            "name": "Saved Chrome/macOS shortcut shows advisory without deleting it",
+            "passed": true
+          },
+          {
+            "name": "Shift wheel preference and Option status are saved normally",
+            "passed": true
+          },
+          {
+            "name": "Saved Cmd choice and conflict advisory survive reopening",
+            "passed": true
+          },
+          {
+            "name": "Clearing Cmd binding keeps other settings and removes its advisory",
+            "passed": true
+          }
+        ],
+        "platformValidation": "macOS metadata/input simulation in Windows Chrome; no Mac hardware"
+      },
+      {
+        "suite": "content",
+        "passed": 71,
+        "failed": 0,
+        "results": [
+          {
+            "name": "No fixed/default shortcuts and saved settings key remains V1",
+            "passed": true
+          },
+          {
+            "name": "Duplicate assignment rejected without replacing existing settings",
+            "passed": true
+          },
+          {
+            "name": "Option-generated characters use physical codes and do not guess missing codes",
+            "passed": true
+          },
+          {
+            "name": "Cmd stays distinct from Ctrl and recovers if letter keyup is missing",
+            "passed": true
+          },
+          {
+            "name": "AI opens its sidebar popup and clicks Interact exactly once",
+            "passed": true
+          },
+          {
+            "name": "Brush opens new-mask popup and clicks its Shape exactly once",
+            "passed": true
+          },
+          {
+            "name": "Already open AI popup starts without toggling its sidebar icon",
+            "passed": true
+          },
+          {
+            "name": "Already open mask popup starts without toggling its sidebar icon",
+            "passed": true
+          },
+          {
+            "name": "Already correct default labels, model, and bounding-box options are preserved",
+            "passed": true
+          },
+          {
+            "name": "AI switches person to exact obstacle before one Interact start",
+            "passed": true
+          },
+          {
+            "name": "Brush switches person to exact obstacle before one Shape start",
+            "passed": true
+          },
+          {
+            "name": "Configured object label is selected for both shortcuts",
+            "passed": true
+          },
+          {
+            "name": "Missing default label stops rather than falling back to person",
+            "passed": true
+          },
+          {
+            "name": "Duplicate exact label names stop without choosing either",
+            "passed": true
+          },
+          {
+            "name": "Disabled matching label stops without changing label or starting",
+            "passed": true
+          },
+          {
+            "name": "Unrelated dropdown's obstacle cannot satisfy this popup's missing label",
+            "passed": true
+          },
+          {
+            "name": "Delayed dropdown and selection are verified before Interact",
+            "passed": true
+          },
+          {
+            "name": "A click that fails to select the label never starts and is not repeated",
+            "passed": true
+          },
+          {
+            "name": "User typing in label dropdown cancels pending activation",
+            "passed": true
+          },
+          {
+            "name": "Invalid saved default-label setting fails closed",
+            "passed": true
+          },
+          {
+            "name": "Repeated keydowns and competing shortcut during readiness run once",
+            "passed": true
+          },
+          {
+            "name": "Brief cooldown prevents duplicate execution before React marks tool active",
+            "passed": true
+          },
+          {
+            "name": "Held-key auto-repeat is ignored before opening any menu",
+            "passed": true
+          },
+          {
+            "name": "Exact modifiers and unrelated keys pass through; pre-cancelled registered key still runs",
+            "passed": true
+          },
+          {
+            "name": "Reassigned key stops old binding and starts with new binding",
+            "passed": true
+          },
+          {
+            "name": "Cleared binding stops interception immediately",
+            "passed": true
+          },
+          {
+            "name": "Typing fields and editable descendants are ignored",
+            "passed": true
+          },
+          {
+            "name": "Focused input and open shadow-root typing field are ignored",
+            "passed": true
+          },
+          {
+            "name": "IME/composition, keyCode 229, dead keys, and AltGraph are ignored",
+            "passed": true
+          },
+          {
+            "name": "Dialogs remain untouched and active brush switches to AI after Escape",
+            "passed": true
+          },
+          {
+            "name": "A fresh same-tool shortcut cancels then restarts once",
+            "passed": true
+          },
+          {
+            "name": "Modified shortcut sends unmodified Escape before switching AI to brush",
+            "passed": true
+          },
+          {
+            "name": "Delayed cancellation waits for idle before opening the next tool",
+            "passed": true
+          },
+          {
+            "name": "Unresponsive Escape fails closed without clicking the active tool or saving",
+            "passed": true
+          },
+          {
+            "name": "Existing-mask editing is canceled before a new tool starts",
+            "passed": true
+          },
+          {
+            "name": "Typing, pointer-down and unmatched keys do not send Escape",
+            "passed": true
+          },
+          {
+            "name": "Job navigation during cancellation prevents a start in the new job",
+            "passed": true
+          },
+          {
+            "name": "A user's Escape cancels a pending tool switch",
+            "passed": true
+          },
+          {
+            "name": "CVAT's buttonless popover mousedown does not block AI Interact",
+            "passed": true
+          },
+          {
+            "name": "CVAT's buttonless popover mousedown does not block mask Shape",
+            "passed": true
+          },
+          {
+            "name": "Disabled sidebar tool is ignored with static feedback",
+            "passed": true
+          },
+          {
+            "name": "Missing, hidden, off-screen, or duplicate sidebar tools are ignored",
+            "passed": true
+          },
+          {
+            "name": "Missing sidebar or unrelated SPA route cannot intercept keys",
+            "passed": true
+          },
+          {
+            "name": "Delayed popup and delayed start button are awaited within the bound",
+            "passed": true
+          },
+          {
+            "name": "Missing popup times out without any follow-up or generic button click",
+            "passed": true
+          },
+          {
+            "name": "Hidden Interact is not replaced by visible generic/wrong-popup buttons",
+            "passed": true
+          },
+          {
+            "name": "Brush selects only mask Shape, never a generic or other-shape button",
+            "passed": true
+          },
+          {
+            "name": "Missing mask Shape does not click a global lookalike",
+            "passed": true
+          },
+          {
+            "name": "Disabled Interact never falls back to a different enabled button",
+            "passed": true
+          },
+          {
+            "name": "Disabled or loading mask Shape is not clicked",
+            "passed": true
+          },
+          {
+            "name": "Disabled popup ancestor prevents starting",
+            "passed": true
+          },
+          {
+            "name": "Duplicate visible start buttons fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden duplicate buttons are ignored; one visible matching button starts once",
+            "passed": true
+          },
+          {
+            "name": "Multiple visible matching popovers fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden Interactors pane never invokes detector/automatic annotation",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels if settings are cleared/reassigned",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels when popup pauses the tab",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels if typing focus changes",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels if another drawing becomes active",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels for a new dialog or unrelated route",
+            "passed": true
+          },
+          {
+            "name": "Pending start cancels on window blur or compositionstart",
+            "passed": true
+          },
+          {
+            "name": "Closing a popup while awaiting its button cancels the start",
+            "passed": true
+          },
+          {
+            "name": "Corrupt duplicate settings fail closed; non-local changes are ignored",
+            "passed": true
+          },
+          {
+            "name": "Reinjection keeps one listener set and starts exactly once",
+            "passed": true
+          },
+          {
+            "name": "Storage read failures keep shortcuts paused; re-enable recovers",
+            "passed": true
+          },
+          {
+            "name": "Catalog includes unused classes and rejects incomplete lists",
+            "passed": true
+          },
+          {
+            "name": "Overview excludes its total row and flags duplicate names",
+            "passed": true
+          },
+          {
+            "name": "Catalog names remain text and empty names fail closed",
+            "passed": true
+          },
+          {
+            "name": "Catalog reads CVAT representative colors from the class swatch",
+            "passed": true
+          },
+          {
+            "name": "Color parsing accepts literal RGB and rejects URLs and invalid values",
+            "passed": true
+          },
+          {
+            "name": "Only HTTP(S) CVAT job paths are eligible",
+            "passed": true
+          }
+        ],
+        "totalClicks": {
+          "ai": 42,
+          "brush": 10,
+          "interact": 24,
+          "shape": 8,
+          "wrong": 0,
+          "save": 0,
+          "inference": 0,
+          "optionChanges": 5
+        },
+        "platformValidation": "macOS metadata/input simulation in Windows Chrome; no Mac hardware"
+      },
+      {
+        "suite": "wheel",
+        "passed": 33,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Old saved settings migrate to enabled Alt wheel without losing chosen hotkeys",
+            "passed": true
+          },
+          {
+            "name": "Alt wheel up/down adjusts shared controlled size by one without zoom",
+            "passed": true
+          },
+          {
+            "name": "Existing-mask editing with Cursor uses the same size control",
+            "passed": true
+          },
+          {
+            "name": "The shared size control also works for active Eraser",
+            "passed": true
+          },
+          {
+            "name": "Ctrl wheel and pinch remain native under either supported modifier",
+            "passed": true
+          },
+          {
+            "name": "Cmd wheel, unmodified trackpad scroll, and horizontal Option swipe stay native",
+            "passed": true
+          },
+          {
+            "name": "Native pinch or Cmd gesture clears a partial size step",
+            "passed": true
+          },
+          {
+            "name": "Shift vertical wheel changes creation and editing sizes by exactly one",
+            "passed": true
+          },
+          {
+            "name": "Shift horizontal wheel uses the dominant direction once, including Eraser",
+            "passed": true
+          },
+          {
+            "name": "Shift horizontal fractional, line, page, and bounded steps normalize consistently",
+            "passed": true
+          },
+          {
+            "name": "Shift horizontal scrolling remains native outside an active eligible canvas",
+            "passed": true
+          },
+          {
+            "name": "Ordinary wheel, wrong modifier, and extra modifiers preserve zoom/scroll",
+            "passed": true
+          },
+          {
+            "name": "Disabled wheel setting preserves normal wheel immediately",
+            "passed": true
+          },
+          {
+            "name": "No visible brush toolbox leaves normal wheel alone",
+            "passed": true
+          },
+          {
+            "name": "Polygon/ambiguous active tools do not change brush size",
+            "passed": true
+          },
+          {
+            "name": "Wheel outside mask surface or over toolbox preserves normal scrolling",
+            "passed": true
+          },
+          {
+            "name": "Pointer coordinates outside canvas or covered by a panel fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden canvas or missing CVAT canvas ancestry is ignored",
+            "passed": true
+          },
+          {
+            "name": "Typing fields and focused input prevent wheel resizing",
+            "passed": true
+          },
+          {
+            "name": "Composition/IME and modal context prevent wheel resizing",
+            "passed": true
+          },
+          {
+            "name": "A pressed mouse button blocks size changes during painting",
+            "passed": true
+          },
+          {
+            "name": "Wheel never synthesizes pointer/mouse strokes or save/continue clicks",
+            "passed": true
+          },
+          {
+            "name": "Extension range clamps to 1–500 and preserves active context at limits",
+            "passed": true
+          },
+          {
+            "name": "Narrower DOM min/max bounds are respected",
+            "passed": true
+          },
+          {
+            "name": "Malformed or manually out-of-range sizes are left unchanged",
+            "passed": true
+          },
+          {
+            "name": "Trackpad fractional deltas accumulate; line/page wheel modes work",
+            "passed": true
+          },
+          {
+            "name": "Horizontal/zero/noncancelable/already handled wheel events are preserved",
+            "passed": true
+          },
+          {
+            "name": "Disabled, readonly, and hidden size controls are ignored",
+            "passed": true
+          },
+          {
+            "name": "Duplicate visible size inputs/toolboxes fail safely",
+            "passed": true
+          },
+          {
+            "name": "Hidden duplicate size input is ignored",
+            "passed": true
+          },
+          {
+            "name": "Paused tab and unrelated CVAT route do not resize",
+            "passed": true
+          },
+          {
+            "name": "Uncanceled existing-mask toolbox blocks AI/Shape starts after Escape request",
+            "passed": true
+          },
+          {
+            "name": "Blur clears the fractional wheel session",
+            "passed": true
+          }
+        ],
+        "totalEvents": {
+          "updates": 31,
+          "ordinaryWheel": 61,
+          "pointerEvents": 0,
+          "saves": 0,
+          "starts": 0
+        },
+        "platformValidation": "macOS metadata/input simulation in Windows Chrome; no Mac hardware"
+      },
+      {
+        "suite": "conflicts",
+        "passed": 23,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Handled down/release blocks prior document capture, real Mousetrap and later listeners",
+            "passed": true
+          },
+          {
+            "name": "Held repeats cannot invoke native CVAT after extension starts drawing",
+            "passed": true
+          },
+          {
+            "name": "A new press during drawing runs real Mousetrap Escape then restarts without leaking its key",
+            "passed": true
+          },
+          {
+            "name": "Accepted activation with missing default label fails without native fallback",
+            "passed": true
+          },
+          {
+            "name": "Accepted activation timeout retains ownership through repeats and release",
+            "passed": true
+          },
+          {
+            "name": "Missing or disabled tool keeps its key reserved instead of falling through to CVAT",
+            "passed": true
+          },
+          {
+            "name": "Typing and contenteditable are passed through without extension activation",
+            "passed": true
+          },
+          {
+            "name": "IME/composition/keyCode 229 are not claimed by the extension",
+            "passed": true
+          },
+          {
+            "name": "Modifier releases remain visible so native canvas Ctrl state cannot stick",
+            "passed": true
+          },
+          {
+            "name": "A pre-cancelled registered key still runs the extension instead of CVAT",
+            "passed": true
+          },
+          {
+            "name": "Earlier stopPropagation does not prevent same-window extension priority",
+            "passed": true
+          },
+          {
+            "name": "Documented limit: earlier unmarked window capture action cannot be undone",
+            "passed": true
+          },
+          {
+            "name": "Pause after a claimed down keeps its nonediting release away from native actions",
+            "passed": true
+          },
+          {
+            "name": "Focus/IME change passes keyup safely; blur removes stale claims",
+            "passed": true
+          },
+          {
+            "name": "Cmd release preserves repeat ownership and fresh press recovers omitted letter keyup",
+            "passed": true
+          },
+          {
+            "name": "Clearing a binding during a press blocks old repeats, then permits native behavior",
+            "passed": true
+          },
+          {
+            "name": "Alt wheel sizing blocks prior document capture and native target zoom/scroll",
+            "passed": true
+          },
+          {
+            "name": "Shift horizontal and vertical wheel use one size step without native zoom",
+            "passed": true
+          },
+          {
+            "name": "Ordinary wheel and Ctrl/Cmd/pinch reach native handlers unchanged by extension",
+            "passed": true
+          },
+          {
+            "name": "Wheel during stroke or without active Brush/Eraser is left to native handling",
+            "passed": true
+          },
+          {
+            "name": "Earlier window wheel cancellation is respected without a size change",
+            "passed": true
+          },
+          {
+            "name": "Documented wheel limit: earlier unmarked window capture cannot be undone",
+            "passed": true
+          },
+          {
+            "name": "Unrelated route and paused tab preserve source-like native shortcuts",
+            "passed": true
+          }
+        ],
+        "evidence": "Public Mousetrap 1.6.5 and replicated CVAT keydown binding on synthetic DOM; not real CVAT or isolated-world/native OS proof",
+        "platformValidation": "Windows Chrome synthetic DOM"
+      },
+      {
+        "suite": "space-pan",
+        "passed": 32,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Existing settings migrate to enabled pan, preserving keys, label and wheel",
+            "passed": true
+          },
+          {
+            "name": "Space pointer drag moves native canvas without brush events, Escape or tool changes",
+            "passed": true
+          },
+          {
+            "name": "Compatibility mouse events do not duplicate pointer-driven panning",
+            "passed": true
+          },
+          {
+            "name": "Mouse-only fallback pans and releases",
+            "passed": true
+          },
+          {
+            "name": "Releasing Space first drains left movement and trailing click",
+            "passed": true
+          },
+          {
+            "name": "Multiple drags work during one held Space",
+            "passed": true
+          },
+          {
+            "name": "Ordinary left brush drag passes through",
+            "passed": true
+          },
+          {
+            "name": "Native middle mouse still passes through",
+            "passed": true
+          },
+          {
+            "name": "Space pressed mid-stroke never hijacks that stroke",
+            "passed": true
+          },
+          {
+            "name": "Text field Space is left to text editing",
+            "passed": true
+          },
+          {
+            "name": "IME Space passes through",
+            "passed": true
+          },
+          {
+            "name": "Modified Space passes through",
+            "passed": true
+          },
+          {
+            "name": "Dialog blocks Space pan",
+            "passed": true
+          },
+          {
+            "name": "Feature toggle restores native Space",
+            "passed": true
+          },
+          {
+            "name": "Paused tab restores native Space",
+            "passed": true
+          },
+          {
+            "name": "Saved tool Space has priority over pan",
+            "passed": true
+          },
+          {
+            "name": "Controls within canvas are never treated as pan surfaces",
+            "passed": true
+          },
+          {
+            "name": "Outside-canvas presses pass through",
+            "passed": true
+          },
+          {
+            "name": "CVAT attachment board is excluded from pan",
+            "passed": true
+          },
+          {
+            "name": "Touch input is not converted into mouse pan",
+            "passed": true
+          },
+          {
+            "name": "Release outside canvas ends drag",
+            "passed": true
+          },
+          {
+            "name": "Window blur releases native drag and drains old stroke",
+            "passed": true
+          },
+          {
+            "name": "Pointer cancellation releases native drag",
+            "passed": true
+          },
+          {
+            "name": "Losing left button state recovers from a missed mouseup",
+            "passed": true
+          },
+          {
+            "name": "Settings change during pan releases and drains",
+            "passed": true
+          },
+          {
+            "name": "Tab pause during pan releases and drains",
+            "passed": true
+          },
+          {
+            "name": "Job navigation releases native drag without further movement",
+            "passed": true
+          },
+          {
+            "name": "Detached canvas releases at document",
+            "passed": true
+          },
+          {
+            "name": "Focus moving into text cancels and drains pan",
+            "passed": true
+          },
+          {
+            "name": "Wheel is swallowed during drag",
+            "passed": true
+          },
+          {
+            "name": "Held Space repeats and release never reach native shortcuts",
+            "passed": true
+          },
+          {
+            "name": "Hidden canvas does not claim Space",
+            "passed": true
+          }
+        ],
+        "platformValidation": "Windows Chrome synthetic DOM"
+      },
+      {
+        "suite": "label-shortcuts",
+        "passed": 20,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Label key changes next label and leaves brush/model/objects untouched",
+            "passed": true
+          },
+          {
+            "name": "Label down, keypress, repeat and keyup all block native CVAT handlers",
+            "passed": true
+          },
+          {
+            "name": "Missing label stays reserved and reports failure without changing preference",
+            "passed": true
+          },
+          {
+            "name": "Duplicate label name is not selected",
+            "passed": true
+          },
+          {
+            "name": "Incomplete class catalog fails safely",
+            "passed": true
+          },
+          {
+            "name": "Typing keeps number keys available",
+            "passed": true
+          },
+          {
+            "name": "Dialog keeps its key behavior",
+            "passed": true
+          },
+          {
+            "name": "IME events do not change label",
+            "passed": true
+          },
+          {
+            "name": "Wrong modifiers and unassigned keys pass through",
+            "passed": true
+          },
+          {
+            "name": "Paused extension restores native number key behavior",
+            "passed": true
+          },
+          {
+            "name": "Mid-stroke key is reserved but does not interrupt or change the drawing",
+            "passed": true
+          },
+          {
+            "name": "Class then brush immediately uses new label before async storage finishes",
+            "passed": true
+          },
+          {
+            "name": "Rapid changes serialize writes and last selection wins",
+            "passed": true
+          },
+          {
+            "name": "Async label save cannot cancel a waiting tool start",
+            "passed": true
+          },
+          {
+            "name": "Write failure keeps saved label and reports error",
+            "passed": true
+          },
+          {
+            "name": "Synchronous job change prevents queued selection from saving",
+            "passed": true
+          },
+          {
+            "name": "Space label binding overrides Space pan",
+            "passed": true
+          },
+          {
+            "name": "Plain number native handler returns after binding is removed",
+            "passed": true
+          },
+          {
+            "name": "Tools and labels reject duplicate assignments in both directions",
+            "passed": true
+          },
+          {
+            "name": "Malformed or ambiguous imported label bindings cannot dispatch",
+            "passed": true
+          }
+        ],
+        "platformValidation": "Windows Chrome synthetic DOM"
+      },
+      {
+        "suite": "overlay",
+        "passed": 45,
+        "failed": 0,
+        "results": [
+          {
+            "name": "Activation displays one isolated palette with colors, hotkeys and selected label",
+            "passed": true
+          },
+          {
+            "name": "Mouse selection saves the shared label, leaves brush and blocks native click",
+            "passed": true
+          },
+          {
+            "name": "Hotkey selection immediately updates palette",
+            "passed": true
+          },
+          {
+            "name": "Popup-style storage selection updates palette",
+            "passed": true
+          },
+          {
+            "name": "Dragging outside palette moves, saves geometry and never reaches CVAT",
+            "passed": true
+          },
+          {
+            "name": "Stored offscreen coordinates are clamped into viewport",
+            "passed": true
+          },
+          {
+            "name": "Minimize shows only launcher; click restores choices and selected label",
+            "passed": true
+          },
+          {
+            "name": "Close disables entire overlay, retains shortcuts and stays off until popup toggle",
+            "passed": true
+          },
+          {
+            "name": "Popup show message restores launcher to full panel",
+            "passed": true
+          },
+          {
+            "name": "Palette preferences survive disable and re-enable",
+            "passed": true
+          },
+          {
+            "name": "Minimized launcher drag saves position without expanding or leaking mouse input",
+            "passed": true
+          },
+          {
+            "name": "Close write failure restores usable panel",
+            "passed": true
+          },
+          {
+            "name": "Legacy collapsed state maps to draggable launcher and keyboard close consumes release",
+            "passed": true
+          },
+          {
+            "name": "Palette wheel never reaches native zoom handler",
+            "passed": true
+          },
+          {
+            "name": "Resize drag changes dimensions, persists and isolates native input",
+            "passed": true
+          },
+          {
+            "name": "Width switches between one, two and three label columns",
+            "passed": true
+          },
+          {
+            "name": "Short window scrolls labels while footer stays visible; taller window reveals more rows",
+            "passed": true
+          },
+          {
+            "name": "Fold and disable retain expanded dimensions",
+            "passed": true
+          },
+          {
+            "name": "Stored invalid and oversized dimensions remain usable within viewport",
+            "passed": true
+          },
+          {
+            "name": "Keyboard resize consumes arrows and persists size",
+            "passed": true
+          },
+          {
+            "name": "All eight edges resize only their axes with the opposite edge anchored",
+            "passed": true
+          },
+          {
+            "name": "Northwest limits preserve bottom and right anchors and fold hides all edges",
+            "passed": true
+          },
+          {
+            "name": "Disabling during resize releases pointer state and preserves size",
+            "passed": true
+          },
+          {
+            "name": "Overlay toggle hides panel and launcher while keeping label shortcuts active",
+            "passed": true
+          },
+          {
+            "name": "Overlay toggle preserves geometry transparency and persists through reactivation",
+            "passed": true
+          },
+          {
+            "name": "Popup overlay toggle releases interrupted range interaction",
+            "passed": true
+          },
+          {
+            "name": "Range recovers from lost release when no button is held",
+            "passed": true
+          },
+          {
+            "name": "Transparency changes immediately, saves separately and restores on enable",
+            "passed": true
+          },
+          {
+            "name": "Transparency range keeps native input while isolating canvas and hotkeys",
+            "passed": true
+          },
+          {
+            "name": "Transparency preferences clamp malformed and old stored values",
+            "passed": true
+          },
+          {
+            "name": "Keyboard selection consumes activation and release after rerender",
+            "passed": true
+          },
+          {
+            "name": "Keyboard arrows move header and persist position",
+            "passed": true
+          },
+          {
+            "name": "Removed labels cannot be selected from stale UI",
+            "passed": true
+          },
+          {
+            "name": "Duplicate class names are disabled",
+            "passed": true
+          },
+          {
+            "name": "Catalog unavailable shows recovery instructions",
+            "passed": true
+          },
+          {
+            "name": "Save failure restores selection and displays failure",
+            "passed": true
+          },
+          {
+            "name": "Job navigation refreshes catalog and unrelated route hides palette",
+            "passed": true
+          },
+          {
+            "name": "Window blur ends dragging and future native input is released",
+            "passed": true
+          },
+          {
+            "name": "CVAT stroke released over palette still reaches native mouseup",
+            "passed": true
+          },
+          {
+            "name": "Dialog blocks label changes from palette",
+            "passed": true
+          },
+          {
+            "name": "Reinjection leaves one palette and one storage listener set",
+            "passed": true
+          },
+          {
+            "name": "REVIEW: label shortcut resumes after mouse opacity adjustment",
+            "passed": true
+          },
+          {
+            "name": "REVIEW: Space pan resumes after mouse opacity adjustment",
+            "passed": true
+          },
+          {
+            "name": "REVIEW: disabled overlay releases unfinished slider input",
+            "passed": true
+          },
+          {
+            "name": "REVIEW: keyup clears native modifier held before slider focus",
+            "passed": true
+          }
+        ],
+        "platformValidation": "Windows Chrome synthetic DOM"
+      },
+      {
+        "suite": "native N label synchronization",
+        "passed": 38,
+        "failed": 0,
+        "results": [
+          {
+            "name": "CVAT's real Standard workspace starts native N once with the chosen label",
+            "passed": true
+          },
+          {
+            "name": "N preserves all remembered draw options, object type and custom metadata",
+            "passed": true
+          },
+          {
+            "name": "N finishes the original mask label after selecting a different next label",
+            "passed": true
+          },
+          {
+            "name": "Idle canvas with a drawing control keeps the native stop path",
+            "passed": true
+          },
+          {
+            "name": "N closes existing-mask EDIT without changing its label",
+            "passed": true
+          },
+          {
+            "name": "AI N keeps the exact model and interactor options while changing label",
+            "passed": true
+          },
+          {
+            "name": "AI interaction N finishes before a changed label can be used",
+            "passed": true
+          },
+          {
+            "name": "B and N use the same selected label through real tool UI controls",
+            "passed": true
+          },
+          {
+            "name": "V and N use the same selected label and preserve the chosen model",
+            "passed": true
+          },
+          {
+            "name": "A manually chosen polygon repeats with a compatible typed label",
+            "passed": true
+          },
+          {
+            "name": "A skeleton repeat uses a compatible label and preserves drawing parameters",
+            "passed": true
+          },
+          {
+            "name": "Tag labels are checked before a native tag repeat",
+            "passed": true
+          },
+          {
+            "name": "Untyped labels can also be used for a native tag repeat",
+            "passed": true
+          },
+          {
+            "name": "Incompatible label type blocks N including its keypress",
+            "passed": true
+          },
+          {
+            "name": "Missing and duplicate native labels block N before any dispatch",
+            "passed": true
+          },
+          {
+            "name": "Unknown React store cannot silently start with the old label",
+            "passed": true
+          },
+          {
+            "name": "Redux Context Provider and older React attachment are supported",
+            "passed": true
+          },
+          {
+            "name": "A cyclic React ancestry is bounded and does not start an old-label tool",
+            "passed": true
+          },
+          {
+            "name": "Job navigation mismatch blocks store mutation",
+            "passed": true
+          },
+          {
+            "name": "Frame loading blocks repeat without changing parameters",
+            "passed": true
+          },
+          {
+            "name": "A deleted frame cannot change remembered label or start native N",
+            "passed": true
+          },
+          {
+            "name": "An unknown Canvas API or nonstandard workspace is rejected",
+            "passed": true
+          },
+          {
+            "name": "3D workspace and missing shortcut contracts report their own failure stage",
+            "passed": true
+          },
+          {
+            "name": "Bridge exceptions show a fixed code without exposing exception contents",
+            "passed": true
+          },
+          {
+            "name": "A remapped native N passes through without changing remembered label",
+            "passed": true
+          },
+          {
+            "name": "The older native shortcut key name is supported",
+            "passed": true
+          },
+          {
+            "name": "A legacy keypress N handler also receives exactly one selected-label start",
+            "passed": true
+          },
+          {
+            "name": "Shift+N redraw keeps its native behavior and original label",
+            "passed": true
+          },
+          {
+            "name": "Typing, IME, modifiers and open dialogs do not mutate CVAT repeat state",
+            "passed": true
+          },
+          {
+            "name": "An extension key assigned to N takes precedence over native repeat",
+            "passed": true
+          },
+          {
+            "name": "N held repeats do not change the label of a drawing that already started",
+            "passed": true
+          },
+          {
+            "name": "Paused extension leaves native N intact",
+            "passed": true
+          },
+          {
+            "name": "An unsupported request protocol cannot dispatch Redux actions",
+            "passed": true
+          },
+          {
+            "name": "Unexpected reducer behavior stops N and retains the original state",
+            "passed": true
+          },
+          {
+            "name": "Reinjection does not register duplicate bridge listeners",
+            "passed": true
+          },
+          {
+            "name": "A pending V/B transition blocks native N until the tool starts",
+            "passed": true
+          },
+          {
+            "name": "Overlay click selects the same optimistic label used by N",
+            "passed": true
+          },
+          {
+            "name": "Existing annotation state is never accessed or relabeled by the bridge",
+            "passed": true
+          }
+        ],
+        "platformValidation": "Windows Chrome synthetic DOM"
+      }
+    ]
+  },
+  "logic": {
+    "suite": "label logic",
+    "environment": "Node VM with DOM and Chrome API test doubles; not browser integration",
+    "passed": 12,
+    "failed": 0,
+    "results": [
+      {
+        "name": "List is unavailable before enabling the tab",
+        "passed": true
+      },
+      {
+        "name": "Enable loads every available class including unused",
+        "passed": true
+      },
+      {
+        "name": "Missing saved name does not silently select a class",
+        "passed": true
+      },
+      {
+        "name": "Selection saves its name without caching catalog or job",
+        "passed": true
+      },
+      {
+        "name": "Refresh clears missing selection, disables duplicates and preserves settings",
+        "passed": true
+      },
+      {
+        "name": "Removed class is rejected before saving",
+        "passed": true
+      },
+      {
+        "name": "Storage failure retains the old preference",
+        "passed": true
+      },
+      {
+        "name": "Changed job rejects stale selection and clears catalog",
+        "passed": true
+      },
+      {
+        "name": "Unrelated settings updates preserve focused manual input",
+        "passed": true
+      },
+      {
+        "name": "Catalog reads complete class list",
+        "passed": true
+      },
+      {
+        "name": "Incomplete sidebar list fails closed",
+        "passed": true
+      },
+      {
+        "name": "Overview excludes sentinel total and flags duplicate names",
+        "passed": true
+      }
+    ]
+  },
+  "worlds": {
+    "testedAt": "2026-10-10T23:33:30.766Z",
+    "suite": "Real Chrome MAIN/isolated world communication",
+    "environment": "Dedicated ephemeral headless Chrome; actual execution-world separation; Chrome APIs and CVAT/React state mocked; no user browser or company data",
+    "passed": 15,
+    "failed": 0,
+    "results": [
+      {
+        "name": "MAIN and isolated globals are distinct",
+        "passed": true
+      },
+      {
+        "name": "Native N crosses isolated-to-MAIN request/ack and starts once with the selected label",
+        "passed": true
+      },
+      {
+        "name": "All remembered options survive actual world separation",
+        "passed": true
+      },
+      {
+        "name": "During drawing the next label changes only extension storage and native N finishes the current label",
+        "passed": true
+      },
+      {
+        "name": "The next native N starts with the new label without leftover request elements",
+        "passed": true
+      },
+      {
+        "name": "Label palette remains reachable during real element fullscreen and after exit",
+        "passed": true
+      },
+      {
+        "name": "Popup recovery repairs hidden styles and restores a visible default panel",
+        "passed": true
+      },
+      {
+        "name": "Status distinguishes an intentionally closed palette from a visible one",
+        "passed": true
+      },
+      {
+        "name": "Recovery keeps the complete panel onscreen under inherited CSS zoom",
+        "passed": true
+      },
+      {
+        "name": "Recovery accounts for a transformed fixed-position containing block",
+        "passed": true
+      },
+      {
+        "name": "A zoomed visual viewport fits the whole palette rather than just its title",
+        "passed": true
+      },
+      {
+        "name": "Visibility status does not call a half-clipped palette visible",
+        "passed": true
+      },
+      {
+        "name": "Previously saved offscreen coordinates and oversized dimensions are clamped on display",
+        "passed": true
+      },
+      {
+        "name": "A smaller browser viewport automatically refits an already open palette",
+        "passed": true
+      },
+      {
+        "name": "A later page layout scale change is corrected without reopening the palette",
+        "passed": true
+      }
+    ]
+  }
+}

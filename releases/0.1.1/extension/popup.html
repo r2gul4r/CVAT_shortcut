@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CVAT Sidebar Shortcuts</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="common.js" defer></script>
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>CVAT shortcuts</h1>
+    <p class="intro">Start a drawing tool with a key you choose.</p>
+    <div class="tab-controls">
+      <button id="enable" type="button" disabled>Enable for this CVAT tab</button>
+      <button id="disable" type="button" class="secondary" hidden>Pause in this tab</button>
+      <p id="tab-status" role="status">Checking tab…</p>
+    </div>
+    <div id="recording" hidden>
+      <p id="recording-text"></p>
+      <button id="cancel" type="button" class="secondary">Cancel</button>
+    </div>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <p id="shortcut-warning" class="note" role="status" hidden></p>
+    <p id="platform-note" class="note"></p>
+    <section class="tool" aria-labelledby="label-title">
+      <h2 id="label-title">Default label for new objects</h2>
+      <label for="default-label">Exact CVAT label name</label>
+      <div class="label-setting"><input id="default-label" type="text" maxlength="128" autocomplete="off" spellcheck="false"><button id="label-save" type="button">Save</button></div>
+      <p class="wheel-note">Starts only after this label is selected. Use obstacle, or enter object if that is your CVAT label.</p>
+    </section>
+    <section class="tool" aria-labelledby="ai-title">
+      <h2 id="ai-title">AI tool</h2>
+      <p>Select the default label, then Interact.</p>
+      <output id="ai-key" class="key">Unassigned</output>
+      <div class="buttons"><button id="ai-assign" type="button">Assign</button><button id="ai-clear" type="button" class="secondary">Clear</button></div>
+    </section>
+    <section class="tool" aria-labelledby="wheel-title">
+      <h2 id="wheel-title">Brush size</h2>
+      <label class="wheel-toggle"><input id="wheel-enabled" type="checkbox"> Enable modifier + wheel</label>
+      <label for="wheel-modifier">Modifier</label>
+      <select id="wheel-modifier">
+        <option value="alt">Alt + wheel (recommended)</option>
+        <option value="shift">Shift + wheel</option>
+      </select>
+      <p class="wheel-note">Wheel up increases; down decreases by 1 pixel per normalized wheel step (1–500 px). Works over the active mask canvas, for drawing or editing. Pinch, Ctrl-wheel, and Cmd-wheel stay native.</p>
+    </section>
+    <section class="tool" aria-labelledby="brush-title">
+      <h2 id="brush-title">New mask (Brush tool)</h2>
+      <p>Select the default label, then Shape.</p>
+      <output id="brush-key" class="key">Unassigned</output>
+      <div class="buttons"><button id="brush-assign" type="button">Assign</button><button id="brush-clear" type="button" class="secondary">Clear</button></div>
+    </section>
+    <p class="note">Settings are saved on this computer. Enable again after reloading or opening a new tab. Choose keys that do not conflict with CVAT or browser shortcuts. Check CVAT Settings > Shortcuts yourself; custom CVAT bindings are not read.</p>
+  </main>
+</body>
+</html>

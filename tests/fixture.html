@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Synthetic CVAT sidebar fixture — no images</title>
+  <style>
+    body {font:14px system-ui;margin:20px;}
+    .cvat-canvas-controls-sidebar {width:260px;min-height:80px;border:1px solid #aaa;padding:10px;}
+    .ant-popover {margin:12px;padding:10px;background:#eee;width:260px;}
+    [hidden] {display:none!important;}
+    .cvat-canvas-container {position:fixed;right:24px;top:24px;width:420px;height:250px;background:#edf3fb;border:1px solid #789;}
+    #cvat_canvas_wrapper, .cvat_masks_canvas_wrapper, #mask-surface {width:100%;height:100%;}
+    .cvat-brush-tools-toolbox {position:fixed;right:24px;top:290px;width:400px;padding:10px;background:#eee;}
+  </style>
+  <script src="/tests/chrome-shim.js"></script>
+  <script src="/extension/common.js"></script>
+  <script src="/extension/overlay.js"></script>
+</head>
+<body tabindex="-1">
+  <h1>Synthetic CVAT sidebar fixture</h1>
+  <p>Only dummy buttons and fields. No images, CVAT server, or company content.</p>
+  <div class="cvat-canvas-controls-sidebar">
+    <span class="cvat-cursor-control cvat-active-canvas-control" role="button">Cursor</span>
+    <span class="cvat-tools-control" role="button" tabindex="0">AI tool</span>
+    <span class="cvat-draw-mask-control" role="button" tabindex="0">Brush tool</span>
+  </div>
+  <div class="ant-popover cvat-tools-control-popover" hidden>
+    <div class="cvat-tools-control-popover-content">AI Tools
+      <div id="ai-pane" role="tabpanel" class="ant-tabs-tabpane ant-tabs-tabpane-active">
+        <select id="ai-model" aria-label="Dummy model"><option>First dummy model</option><option selected>Selected dummy model</option></select>
+        <select id="ai-label" aria-label="Dummy AI label"><option>First dummy label</option><option selected>Selected dummy label</option></select>
+        <input id="ai-box" type="checkbox" checked aria-label="Dummy bounding box option">
+        <button class="cvat-tools-interact-button">Interact</button>
+      </div>
+      <div id="detectors-pane" hidden><button class="cvat-tools-detect-button">Annotate</button></div>
+    </div>
+  </div>
+  <div class="ant-popover cvat-draw-mask-popover cvat-draw-shape-popover" hidden>
+    <div class="cvat-draw-shape-popover-content">Draw new mask
+      <select id="mask-label" aria-label="Dummy mask label"><option>First dummy label</option><option selected>Selected dummy label</option></select>
+      <button class="cvat-draw-mask-shape-button">Shape</button>
+    </div>
+  </div>
+  <button id="wrong-shape">Shape</button><button id="wrong-interact">Interact</button><button id="wrong-save">Save</button>
+  <input id="input" aria-label="Dummy typing field"><textarea id="textarea" aria-label="Dummy text area"></textarea>
+  <select id="select" aria-label="Dummy selector"><option>Dummy label</option></select>
+  <div id="editable" contenteditable="true"><span id="editable-child">Dummy editable text</span></div>
+  <div id="role-textbox" role="textbox" tabindex="0">Dummy textbox</div>
+  <div id="role-combobox" role="combobox" tabindex="0">Dummy combobox</div>
+  <div id="shadow-host"></div>
+  <div id="dialog" role="dialog" aria-modal="true" hidden>Dummy modal</div>
+  <div class="cvat-canvas-container">
+    <div id="cvat_canvas_wrapper"><div class="cvat_masks_canvas_wrapper"><div id="mask-surface">Dummy mask surface — no canvas or images</div></div></div>
+  </div>
+  <div class="cvat-brush-tools-toolbox" hidden>
+    <button class="cvat-brush-tools-brush cvat-brush-tools-active-tool">Brush</button>
+    <button class="cvat-brush-tools-eraser">Eraser</button>
+    <button class="cvat-brush-tools-polygon-plus">Polygon</button>
+    <button class="cvat-brush-tools-finish">Finish</button>
+    <button class="cvat-brush-tools-continue">Continue</button>
+    <div class="cvat-brush-tools-brush-size"><input id="brush-size" type="text" role="spinbutton" aria-valuemin="1" value="10" aria-label="Dummy brush size"></div>
+  </div>
+  <pre id="test-results">Tests pending…</pre>
+  <script src="/tests/label-fixture.js"></script>
+  <script src="/tests/test-content.js"></script>
+</body>
+</html>

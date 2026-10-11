@@ -1,0 +1,56 @@
+{
+  "suite": "label logic",
+  "environment": "Node VM with DOM and Chrome API test doubles; not browser integration",
+  "passed": 12,
+  "failed": 0,
+  "results": [
+    {
+      "name": "List is unavailable before enabling the tab",
+      "passed": true
+    },
+    {
+      "name": "Enable loads every available class including unused",
+      "passed": true
+    },
+    {
+      "name": "Missing saved name does not silently select a class",
+      "passed": true
+    },
+    {
+      "name": "Selection saves its name without caching catalog or job",
+      "passed": true
+    },
+    {
+      "name": "Refresh clears missing selection, disables duplicates and preserves settings",
+      "passed": true
+    },
+    {
+      "name": "Removed class is rejected before saving",
+      "passed": true
+    },
+    {
+      "name": "Storage failure retains the old preference",
+      "passed": true
+    },
+    {
+      "name": "Changed job rejects stale selection and clears catalog",
+      "passed": true
+    },
+    {
+      "name": "Unrelated settings updates preserve focused manual input",
+      "passed": true
+    },
+    {
+      "name": "Catalog reads complete class list",
+      "passed": true
+    },
+    {
+      "name": "Incomplete sidebar list fails closed",
+      "passed": true
+    },
+    {
+      "name": "Overview excludes sentinel total and flags duplicate names",
+      "passed": true
+    }
+  ]
+}

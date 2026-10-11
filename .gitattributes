@@ -1,0 +1,6 @@
+* text=auto eol=lf
+# Preserve runtime bytes so checked-out sources match the distributed ZIP.
+extension/** -text whitespace=cr-at-eol
+*.zip binary
+*.png binary
+*.jpg binary

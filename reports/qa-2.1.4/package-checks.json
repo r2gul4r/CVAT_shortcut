@@ -1,0 +1,13 @@
+{
+  "archiveFileCount": 22,
+  "zipMatchesRuntime": true,
+  "popupAndGuideLocalLinks": "passed",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "manifestVersion": "2.1.4",
+  "archiveSha256": "8b4a54e37c1b5a03f53da0e3ff606842ea1d568862180b7475c2d61f3b1738d3",
+  "releaseChecksumMatches": true
+}

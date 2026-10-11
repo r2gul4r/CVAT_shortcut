@@ -1,0 +1,69 @@
+{
+  "testedAt": "2026-10-11T23:50:17.955Z",
+  "suite": "Real Chrome MAIN/isolated world communication",
+  "environment": "Dedicated ephemeral headless Chrome; actual execution-world separation; Chrome APIs and CVAT/React state mocked; no user browser or company data",
+  "passed": 15,
+  "failed": 0,
+  "results": [
+    {
+      "name": "MAIN and isolated globals are distinct",
+      "passed": true
+    },
+    {
+      "name": "Native N crosses isolated-to-MAIN request/ack and starts once with the selected label",
+      "passed": true
+    },
+    {
+      "name": "All remembered options survive actual world separation",
+      "passed": true
+    },
+    {
+      "name": "During drawing the next label changes only extension storage and native N finishes the current label",
+      "passed": true
+    },
+    {
+      "name": "The next native N starts with the new label without leftover request elements",
+      "passed": true
+    },
+    {
+      "name": "Label palette remains reachable during real element fullscreen and after exit",
+      "passed": true
+    },
+    {
+      "name": "Popup recovery repairs hidden styles and restores a visible default panel",
+      "passed": true
+    },
+    {
+      "name": "Status distinguishes an intentionally closed palette from a visible one",
+      "passed": true
+    },
+    {
+      "name": "Recovery keeps the complete panel onscreen under inherited CSS zoom",
+      "passed": true
+    },
+    {
+      "name": "Recovery accounts for a transformed fixed-position containing block",
+      "passed": true
+    },
+    {
+      "name": "A zoomed visual viewport fits the whole palette rather than just its title",
+      "passed": true
+    },
+    {
+      "name": "Visibility status does not call a half-clipped palette visible",
+      "passed": true
+    },
+    {
+      "name": "Previously saved offscreen coordinates and oversized dimensions are clamped on display",
+      "passed": true
+    },
+    {
+      "name": "A smaller browser viewport automatically refits an already open palette",
+      "passed": true
+    },
+    {
+      "name": "A later page layout scale change is corrected without reopening the palette",
+      "passed": true
+    }
+  ]
+}

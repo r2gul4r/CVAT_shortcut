@@ -26,6 +26,8 @@ CVAT의 AI·새 마스크 도구 단축키, 라벨 선택 오버레이, 브러�
 
 ## 테스트와 패키징
 
+[**2.1.4 전체 QA 보고서**](reports/qa-2.1.4/README.md) — 기존 443개 검사 통과, 추가 15개 중 6개 실패. 재현 조건·심각도·대응 방향과 예시 화면을 포함합니다.
+
 Node.js와 Chrome이 필요합니다. Windows 기본 Chrome 경로를 사용하며, 다른 설치 경로는 `CVAT_TEST_CHROME` 환경 변수로 지정합니다.
 
 ```powershell

@@ -10,73 +10,84 @@
 </head>
 <body>
   <main>
-    <h1>CVAT 단축키 <small>2.1.4</small></h1>
-    <p class="intro">확장을 켜면 움직이는 라벨 선택창이 작업 화면에 나타납니다.</p>
-    <a id="open-guide" class="guide-button" href="guide.html" target="_blank" rel="noopener">적용 가이드 · 기능 설명 <span aria-hidden="true">↗</span></a>
+    <header class="app-header">
+      <div><h1>CVAT 단축키 <small>2.2.1</small></h1><p class="subtitle">작업에 맞게 키와 라벨을 설정하세요.</p></div>
+      <nav class="header-links" aria-label="도움말"><a id="open-guide" class="guide-button" href="guide.html" target="_blank" rel="noopener">사용 가이드</a><a id="open-updates" class="guide-button" href="updates.html" target="_blank" rel="noopener">업데이트 내역</a></nav>
+    </header>
     <div class="tab-controls">
-      <button id="enable" type="button" disabled>이 CVAT 탭에서 사용</button>
-      <button id="disable" type="button" class="secondary" hidden>이 탭에서 일시정지</button>
-      <label class="wheel-toggle"><input id="overlay-enabled" type="checkbox" disabled> 라벨 선택창 사용</label>
-      <p class="wheel-note">끄면 선택창만 숨기고 단축키는 유지합니다. 이 설정은 같은 Chrome 프로필의 탭에 함께 적용됩니다.</p>
-      <button id="overlay-show" type="button" class="secondary" disabled>라벨 선택창 복구</button>
-      <p class="wheel-note">안 보이면 기본 위치·크기·투명도로 다시 표시합니다.</p>
       <p id="tab-status" role="status">탭 확인 중…</p>
+      <button id="enable" type="button" disabled>이 CVAT 탭에서 사용</button>
+      <button id="disable" type="button" class="secondary" hidden>일시정지</button>
     </div>
-    <div id="recording" hidden>
-      <p id="recording-text"></p>
-      <button id="cancel" type="button" class="secondary">취소</button>
-    </div>
-    <p id="notice" role="status" aria-live="polite"></p>
-    <p id="shortcut-warning" class="note" role="status" hidden></p>
-    <p id="platform-note" class="note"></p>
-    <section class="tool" aria-labelledby="label-title">
-      <h2 id="label-title">이 탭의 라벨 선택</h2>
-      <p class="wheel-note">AI·새 마스크 단축키와 N으로 새 객체를 시작할 때 사용할 라벨을 선택하세요. 선택하면 자동 저장됩니다.</p>
-      <p class="wheel-note">각 라벨의 ‘키 지정’으로 빠르게 바꿀 수 있습니다. 기존 객체와 현재 그리는 객체는 유지하고 다음 객체부터 적용됩니다. 같은 이름의 라벨이 있는 다른 작업에서도 사용할 수 있습니다.</p>
-      <p class="wheel-note">N은 이전 도구와 설정을 유지하며 선택한 라벨로 다시 시작합니다. 그리는 중 N의 완료·종료 동작은 그대로입니다. Shift+N 다시 그리기도 유지됩니다.</p>
-      <div id="label-colors" hidden>
-        <div id="label-color-list" class="label-color-list" role="group" aria-label="사용할 수 있는 클래스"></div>
-        <p class="wheel-note">색상이 없으면 CVAT 오른쪽 Labels 탭을 열고 목록을 새로고침하세요.</p>
+
+    <section class="tool" aria-labelledby="tools-title">
+      <div class="section-heading"><h2 id="tools-title">도구 단축키</h2><span class="muted">자동 저장</span></div>
+      <div class="shortcut-row" aria-labelledby="ai-title">
+        <div class="tool-name"><h3 id="ai-title">AI 도구</h3><p>선택한 라벨로 Interact</p></div>
+        <output id="ai-key" class="key" aria-label="AI 도구 현재 단축키">미지정</output>
+        <div class="buttons"><button id="ai-assign" type="button" aria-label="AI 도구 단축키 지정 또는 변경">지정</button><button id="ai-clear" type="button" class="secondary" aria-label="AI 도구 단축키 해제">해제</button></div>
       </div>
-      <button id="label-refresh" type="button" class="secondary" disabled>목록 새로고침</button>
+      <div class="shortcut-row" aria-labelledby="brush-title">
+        <div class="tool-name"><h3 id="brush-title">새 마스크</h3><p>브러쉬 · Shape</p></div>
+        <output id="brush-key" class="key" aria-label="새 마스크 현재 단축키">미지정</output>
+        <div class="buttons"><button id="brush-assign" type="button" aria-label="새 마스크 단축키 지정 또는 변경">지정</button><button id="brush-clear" type="button" class="secondary" aria-label="새 마스크 단축키 해제">해제</button></div>
+      </div>
+      <div class="shortcut-row" aria-labelledby="polygon-title">
+        <div class="tool-name"><h3 id="polygon-title">새 폴리곤</h3><p>점 수 제한 없음 · Simplify OFF</p></div>
+        <output id="polygon-key" class="key" aria-label="새 폴리곤 현재 단축키">미지정</output>
+        <div class="buttons"><button id="polygon-assign" type="button" aria-label="폴리곤 단축키 지정 또는 변경">지정</button><button id="polygon-clear" type="button" class="secondary" aria-label="폴리곤 단축키 해제">해제</button></div>
+      </div>
+      <p class="section-note">도구를 바꾸면 진행 중인 그리기는 Esc처럼 취소됩니다.</p>
+    </section>
+
+    <p id="shortcut-warning" class="warning" role="status" hidden></p>
+    <section class="tool" aria-labelledby="label-title">
+      <div class="section-heading"><h2 id="label-title">이 탭의 라벨 선택</h2><button id="label-refresh" type="button" class="text-button" disabled>목록 새로고침</button></div>
+      <p class="section-note">이름을 누르면 다음 객체에 적용됩니다.</p>
+      <div class="overlay-controls">
+        <label class="wheel-toggle"><input id="overlay-enabled" type="checkbox" disabled> 라벨 선택창 사용</label>
+        <button id="overlay-show" type="button" class="secondary" disabled title="기본 위치·크기·투명도로 다시 표시">선택창 복구</button>
+      </div>
+      <div id="label-colors" hidden>
+        <div class="list-heading" aria-hidden="true"><span>라벨</span><span>라벨 전환 단축키</span></div>
+        <div id="label-color-list" class="label-color-list" role="group" aria-label="사용할 수 있는 클래스"></div>
+      </div>
       <p id="label-status" class="wheel-note" role="status"></p>
-      <details id="label-manual"><summary>직접 입력</summary>
-        <label for="default-label">CVAT에 등록된 정확한 라벨 이름</label>
+      <details id="label-manual"><summary>라벨 이름 직접 입력</summary>
+        <label for="default-label">CVAT에 등록된 정확한 이름</label>
         <div class="label-setting"><input id="default-label" type="text" maxlength="128" autocomplete="off" spellcheck="false"><button id="label-save" type="button">저장</button></div>
-        <p class="wheel-note">목록을 읽지 못할 때 사용하세요. 복사한 이름을 붙여넣을 수도 있습니다.</p>
       </details>
     </section>
-    <section class="tool" aria-labelledby="ai-title">
-      <h2 id="ai-title">AI 도구</h2>
-      <p>Esc로 현재 도구를 취소한 뒤 기본 라벨로 Interact를 실행합니다.</p>
-      <output id="ai-key" class="key">미지정</output>
-      <div class="buttons"><button id="ai-assign" type="button">지정</button><button id="ai-clear" type="button" class="secondary">해제</button></div>
-    </section>
-    <section class="tool" aria-labelledby="pan-title">
-      <h2 id="pan-title">스페이스로 화면 이동</h2>
-      <label class="wheel-toggle"><input id="pan-enabled" type="checkbox"> Space + 왼쪽 드래그로 이동</label>
-      <p class="wheel-note">스페이스를 누른 채 이미지를 왼쪽 버튼으로 드래그하세요. 브러쉬를 켜 둔 상태로 화면만 이동합니다. 버튼과 스페이스를 놓은 뒤 다시 그리세요.</p>
-      <p id="pan-warning" class="wheel-note" hidden>Space가 도구 또는 라벨 단축키로 지정되어 있어 해당 기능을 우선합니다. 지정된 키를 변경하거나 해제하면 화면 이동을 사용할 수 있습니다.</p>
-      <p class="wheel-note">선을 긋는 중에는 먼저 마우스 버튼을 놓으세요. CVAT의 기존 Space 기능을 쓰려면 이 옵션을 끄세요.</p>
-    </section>
-    <section class="tool" aria-labelledby="wheel-title">
-      <h2 id="wheel-title">브러쉬 크기</h2>
-      <label class="wheel-toggle"><input id="wheel-enabled" type="checkbox"> 보조키 + 휠로 크기 조절</label>
-      <label for="wheel-modifier">보조키</label>
-      <select id="wheel-modifier">
-        <option value="alt">Alt + 휠 (권장)</option>
-        <option value="shift">Shift + 휠</option>
-      </select>
-      <p class="wheel-note">마스크를 그리거나 편집할 때 캔버스 위에서 사용합니다. 휠을 위로 돌리면 커지고 아래로 돌리면 작아집니다. 조절 단위는 1px, 범위는 1–500px입니다. 핀치와 Ctrl/Cmd + 휠은 기존 동작을 유지합니다.</p>
-    </section>
-    <section class="tool" aria-labelledby="brush-title">
-      <h2 id="brush-title">새 마스크 (브러쉬)</h2>
-      <p>Esc로 현재 도구를 취소한 뒤 기본 라벨로 Shape를 실행합니다.</p>
-      <output id="brush-key" class="key">미지정</output>
-      <div class="buttons"><button id="brush-assign" type="button">지정</button><button id="brush-clear" type="button" class="secondary">해제</button></div>
-    </section>
-    <p class="note">이 탭에서 사용 중에는 지정한 확장 단축키가 CVAT보다 우선합니다. 도구가 준비되지 않아도 같은 키의 CVAT 기능을 실행하지 않습니다. 글자 입력 중·IME·대화상자에서는 기존 입력을 유지하며, Chrome·운영체제 단축키는 우선할 수 있습니다.</p>
-    <p class="note">도구 단축키는 진행 중인 그리기·편집을 Esc처럼 취소할 수 있습니다. 라벨 단축키는 도구를 취소하지 않습니다. 설정은 이 Chrome 프로필의 탭들이 공유합니다. 새로고침하거나 새 탭을 열면 다시 사용 버튼을 눌러주세요.</p>
+
+    <details class="tool preferences">
+      <summary>화면 이동 · 브러쉬 설정</summary>
+      <div class="preference-group">
+        <h3 id="pan-title">화면 이동</h3>
+        <label class="wheel-toggle"><input id="pan-enabled" type="checkbox"> Space + 왼쪽 드래그</label>
+        <p class="wheel-note">그리던 선을 마친 뒤 Space를 누른 채 드래그하세요. 브러쉬는 유지됩니다.</p>
+        <p id="pan-warning" class="warning" hidden>Space가 도구 또는 라벨 단축키로 지정되어 해당 기능이 우선합니다. 화면 이동을 쓰려면 키 지정을 변경하거나 해제하세요.</p>
+      </div>
+      <div class="preference-group">
+        <h3 id="wheel-title">브러쉬 크기</h3>
+        <label class="wheel-toggle"><input id="wheel-enabled" type="checkbox"> 보조키 + 휠로 크기 조절</label>
+        <label for="wheel-modifier">보조키</label>
+        <select id="wheel-modifier"><option value="alt">Alt + 휠 (권장)</option><option value="shift">Shift + 휠</option></select>
+        <p class="wheel-note">위로 돌리면 커지고 아래로 돌리면 작아집니다. 1px씩 조절되며 Ctrl/Cmd + 휠은 기존대로 동작합니다.</p>
+      </div>
+    </details>
+    <details class="help">
+      <summary>단축키 · 라벨 사용 안내</summary>
+      <p>AI·새 마스크·폴리곤과 N으로 새 객체를 시작할 때 선택한 라벨을 사용합니다. 기존 객체와 현재 그리는 객체의 라벨은 바뀌지 않습니다.</p>
+      <p>N은 이전 도구와 설정을 불러옵니다. N을 확장 단축키로 지정하면 해당 확장 기능이 우선합니다.</p>
+      <p>라벨이나 색상이 없으면 CVAT의 Labels 또는 Overview를 열고 목록을 새로고침하세요. 선택창이 보이지 않으면 선택창 복구를 누르세요.</p>
+      <p>설정은 같은 Chrome 프로필의 탭들이 공유합니다. 페이지를 새로고침하면 확장을 다시 켜주세요. 선택창만 꺼도 단축키는 계속 작동합니다.</p>
+      <p>지정한 확장 단축키는 CVAT보다 우선합니다. 입력칸·IME·대화상자에서는 기존 입력을 유지합니다.</p>
+      <p id="platform-note"></p>
+    </details>
+    <div class="feedback-area">
+      <div id="recording" hidden role="status"><p id="recording-text"></p><button id="cancel" type="button" class="secondary">취소</button></div>
+      <p id="notice" role="status" aria-live="polite"></p>
+    </div>
   </main>
 </body>
 </html>

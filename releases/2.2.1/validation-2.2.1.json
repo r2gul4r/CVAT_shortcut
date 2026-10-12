@@ -1,0 +1,19 @@
+{
+  "version": "2.2.1",
+  "passed": 501,
+  "failed": 0,
+  "suites": {
+    "browser_synthetic": 440,
+    "label_logic": 12,
+    "chrome_execution_worlds": 15,
+    "release_automation_mocked": 34
+  },
+  "runtime_files": 24,
+  "web_store_live_submission": "not_run_credentials_required",
+  "visual_check": "Popup and history page rendered in in-app browser; no real CVAT data used",
+  "limitations": [
+    "Actual installed extension popup host not tested",
+    "Store authentication and submission require owner configuration",
+    "Previously deferred QA issues and assigned-N conflict unchanged"
+  ]
+}

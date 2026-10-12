@@ -6,6 +6,7 @@
   let recording = null;
   let composing = false;
   let saving = false;
+  let noticeTimer;
   let activeTab;
   let loaded = false;
   let tabEnabled = false;
@@ -76,8 +77,10 @@
   }
 
   function notice(text, error = false) {
+    clearTimeout(noticeTimer);
     $("notice").textContent = text;
     $("notice").classList.toggle("error", error);
+    if (text && !error) noticeTimer = setTimeout(() => { $("notice").textContent = ""; }, 3500);
   }
 
   function render() {
@@ -90,13 +93,13 @@
       $(action + "-assign").disabled = !loaded || saving;
       $(action + "-clear").disabled = !loaded || saving || !settings.shortcuts[action];
     }
-    const warnings = [...shared.ACTIONS.map((action) => ({name: action === "ai" ? "AI 도구" : "새 마스크", shortcut: settings.shortcuts[action]})),
+    const warnings = [...shared.ACTIONS.map((action) => ({name: shared.ACTION_LABELS[action], shortcut: settings.shortcuts[action]})),
       ...settings.labelShortcuts].filter((entry) => shared.shortcutWarning(entry.shortcut));
     $("shortcut-warning").hidden = warnings.length === 0;
     $("shortcut-warning").textContent = warnings.length ?
       `${warnings.map((entry) => entry.name).join(" / ")}: ${shared.shortcutWarning(warnings[0].shortcut)}` : "";
     $("recording").hidden = !recording;
-    if (recording) $("recording-text").textContent = `${typeof recording === "object" ? "라벨 " + recording.name : recording === "ai" ? "AI 도구" : "새 마스크 (브러쉬)"}에 사용할 키 또는 키 조합을 누르세요. Esc로 취소합니다.`;
+    if (recording) $("recording-text").textContent = `${typeof recording === "object" ? "라벨 " + recording.name : shared.ACTION_LABELS[recording]}에 사용할 키 또는 키 조합을 누르세요. Esc로 취소합니다.`;
     $("wheel-enabled").checked = settings.brushWheel.enabled;
     $("pan-enabled").checked = settings.spacePan;
     $("pan-enabled").disabled = !loaded || saving || Boolean(recording);
@@ -153,6 +156,7 @@
     tabEnabled = Boolean(on);
     catalog = on && status.catalog ? status.catalog : {state: "inactive", labels: []};
     $("enable").disabled = !activeTab || !shared.supportedURL(activeTab.url) || on;
+    $("enable").hidden = Boolean(on);
     $("disable").hidden = !on;
     $("overlay-show").disabled = !on || !overlayLoaded || !overlayEnabled || overlaySaving;
     $("tab-status").textContent = on ? "이 탭에서 사용 중입니다." :
@@ -203,7 +207,7 @@
       const current = await chrome.storage.local.get(shared.STORAGE_KEY);
       const next = shared.normalize({...shared.normalize(current[shared.STORAGE_KEY]), defaultLabelName: name});
       await chrome.storage.local.set({[shared.STORAGE_KEY]: next}); settings = next;
-      notice("AI와 새 마스크에 사용할 기본 라벨을 저장했습니다.");
+      notice("AI·새 마스크·폴리곤에 사용할 기본 라벨을 저장했습니다.");
     } catch { if (fromList) showTabStatus(null); notice("저장하지 못했습니다. 탭과 라벨 목록을 확인하고 다시 시도하세요.", true); }
     finally { saving = false; render(); }
   }

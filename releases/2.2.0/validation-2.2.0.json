@@ -1,0 +1,36 @@
+{
+  "version": "2.2.0",
+  "scope": "Polygon feature and popup layout revision; shortcut editing, label rows, collapsible preferences and regression tests",
+  "passed": 467,
+  "failed": 0,
+  "suites": [
+    {
+      "file": "tests/test-results.json",
+      "passed": 440,
+      "failed": 0
+    },
+    {
+      "file": "tests/label-logic-results.json",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "file": "tests/world-results.json",
+      "passed": 15,
+      "failed": 0
+    }
+  ],
+  "environment": "Dedicated headless Chrome profiles and Node VM; synthetic CVAT DOM/Chrome APIs; actual MAIN/isolated execution-world communication; no company page or data accessed",
+  "limitations": [
+    "Actual deployed CVAT/Ant Design integration remains unverified.",
+    "Mac behavior uses metadata simulation, not Mac hardware.",
+    "2.1.4 exploratory QA findings and N shortcut double assignment are unchanged."
+  ],
+  "publicSource": [
+    "https://github.com/cvat-ai/cvat/blob/develop/cvat-ui/src/components/annotation-page/standard-workspace/controls-side-bar/draw-polygon-control.tsx",
+    "https://github.com/cvat-ai/cvat/blob/develop/cvat-ui/src/components/annotation-page/standard-workspace/controls-side-bar/draw-shape-popover.tsx"
+  ],
+  "popupVisualReview": "reports/popup-layout/README.md",
+  "migration": "Initial local 2.2.0 polyline binding maps to polygon only if polygon is absent; explicit null stays cleared.",
+  "popupSizing": "200px initial-viewport regression failed before CSS fix and passed after; actual extension-host auto-sizing still requires user verification."
+}

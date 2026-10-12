@@ -1,0 +1,113 @@
+name: Check and release extension
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cvat-release-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.gate.outputs.version }}
+      release: ${{ steps.gate.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify notes and release trigger
+        id: gate
+        run: |
+          python tools/release_notes.py --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/release_gate.py
+      - name: Test release failure and retry handling
+        run: python -m unittest discover -s tests -p test_release.py -v
+      - name: Test extension in isolated Chrome
+        run: node tests/run-tests.mjs
+      - name: Test label logic
+        run: node tests/test-label-logic.cjs
+      - name: Test Chrome execution worlds
+        run: node tests/run-world-tests.mjs
+      - name: Build verified package
+        run: python tools/package-extension.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.gate.outputs.version }}
+          path: |
+            releases/${{ steps.gate.outputs.version }}/*.zip
+            releases/${{ steps.gate.outputs.version }}/build-audit.json
+          if-no-files-found: error
+      - name: Store connection status
+        if: steps.gate.outputs.release == 'true' && vars.CWS_AUTOPUBLISH != 'true'
+        run: |
+          "### Web Store connection pending`nGitHub release and ZIP will be created. Web Store submission is disabled until CWS secrets and CWS_AUTOPUBLISH are configured. See docs/automatic-release.md." >> $env:GITHUB_STEP_SUMMARY
+
+  github-release:
+    needs: verify
+    if: needs.verify.outputs.release == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.verify.outputs.version }}
+          path: releases/${{ needs.verify.outputs.version }}
+      - name: Publish GitHub notes and exact tested ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/github_release.py
+
+  web-store:
+    needs: [verify, github-release]
+    if: needs.verify.outputs.release == 'true' && vars.CWS_AUTOPUBLISH == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.verify.outputs.version }}
+          path: releases/${{ needs.verify.outputs.version }}
+      - name: Upload and submit for review
+        env:
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+        run: python tools/publish_store.py "releases/${env:RELEASE_VERSION}/cvat-sidebar-shortcuts-${env:RELEASE_VERSION}-ko.zip"

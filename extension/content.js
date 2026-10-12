@@ -13,7 +13,12 @@
     brush: {selector: ".cvat-draw-mask-control", panel: ".cvat-draw-mask-popover",
       content: ".cvat-draw-shape-popover-content",
       start: ".cvat-draw-shape-popover-content button.cvat-draw-mask-shape-button",
-      startLabel: "Shape", label: "새 마스크 (브러쉬)"}
+      startLabel: "Shape", label: "새 마스크 (브러쉬)"},
+    polygon: {selector: ".cvat-draw-polygon-control", panel: ".cvat-draw-shape-popover",
+      panelMarker: ".cvat-draw-polygon-shape-button",
+      content: ".cvat-draw-shape-popover-content",
+      start: ".cvat-draw-shape-popover-content button.cvat-draw-polygon-shape-button",
+      startLabel: "Shape", label: "새 폴리곤", configurePolygon: true}
   });
   const SIDEBAR = ".cvat-canvas-controls-sidebar";
   const DISABLED = "[disabled], [aria-disabled='true'], [inert], .cvat-disabled-canvas-control, .ant-btn-loading";
@@ -245,6 +250,50 @@
     return selected() === operation.labelName && combo.getAttribute("aria-expanded") === "false";
   }
 
+  function toolPanels(tool) {
+    // CVAT shares the shape popover class across mask, polygon, polyline and other tools.
+    return [...document.querySelectorAll(tool.panel)].filter((panel) => visible(panel) &&
+      (!tool.panelMarker || panel.querySelector(tool.panelMarker)));
+  }
+
+  function ensurePolygonOptions(operation, panel) {
+    if (!operation.tool.configurePolygon) return true;
+    const inputs = [...panel.querySelectorAll(".cvat-draw-shape-popover-points-selector input, input.cvat-draw-shape-popover-points-selector")].filter(visible);
+    const switches = [...panel.querySelectorAll(".cvat-draw-polygon-popover-simplify-switch[role='switch']")].filter(visible);
+    if (inputs.length !== 1 || !(inputs[0] instanceof HTMLInputElement) || switches.length !== 1) {
+      cancelPending("폴리곤의 Number of points / Simplify 설정을 확인하지 못했습니다. 직접 실행하세요."); return false;
+    }
+    const input = inputs[0], toggle = switches[0];
+    if (input.readOnly || input.closest(DISABLED) ||
+        (operation.pointsInput && operation.pointsInput !== input) ||
+        (operation.simplifySwitch && operation.simplifySwitch !== toggle)) {
+      cancelPending("폴리곤 설정이 변경되었거나 비활성화되어 있습니다. 직접 실행하세요."); return false;
+    }
+    operation.pointsInput = input; operation.simplifySwitch = toggle;
+    if (input.value !== "") {
+      if (!operation.pointsCleared) {
+        operation.pointsCleared = true;
+        // Use the native setter so React/rc-input-number receives an actual input change.
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "");
+        input.dispatchEvent(new Event("input", {bubbles: true}));
+        input.dispatchEvent(new Event("change", {bubbles: true}));
+      }
+      return false; // Wait for the controlled input and dependent switch to render.
+    }
+    const checked = toggle.getAttribute("aria-checked");
+    if (checked !== "true" && checked !== "false") {
+      cancelPending("Simplify 상태를 확인하지 못해 폴리곤을 시작하지 않았습니다."); return false;
+    }
+    if (checked === "true") {
+      // A predefined point count disables this switch until the cleared input commits.
+      if (!toggle.closest(DISABLED) && !operation.simplifyClicked) {
+        operation.simplifyClicked = true; toggle.click();
+      }
+      return false;
+    }
+    return !toggle.closest(DISABLED);
+  }
+
   function startWhenReady(operation) {
     if (pending !== operation) return;
     const {tool, side, target} = operation;
@@ -257,7 +306,7 @@
       cancelPending();
       return;
     }
-    const panels = [...document.querySelectorAll(tool.panel)].filter(visible);
+    const panels = toolPanels(tool);
     if (panels.length > 1) {
       cancelPending(`${tool.label} 메뉴가 여러 개여서 구분할 수 없습니다. 직접 실행하세요.`);
       return;
@@ -287,7 +336,16 @@
           }
           operation.timer = setTimeout(() => startWhenReady(operation), READY_POLL_MS); return;
         }
-        // Verify again immediately before starting; keep the model and other options intact.
+        try {
+          if (!ensurePolygonOptions(operation, panel)) {
+            if (pending !== operation) return;
+            if (performance.now() >= operation.deadline) {
+              cancelPending("Number of points 공란 / Simplify OFF를 확인하지 못해 폴리곤을 시작하지 않았습니다."); return;
+            }
+            operation.timer = setTimeout(() => startWhenReady(operation), READY_POLL_MS); return;
+          }
+        } catch { cancelPending("폴리곤 옵션을 변경하지 못했습니다. 직접 실행하세요."); return; }
+        // Label/model remain scoped to this menu. Only polygon has forced drawing options.
         if (operation.labelSelector?.contains(focusedElement())) {
           focusedElement()?.blur?.();
           operation.previousFocus?.focus?.({preventScroll: true});
@@ -300,7 +358,7 @@
       }
     }
     if (performance.now() >= operation.deadline) {
-      cancelPending(panel ? `이 메뉴에서 ${tool.startLabel}을 사용할 수 없습니다. ${tool.startLabel === "Interact" ? "AI Interactors 탭에서 모델·라벨을 확인하세요." : "Draw new mask 메뉴를 확인하세요."} 직접 실행하세요.` :
+      cancelPending(panel ? `이 메뉴에서 ${tool.startLabel}을 사용할 수 없습니다. ${tool.startLabel === "Interact" ? "AI Interactors 탭에서 모델·라벨을 확인하세요." : tool.configurePolygon ? "Draw new polygon 메뉴를 확인하세요." : "Draw new mask 메뉴를 확인하세요."} 직접 실행하세요.` :
         `${tool.label} 메뉴를 확인하지 못했습니다. 지원하지 않는 CVAT 버전일 수 있으니 직접 여세요.`);
       return;
     }
@@ -325,7 +383,7 @@
     // Give label/menu readiness its own bound after cancellation has completed.
     operation.deadline = performance.now() + READY_TIMEOUT_MS;
     try {
-      if (![...document.querySelectorAll(tool.panel)].some(visible)) target.click();
+      if (!toolPanels(tool).length) target.click();
       startWhenReady(operation);
     } catch { cancelPending(`${tool.label}을 활성화하지 못했습니다. 직접 실행하세요.`); }
   }

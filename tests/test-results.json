@@ -1,9 +1,9 @@
 {
-  "testedAt": "2026-10-11T23:50:24.012Z",
+  "testedAt": "2026-10-12T07:28:48.701Z",
   "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
   "staticChecks": "passed",
-  "passed": 416,
+  "passed": 440,
   "failed": 0,
   "suites": [
     {
@@ -310,7 +310,7 @@
     },
     {
       "suite": "popup",
-      "passed": 42,
+      "passed": 44,
       "failed": 0,
       "results": [
         {
@@ -475,6 +475,14 @@
         },
         {
           "name": "Label key rejects stale job and failed storage writes",
+          "passed": true
+        },
+        {
+          "name": "Polygon shortcut can be assigned, changed, cleared and blocks tool duplicates",
+          "passed": true
+        },
+        {
+          "name": "A narrow initial popup viewport cannot collapse tool names into vertical text",
           "passed": true
         },
         {
@@ -1788,6 +1796,102 @@
         },
         {
           "name": "Existing annotation state is never accessed or relabeled by the bridge",
+          "passed": true
+        }
+      ],
+      "platformValidation": "Windows Chrome synthetic DOM"
+    },
+    {
+      "suite": "polygon",
+      "passed": 22,
+      "failed": 0,
+      "results": [
+        {
+          "name": "Old settings retain AI/brush keys; polygon starts unassigned",
+          "passed": true
+        },
+        {
+          "name": "Early 2.2.0 polyline key migrates to polygon without reviving an explicitly cleared key",
+          "passed": true
+        },
+        {
+          "name": "Every ordered pair of tool keys rejects duplicate assignment",
+          "passed": true
+        },
+        {
+          "name": "Corrupt two-way and three-way tool duplicates are all disabled",
+          "passed": true
+        },
+        {
+          "name": "Label shortcuts cannot reuse polygon keys in either direction",
+          "passed": true
+        },
+        {
+          "name": "Single press clears point count, disables Simplify and starts Shape with selected label",
+          "passed": true
+        },
+        {
+          "name": "Already blank / OFF settings start without toggling Simplify ON",
+          "passed": true
+        },
+        {
+          "name": "Existing point limit with Simplify OFF is still cleared",
+          "passed": true
+        },
+        {
+          "name": "Controlled settings and label render delays are awaited before Shape",
+          "passed": true
+        },
+        {
+          "name": "Overlay-selected label is used by polygon immediately",
+          "passed": true
+        },
+        {
+          "name": "Switching from active brush sends Escape then completes polygon setup",
+          "passed": true
+        },
+        {
+          "name": "Unrelated visible shape popover is not used as the polygon menu",
+          "passed": true
+        },
+        {
+          "name": "Polyline icon and popover cannot be mistaken for polygon",
+          "passed": true
+        },
+        {
+          "name": "Missing label stops before changing options or starting",
+          "passed": true
+        },
+        {
+          "name": "Missing Simplify control stops instead of guessing its state",
+          "passed": true
+        },
+        {
+          "name": "Rejected point change times out without starting",
+          "passed": true
+        },
+        {
+          "name": "Rejected Simplify toggle never retries ON/OFF or starts",
+          "passed": true
+        },
+        {
+          "name": "Disabled points input stops without starting",
+          "passed": true
+        },
+        {
+          "name": "Disabled Shape button stops without changing options",
+          "passed": true
+        },
+        {
+          "name": "Duplicate own popovers are rejected",
+          "passed": true
+        },
+        {
+          "name": "Typing and dialog keep the key native",
+          "passed": true
+        },
+        {
+          "name": "Explicit Escape during delayed setup prevents later Shape",
           "passed": true
         }
       ],

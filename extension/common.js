@@ -1,7 +1,8 @@
 /* Shared, dependency-free shortcut handling. Physical keys work across input layouts. */
 (() => {
   "use strict";
-  const ACTIONS = Object.freeze(["ai", "brush"]);
+  const ACTIONS = Object.freeze(["ai", "brush", "polygon"]);
+  const ACTION_LABELS = Object.freeze({ai: "AI 도구", brush: "새 마스크 (브러쉬)", polygon: "새 폴리곤"});
   const STORAGE_KEY = "cvatSidebarShortcutsV1";
   const VALID_CODE = /^(Key[A-Z]|Digit[0-9]|F([1-9]|1[0-9]|2[0-4])|Numpad([0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter|Equal|Comma)|Arrow(Up|Down|Left|Right)|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Enter|Space|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|IntlBackslash|IntlRo|IntlYen)$/;
 
@@ -27,12 +28,17 @@
 
   function normalize(value) {
     const shortcuts = {};
-    for (const action of ACTIONS) shortcuts[action] = sanitizeShortcut(value?.shortcuts?.[action]);
-    // Corrupt/externally edited duplicate settings never dispatch an ambiguous action.
-    if (shortcuts.ai && signature(shortcuts.ai) === signature(shortcuts.brush)) {
-      shortcuts.ai = null;
-      shortcuts.brush = null;
+    for (const action of ACTIONS) {
+      // The early 2.2.0 local build named this slot polyline. Carry its saved key forward
+      // only when polygon is absent; an explicit polygon:null must stay cleared.
+      const stored = action === "polygon" && !Object.prototype.hasOwnProperty.call(value?.shortcuts || {}, "polygon") ?
+        value?.shortcuts?.polyline : value?.shortcuts?.[action];
+      shortcuts[action] = sanitizeShortcut(stored);
     }
+    // Corrupt/externally edited duplicate settings never dispatch an ambiguous action.
+    const duplicates = ACTIONS.filter((action) => shortcuts[action] && ACTIONS.some((other) =>
+      other !== action && signature(shortcuts[other]) === signature(shortcuts[action])));
+    for (const action of duplicates) shortcuts[action] = null;
     const label = typeof value?.defaultLabelName === "string" ? value.defaultLabelName.trim() : "obstacle";
     const defaultLabelName = label && label.length <= 128 && !/[\u0000-\u001f\u007f]/.test(label) ? label : "";
     const bindings = (Array.isArray(value?.labelShortcuts) ? value.labelShortcuts : []).filter((entry) =>
@@ -53,9 +59,9 @@
     const next = normalize(value);
     const candidate = sanitizeShortcut(shortcut);
     if (shortcut !== null && !candidate) throw new Error("Ctrl·Alt·Shift 같은 보조키 외에 사용할 키를 함께 누르세요.");
-    const other = ACTIONS.find((entry) => entry !== action);
-    if (candidate && signature(candidate) === signature(next.shortcuts[other])) {
-      throw new Error(`이미 ${other === "ai" ? "AI 도구" : "새 마스크 (브러쉬)"}에 지정된 키입니다. 다른 키를 선택하거나 기존 지정을 해제하세요.`);
+    const other = candidate && ACTIONS.find((entry) => entry !== action && signature(candidate) === signature(next.shortcuts[entry]));
+    if (other) {
+      throw new Error(`이미 ${ACTION_LABELS[other]}에 지정된 키입니다. 다른 키를 선택하거나 기존 지정을 해제하세요.`);
     }
     const conflict = candidate && next.labelShortcuts.find((entry) => signature(entry.shortcut) === signature(candidate));
     if (conflict) throw new Error(`이미 라벨 '${conflict.name}'에 지정된 키입니다. 기존 지정을 해제하거나 다른 키를 선택하세요.`);
@@ -67,7 +73,7 @@
     if (typeof name !== "string" || !name || name !== name.trim() || name.length > 128 || /[\u0000-\u001f\u007f]/.test(name)) throw new Error("올바른 라벨 이름이 아닙니다.");
     const next = normalize(value), candidate = sanitizeShortcut(shortcut);
     if (shortcut !== null && !candidate) throw new Error("사용할 키 또는 키 조합을 누르세요.");
-    if (candidate && ACTIONS.some((action) => signature(next.shortcuts[action]) === signature(candidate))) throw new Error("AI 또는 새 마스크에 지정된 키입니다. 다른 키를 선택하세요.");
+    if (candidate && ACTIONS.some((action) => signature(next.shortcuts[action]) === signature(candidate))) throw new Error("도구 단축키에 지정된 키입니다. 다른 키를 선택하세요.");
     if (candidate && next.labelShortcuts.some((entry) => entry.name !== name && signature(entry.shortcut) === signature(candidate))) throw new Error("다른 라벨에 지정된 키입니다. 다른 키를 선택하세요.");
     next.labelShortcuts = next.labelShortcuts.filter((entry) => entry.name !== name);
     if (candidate) next.labelShortcuts.push({name, shortcut: candidate});
@@ -165,6 +171,6 @@
       ...(count === 1 && colors.has(name) ? {color: colors.get(name)} : {})}))};
   }
 
-  globalThis.CVATShortcuts = Object.freeze({ACTIONS, STORAGE_KEY, sanitizeShortcut, signature, assignLabel,
+  globalThis.CVATShortcuts = Object.freeze({ACTIONS, ACTION_LABELS, STORAGE_KEY, sanitizeShortcut, signature, assignLabel,
     fromEvent, normalize, assign, format, isMac, wheelModifierName, shortcutWarning, supportedURL, readLabelCatalog, normalizeLabelColor});
 })();

@@ -1,18 +1,25 @@
 # CVAT Sidebar Shortcuts
 
-현재 버전: **2.1.4** · Chrome Manifest V3 확장프로그램
+현재 버전: **2.2.1** · Chrome Manifest V3 확장프로그램
 
-CVAT의 AI·새 마스크 도구 단축키, 라벨 선택 오버레이, 브러쉬 크기 조절, Space 화면 이동과 한글 가이드를 제공합니다.
+CVAT의 AI·새 마스크·폴리곤 도구 단축키, 라벨 선택 오버레이, 브러쉬 크기 조절, Space 화면 이동과 한글 가이드를 제공합니다.
 
 ## 작업 위치와 배포 파일
 
 - 로컬 작업 폴더: `C:\git\cvat_shortcut`
 - 확장 소스: [`extension/`](extension/)
-- 배포 ZIP: [cvat-sidebar-shortcuts-2.1.4-ko.zip](releases/2.1.4/cvat-sidebar-shortcuts-2.1.4-ko.zip)
-- [2.1.4 패치노트](releases/2.1.4/release-notes-2.1.4.txt)
+- 배포 ZIP: [최신 GitHub 릴리스](https://github.com/r2gul4r/CVAT_shortcut/releases/latest) · 로컬 `releases/2.2.1/cvat-sidebar-shortcuts-2.2.1-ko.zip`
+- [2.2.0 패치노트](releases/2.2.0/release-notes-2.2.0.txt)
 - [적용 가이드](extension/guide.html)
 
-2.1.4는 2.1.3의 버전 표기만 변경한 배포본입니다. 라벨 선택창의 위치·크기를 실제 보이는 화면에 맞추고, 화면 확대·창 크기 변경 및 저장된 화면 밖 위치를 보정합니다. N을 확장 도구 단축키로 중복 지정할 때의 완료 동작 변경은 포함하지 않았습니다.
+2.2.0은 폴리곤 도구 단축키를 추가합니다. 팝업의 **새 폴리곤 → 지정**에서 사용할 키를 정하고, 오버레이에서 라벨을 고른 뒤 해당 키를 누르세요. Number of points를 공란으로, Simplify를 OFF로 맞추고 Shape로 시작합니다. 기존 설정은 유지되며 새 단축키는 미지정으로 시작합니다. 초기 2.2.0 로컬 빌드에서 폴리라인에 지정했던 키는 폴리곤으로 이어받습니다.
+
+
+## 자동 배포와 업데이트 내역
+
+[자동 배포 연결 가이드](docs/automatic-release.md)를 한 번 설정하면, 버전을 올려 main에 푸시할 때 검사 → ZIP 생성 → GitHub 릴리스 → Chrome 웹스토어 심사 제출로 이어집니다. 인증 연결 전에는 GitHub 릴리스까지만 실행합니다. Google의 심사 승인은 별도로 필요합니다.
+
+패치노트는 `release-notes.json`의 맨 위에 추가하고 `python tools/release_notes.py`로 확장 내부 화면을 갱신합니다. 팝업의 **업데이트 내역** 버튼에서 확인할 수 있습니다. 스토어 상세 설명은 API로 자동 수정하지 않으며, 최초 한 번 [전체 업데이트 내역](https://github.com/r2gul4r/CVAT_shortcut/releases) 링크를 넣습니다.
 
 ## 로컬 설치
 
@@ -26,7 +33,11 @@ CVAT의 AI·새 마스크 도구 단축키, 라벨 선택 오버레이, 브러�
 
 ## 테스트와 패키징
 
-[**2.1.4 전체 QA 보고서**](reports/qa-2.1.4/README.md) — 기존 443개 검사 통과, 추가 15개 중 6개 실패. 재현 조건·심각도·대응 방향과 예시 화면을 포함합니다.
+2.2.1 검사: **501개 통과, 0개 실패**. 기존 확장 467개와 자동 배포 실패·재실행 검사 34개를 포함합니다. 웹스토어 실제 인증과 제출은 연결 설정 후 확인해야 합니다.
+
+2.2.0 회귀 검사: **467개 통과, 0개 실패**. 새 폴리곤 22개와 팝업 설정 검사, 기존 도구·오버레이·실행 영역 검사를 포함합니다. [검증 내역](releases/2.2.0/validation-2.2.0.json).
+
+이전 [**2.1.4 전체 QA 보고서**](reports/qa-2.1.4/README.md) — 기존 443개 검사 통과, 추가 15개 중 6개 실패. 재현 조건·심각도·대응 방향과 예시 화면을 포함합니다.
 
 Node.js와 Chrome이 필요합니다. Windows 기본 Chrome 경로를 사용하며, 다른 설치 경로는 `CVAT_TEST_CHROME` 환경 변수로 지정합니다.
 
@@ -34,6 +45,8 @@ Node.js와 Chrome이 필요합니다. Windows 기본 Chrome 경로를 사용하�
 node tests/run-tests.mjs
 node tests/test-label-logic.cjs
 node tests/run-world-tests.mjs
+python -m unittest discover -s tests -p test_release.py
+python tools/release_notes.py --check
 python tools/package-extension.py
 ```
 
@@ -44,6 +57,24 @@ python tools/package-extension.py
 ## 구현·업데이트 이력
 
 **최신 버전 → 이전 버전** 순서로 정리했습니다.
+
+### 2.2.1 — 업데이트 내역과 자동 배포 준비
+
+- 팝업에 업데이트 내역 버튼을 추가했습니다. 설치한 버전까지의 변경 내용을 확장 안에서 확인할 수 있습니다.
+- GitHub의 최신 릴리스로 이동하는 링크를 추가했습니다.
+- 패치노트 원본을 한 곳에서 관리해 확장 내부 화면과 GitHub 릴리스에 함께 반영합니다.
+- 버전이 올라간 main 푸시에서 검사, ZIP 생성, GitHub 릴리스 게시를 자동 실행합니다. 웹스토어 인증을 연결하면 심사 제출까지 이어집니다.
+- 팝업의 폭을 400px로 고정해 좁게 열리며 글자가 세로로 끊기는 문제를 수정했습니다.
+
+### 2.2.0 — 폴리곤 단축키와 라벨 연동
+
+- 팝업에 새 폴리곤 단축키 지정·변경·해제를 추가했습니다.
+- 도구 단축키를 상단에 모으고 라벨 선택·키 지정 행을 정렬했습니다. 화면 이동·브러쉬 설정과 상세 안내는 접어 볼 수 있습니다. [화면 비교](reports/popup-layout/README.md).
+- 오버레이 또는 라벨 단축키로 고른 다음 객체 라벨을 폴리곤에도 적용합니다.
+- 실행 시 기존 도구를 Esc로 취소하고 Number of points 공란, Simplify OFF를 확인한 뒤 Shape를 누릅니다.
+- AI·브러쉬·폴리곤·라벨 단축키 사이의 중복 지정을 막습니다. 기존 설정은 유지합니다.
+- 라벨·옵션·메뉴 구조를 확인할 수 없으면 잘못된 설정으로 시작하지 않고 안내합니다.
+- 2.1.4 QA 보고서의 별도 문제와 N 중복 지정 동작은 이번 변경 범위에 포함하지 않았습니다.
 
 ### 2.1.4 — 배포 버전명 변경
 
@@ -218,6 +249,6 @@ python tools/package-extension.py
 - **N 중복 지정 처리: 보류.** 확장 AI·새 마스크 단축키를 N으로 지정하면 CVAT의 N 완료 동작과 충돌할 수 있습니다. 시작·완료를 상태별로 구분하는 방안은 계획만 검토했으며 현재 코드에 적용하지 않았습니다.
 - **확장 단축키 우선 처리의 범위:** Chrome·운영체제가 먼저 사용하는 키까지 우선권을 보장하지는 않습니다. 입력창·한글 조합·대화상자에서는 별도 예외 처리를 적용합니다.
 - **검증 범위:** 예시 화면과 모의 API, 별도 Chrome 실행 환경 기준입니다. Mac 검사는 Windows에서 입력·플랫폼 정보를 모의한 것이며, 실제 Mac 기기나 모든 CVAT 설치본의 동작을 보증하는 검사는 아닙니다.
-- **이전 자료:** `store/`와 `INSTALLATION-STATUS.md`에는 초기 배포 준비 기록이 남아 있습니다. 현재 설치와 패키징은 이 README 상단의 2.1.4 안내를 사용하세요.
+- **이전 자료:** `store/`와 `INSTALLATION-STATUS.md`에는 초기 배포 준비 기록이 남아 있습니다. 현재 설치와 패키징은 이 README 상단의 현재 버전 안내를 사용하세요.
 
 검사 결과: [브라우저 회귀 검사](tests/test-results.json) · [라벨 로직 검사](tests/label-logic-results.json) · [Chrome 실행 환경 검사](tests/world-results.json)

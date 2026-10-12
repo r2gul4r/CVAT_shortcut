@@ -277,6 +277,30 @@
       assert($("notice").classList.contains("error") && JSON.stringify(fixtureAPI.read()[S.STORAGE_KEY]) === before);
       delete window.testTabURL; $("cancel").click();
     });
+    await test("Polygon shortcut can be assigned, changed, cleared and blocks tool duplicates", async () => {
+      await chrome.storage.local.set({[S.STORAGE_KEY]: S.normalize({shortcuts:{ai:{code:"KeyV"},brush:{code:"KeyB"}}})});
+      assert($("polygon-key").textContent === "미지정");
+      $("polygon-assign").click(); assert($("recording-text").textContent.includes("폴리곤"));
+      key("KeyB"); await delay(20); assert($("notice").textContent.includes("이미") && !$("recording").hidden);
+      key("KeyP"); await delay(20); assert($("polygon-key").textContent === "P" && $("polygon-assign").textContent === "변경");
+      $("polygon-assign").click(); key("KeyL",{altKey:true}); await delay(20); assert($("polygon-key").textContent === "Alt + L");
+      $("polygon-clear").click(); await delay(20); assert(fixtureAPI.read()[S.STORAGE_KEY].shortcuts.polygon === null && $("polygon-key").textContent === "미지정");
+      assert(fixtureAPI.read()[S.STORAGE_KEY].shortcuts.ai.code === "KeyV" && fixtureAPI.read()[S.STORAGE_KEY].shortcuts.brush.code === "KeyB");
+    });
+    await test("A narrow initial popup viewport cannot collapse tool names into vertical text", async () => {
+      const frame = document.createElement("iframe"); frame.style.cssText = "width:200px;height:600px;border:0";
+      frame.src = "/tests/popup-view";
+      try {
+        await new Promise((resolve) => { frame.onload = resolve; document.body.append(frame); });
+        const doc = frame.contentDocument, width = doc.body.getBoundingClientRect().width;
+        assert(width >= 400, `Popup content shrank to ${width}px in a 200px initial viewport`);
+        for (const action of S.ACTIONS) {
+          const title = doc.getElementById(action + "-title");
+          assert(title.getBoundingClientRect().height < 30, `${action} title wraps vertically`);
+          assert(doc.getElementById(action + "-clear").getBoundingClientRect().right <= width, `${action} controls overflow`);
+        }
+      } finally { frame.remove(); }
+    });
     await test("Opening popup migrates saved Ctrl wheel to Alt without changing other settings", async () => {
       const before = fixtureAPI.read()[S.STORAGE_KEY];
       const saved = {...before, brushWheel: {enabled: false, modifier: "ctrl"}, extraPreference: "preserved"};

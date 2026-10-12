@@ -1,6 +1,7 @@
 tests/.browser-profiles/
 *.zip
 !releases/2.1.4/cvat-sidebar-shortcuts-2.1.4-ko.zip
+!releases/2.2.0/cvat-sidebar-shortcuts-2.2.0-ko.zip
 __pycache__/
 *.pyc
 .env

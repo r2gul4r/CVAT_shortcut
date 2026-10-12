@@ -13,7 +13,7 @@ assert re.fullmatch(r'\d+\.\d+\.\d+(?:\.\d+)?', version)
 assert manifest['manifest_version'] == 3
 assert sorted(manifest['permissions']) == ['activeTab', 'scripting', 'storage']
 expected = {'manifest.json', 'common.js', 'content.js', 'native-repeat.js',
-            'overlay.js', 'popup.js', 'popup.html', 'popup.css', 'guide.html', 'guide.css'}
+            'overlay.js', 'popup.js', 'popup.html', 'popup.css', 'guide.html', 'guide.css', 'updates.html', 'updates.css'}
 expected.update(f'icons/icon{size}.png' for size in [16, 32, 48, 128])
 expected.update(f'guide-images/{name}.jpg' for name in [
     '01-enable', '02-label', '03-ai-key', '04-brush-key',
@@ -25,7 +25,11 @@ output.mkdir(parents=True, exist_ok=True)
 archive = output / f'cvat-sidebar-shortcuts-{version}-ko.zip'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as bundle:
     for name, path in sorted(files.items()):
-        bundle.write(path, name)
+        info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.create_system = 3
+        info.external_attr = 0o100644 << 16
+        bundle.writestr(info, path.read_bytes())
 with zipfile.ZipFile(archive) as bundle:
     assert bundle.testzip() is None
     assert all(bundle.read(name) == path.read_bytes() for name, path in files.items())

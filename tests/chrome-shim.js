@@ -13,6 +13,7 @@
   }
   function read() { return JSON.parse(localStorage.getItem(storageKey) || "{}"); }
   const chrome = {
+    permissions: {async request() {return !window.testHealthPermissionDenied;}},
     storage: {
       local: {
         async get(key) { if (failRead) throw new Error("Synthetic read failure"); return {[key]: read()[key] ?? (key === "cvatLabelOverlayV1" ? {x:20,y:500,view:"panel"} : undefined)}; },
@@ -27,7 +28,13 @@
       },
       onChanged: {addListener(listener) { listeners.storage.push(listener); }}
     },
-    runtime: {onMessage: {addListener(listener) { listeners.message.push(listener); }}},
+    runtime: {async sendMessage(message) {
+      if(message.type==='CVAT_HEALTH_AUTO'){window.testHealthAuto=message.enabled;window.testHealthEnabled=message.enabled;}
+      if (message.type === 'CVAT_HEALTH_START') window.testHealthEnabled = true;
+      if (message.type === 'CVAT_HEALTH_STOP') window.testHealthEnabled = false;
+      if(window.testHealthFailure)throw Error('Could not establish connection. Receiving end does not exist.');
+      return {...(window.testHealthEnabled?window.testHealthSnapshot||{}:{}),enabled:Boolean(window.testHealthEnabled),auto:Boolean(window.testHealthAuto)};
+    },onMessage: {addListener(listener) { listeners.message.push(listener); }}},
     tabs: {
       async query() { return [{id: 7, url: window.testTabURL || "http://127.0.0.1/tasks/1/jobs/1"}]; },
       async sendMessage(_tab, message) {

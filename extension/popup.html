@@ -7,13 +7,19 @@
   <link rel="stylesheet" href="popup.css">
   <script src="common.js" defer></script>
   <script src="popup.js" defer></script>
+  <script src="health-popup.js" defer></script>
 </head>
 <body>
   <main>
     <header class="app-header">
-      <div><h1>CVAT 단축키 <small>2.2.1</small></h1><p class="subtitle">작업에 맞게 키와 라벨을 설정하세요.</p></div>
+      <div><h1>CVAT 단축키 <small>2.3.0</small></h1><p class="subtitle">작업에 맞게 키와 라벨을 설정하세요.</p></div>
       <nav class="header-links" aria-label="도움말"><a id="open-guide" class="guide-button" href="guide.html" target="_blank" rel="noopener">사용 가이드</a><a id="open-updates" class="guide-button" href="updates.html" target="_blank" rel="noopener">업데이트 내역</a></nav>
     </header>
+    <nav class="screen-tabs" role="tablist" aria-label="확장 화면">
+      <button id="screen-shortcuts" type="button" role="tab" aria-selected="true" aria-controls="shortcuts-screen">단축키</button>
+      <button id="screen-health" type="button" role="tab" aria-selected="false" aria-controls="health-screen" tabindex="-1">연결 상태</button>
+    </nav>
+    <div id="shortcuts-screen" role="tabpanel" aria-labelledby="screen-shortcuts">
     <div class="tab-controls">
       <p id="tab-status" role="status">탭 확인 중…</p>
       <button id="enable" type="button" disabled>이 CVAT 탭에서 사용</button>
@@ -88,6 +94,22 @@
       <div id="recording" hidden role="status"><p id="recording-text"></p><button id="cancel" type="button" class="secondary">취소</button></div>
       <p id="notice" role="status" aria-live="polite"></p>
     </div>
+    </div>
+    <section id="health-screen" role="tabpanel" aria-labelledby="screen-health" hidden>
+      <div class="tool">
+        <h2>내 CVAT 연결 상태</h2>
+        <div id="health-state" class="health-status" data-state="idle"><span class="health-dot" aria-hidden="true"></span><span id="health-status" role="status">측정 꺼짐</span></div>
+        <p id="health-description" class="section-note">측정을 켜면 이 탭의 기존 요청부터 확인합니다.</p>
+        <div class="health-summary"><div><span>최근 5분 완료 요청</span><strong id="health-count">0</strong></div><div><span>현재 오래 기다리는 요청</span><strong id="health-waiting">0</strong></div></div>
+        <table class="health-table"><thead><tr><th scope="col">종류</th><th scope="col">중앙값</th><th scope="col">건수</th><th scope="col">오류</th></tr></thead><tbody><tr><th scope="row">일반 API</th><td id="health-api-median">—</td><td id="health-api-count">0</td><td id="health-api-errors">0</td></tr><tr><th scope="row">이미지</th><td id="health-image-median">—</td><td id="health-image-count">0</td><td id="health-image-errors">0</td></tr><tr><th scope="row">저장</th><td id="health-save-median">—</td><td id="health-save-count">0</td><td id="health-save-errors">0</td></tr><tr><th scope="row">AI</th><td id="health-ai-median">—</td><td id="health-ai-count">0</td><td id="health-ai-errors">0</td></tr></tbody></table>
+        <p id="health-last" class="section-note">아직 측정된 요청이 없습니다.</p>
+        <p id="health-errors" class="section-note"></p>
+        <div class="health-actions"><span class="muted">팝업을 닫아도 계속 측정</span><button id="health-toggle" type="button" class="secondary" disabled>측정 시작</button></div>
+        <p id="health-note" class="section-note" role="status">처음 켤 때 현재 CVAT 사이트의 접근 권한을 허용하세요.</p>
+      </div>
+      <div class="tool"><label class="wheel-toggle"><input id="health-auto" type="checkbox" disabled> 이 CVAT 서버에서 자동 측정</label><p class="section-note">새로고침·Job 이동·Chrome 재시작 후 작업 화면에서 다시 시작합니다. 체크를 해제하면 이 서버의 측정을 끕니다.</p></div>
+      <p class="section-note">열려 있는 동안 2초마다 갱신합니다. 추가 점검 요청이나 외부 전송은 없습니다. 응답 시간에는 서버·네트워크·다운로드 시간이 포함되며 저장 성공을 보장하지 않습니다.</p>
+    </section>
   </main>
 </body>
 </html>

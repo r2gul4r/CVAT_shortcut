@@ -1,0 +1,23 @@
+{
+  "version": "2.3.0",
+  "scope": "Popup-only health view and background monitoring; actual localhost and synthetic tests",
+  "passed": 562,
+  "failed": 0,
+  "suites": {
+    "synthetic_browser": 453,
+    "health_core_worker_popup": 38,
+    "real_chrome_extension": 10,
+    "label_logic": 12,
+    "chrome_execution_worlds": 15,
+    "release_failure_retry": 34
+  },
+  "limits": [
+    "Real Chrome APIs tested with unchanged no-grant manifest and separate localhost-only pregranted fixture",
+    "Native permission dialog approval was not automated; user installed extension not inspected",
+    "Full Chrome restart is modeled with a fresh worker plus local settings; real reload and Job navigation verified",
+    "Company CVAT traffic not inspected",
+    "GitHub release and Web Store submission results are tracked separately in GitHub Actions"
+  ],
+  "privacy": "No probe requests, no external transmission, no request/response bodies or credentials retained",
+  "package_files": 27
+}

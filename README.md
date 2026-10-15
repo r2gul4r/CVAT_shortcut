@@ -1,14 +1,14 @@
 # CVAT Sidebar Shortcuts
 
-현재 버전: **2.2.1** · Chrome Manifest V3 확장프로그램
+현재 소스 버전: **2.3.0** · Chrome Manifest V3 확장프로그램
 
-CVAT의 AI·새 마스크·폴리곤 도구 단축키, 라벨 선택 오버레이, 브러쉬 크기 조절, Space 화면 이동과 한글 가이드를 제공합니다.
+CVAT의 AI·새 마스크·폴리곤 도구 단축키, 라벨 선택 오버레이, 브러쉬 크기 조절, Space 화면 이동, 개인 연결 상태 확인과 한글 가이드를 제공합니다.
 
 ## 작업 위치와 배포 파일
 
 - 로컬 작업 폴더: `C:\git\cvat_shortcut`
 - 확장 소스: [`extension/`](extension/)
-- 배포 ZIP: [최신 GitHub 릴리스](https://github.com/r2gul4r/CVAT_shortcut/releases/latest) · 로컬 `releases/2.2.1/cvat-sidebar-shortcuts-2.2.1-ko.zip`
+- 배포 ZIP: [최신 GitHub 릴리스](https://github.com/r2gul4r/CVAT_shortcut/releases/latest) · 로컬 `releases/2.3.0/cvat-sidebar-shortcuts-2.3.0-ko.zip`
 - [2.2.0 패치노트](releases/2.2.0/release-notes-2.2.0.txt)
 - [적용 가이드](extension/guide.html)
 
@@ -57,6 +57,19 @@ python tools/package-extension.py
 ## 구현·업데이트 이력
 
 **최신 버전 → 이전 버전** 순서로 정리했습니다.
+
+### 2.3.0 — 내 CVAT 연결 상태
+
+- **이 CVAT 서버에서 자동 측정**을 체크하면 설정을 기억하고 새로고침·Job 이동·브라우저 재시작 후 작업 화면에서 다시 측정합니다. 팝업은 닫아도 됩니다. 팝업의 측정 끄기는 현재 탭만 다음 새로고침/Job 이동까지 잠시 끄고, 체크 해제는 해당 서버의 자동 측정과 열려 있는 측정을 끕니다.
+
+- 팝업 상단 **단축키 / 연결 상태**로 화면을 전환합니다. **연결 상태 → 측정 시작**으로 켜며 통계는 팝업 안에서 확인합니다. 연결 상태 오버레이는 표시하지 않습니다. 단축키 기능과 독립적으로 켜고 끕니다.
+- 기존 CVAT API 요청만 관찰합니다. 추가 점검 요청·외부 전송·회사 이미지 수집은 없습니다.
+- 일반 API / 이미지 / 저장 / AI를 구분하여 최근 5분(최대 300건) 중앙값과 오류 건수를 표시합니다. 상태 판단은 최근 1분 기준이며 캐시·취소 요청은 제외합니다.
+- 서버 오류·네트워크 실패·요청 제한·인증 및 권한 문제를 구분합니다. 내 연결 상태이며 서버 자체의 건강이나 저장 성공을 보증하지 않습니다.
+- `webRequest`와 사이트 접근은 선택 권한입니다. 상태 보기를 누르면 현재 CVAT 호스트만 허용을 요청합니다. 허용은 Chrome에 유지되지만 측정은 직접 켠 Job 탭의 같은 origin 요청에만 적용됩니다. Chrome 확장 관리에서 사이트 권한을 철회할 수 있습니다.
+- 통계는 `storage.session`에 저장되어 서비스 워커 재시작 때 복구됩니다. 새로고침·다른 Job 이동·탭 종료·끄기에서 삭제됩니다. 브라우저 재시작 후에도 유지하는 작업 기록이 아닙니다.
+- 개인 연결 상태만 표시합니다. 팀 대시보드나 다른 사용자와의 통계 공유는 제공하지 않습니다.
+- 로컬 설치본은 확장을 새로고침한 뒤 사용하세요. GitHub 릴리스와 웹스토어 자동 제출 결과는 [Actions](https://github.com/r2gul4r/CVAT_shortcut/actions)에서 확인합니다. GitHub에 올라온 소스 버전과 웹스토어 심사·배포 버전은 다를 수 있습니다.
 
 ### 2.2.1 — 업데이트 내역과 자동 배포 준비
 

@@ -48,6 +48,8 @@ jobs:
         run: node tests/run-tests.mjs
       - name: Test label logic
         run: node tests/test-label-logic.cjs
+      - name: Test passive connection monitoring
+        run: node --test tests/test-health.cjs
       - name: Test Chrome execution worlds
         run: node tests/run-world-tests.mjs
       - name: Build verified package

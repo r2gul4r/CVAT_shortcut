@@ -1,9 +1,9 @@
 {
-  "testedAt": "2026-10-12T07:28:48.701Z",
+  "testedAt": "2026-10-15T23:42:01.261Z",
   "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
   "staticChecks": "passed",
-  "passed": 440,
+  "passed": 453,
   "failed": 0,
   "suites": [
     {
@@ -1796,6 +1796,66 @@
         },
         {
           "name": "Existing annotation state is never accessed or relabeled by the bridge",
+          "passed": true
+        }
+      ],
+      "platformValidation": "Windows Chrome synthetic DOM"
+    },
+    {
+      "suite": "Health popup tabs",
+      "passed": 13,
+      "failed": 0,
+      "results": [
+        {
+          "name": "shortcuts is default screen",
+          "passed": true
+        },
+        {
+          "name": "switching away cancels shortcut recording",
+          "passed": true
+        },
+        {
+          "name": "health is separate tab panel",
+          "passed": true
+        },
+        {
+          "name": "off state uses no stale success",
+          "passed": true
+        },
+        {
+          "name": "start displays counts and median",
+          "passed": true
+        },
+        {
+          "name": "no connection overlay inserted",
+          "passed": true
+        },
+        {
+          "name": "open health tab refreshes without a server probe",
+          "passed": true
+        },
+        {
+          "name": "screen switch does not stop measurement",
+          "passed": true
+        },
+        {
+          "name": "keyboard tab navigation works",
+          "passed": true
+        },
+        {
+          "name": "communication failure does not claim healthy",
+          "passed": true
+        },
+        {
+          "name": "stop clears displayed samples",
+          "passed": true
+        },
+        {
+          "name": "automatic option survives screen switch",
+          "passed": true
+        },
+        {
+          "name": "health layout fits popup width",
           "passed": true
         }
       ],

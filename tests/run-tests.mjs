@@ -11,15 +11,19 @@ const chromePath = process.env.CVAT_TEST_CHROME || "C:\\Program Files\\Google\\C
 const manifest = JSON.parse(await readFile(path.join(root, "extension", "manifest.json"), "utf8"));
 assert.equal(manifest.manifest_version, 3);
 assert.deepEqual([...manifest.permissions].sort(), ["activeTab", "scripting", "storage"]);
-for (const forbidden of ["host_permissions", "optional_host_permissions", "content_scripts", "externally_connectable", "web_accessible_resources", "background"]) assert.equal(manifest[forbidden], undefined, forbidden);
-for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js"]) {
+assert.deepEqual(manifest.optional_permissions, ['webRequest']);
+assert.deepEqual(manifest.background, {service_worker:'health-worker.js'});
+assert.deepEqual(manifest.optional_host_permissions, ['http://*/*', 'https://*/*']);
+for (const forbidden of ["host_permissions", "content_scripts", "externally_connectable", "web_accessible_resources"]) assert.equal(manifest[forbidden], undefined, forbidden);
+for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js", "health-core.js", "health-worker.js", "health-popup.js"]) {
   const source = await readFile(path.join(root, "extension", name), "utf8");
   assert(!/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon|captureVisibleTab|getImageData|toDataURL)\s*\(/.test(source), `${name}: forbidden network/image API`);
   execFileSync(process.execPath, ["--check", path.join(root, "extension", name)], {windowsHide: true});
 }
 
 const files = new Map();
-for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js", "popup.css"]) files.set("/extension/" + name, path.join(root, "extension", name));
+for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js", "popup.css", "health-popup.js", "health-core.js"]) files.set("/extension/" + name, path.join(root, "extension", name));
+files.set('/tests/test-health-popup.js',path.join(root,'tests/test-health-popup.js'));
 for (const name of ["chrome-shim.js", "label-fixture.js", "mac-platform.js", "test-content.js", "test-popup.js", "test-popup-mac.js", "test-wheel.js", "test-conflicts.js", "test-space-pan.js", "test-label-shortcuts.js", "test-overlay.js", "test-native-repeat.js", "test-polygon.js"]) files.set("/tests/" + name, path.join(root, "tests", name));
 files.set("/tests/mousetrap-1.6.5.js", path.join(root, "reference", "mousetrap-1.6.5.js"));
 files.set("/tests/polygon-fixture.js", path.join(root, "tests", "polygon-fixture.js"));
@@ -31,6 +35,7 @@ for (const name of ["01-enable", "02-label", "03-ai-key", "04-brush-key", "05-wh
 const fixture = await readFile(path.join(root, "tests", "fixture.html"), "utf8");
 const popup = await readFile(path.join(root, "extension", "popup.html"), "utf8");
 const popupFixture = (run, unrelated = false, mac = false) => popup
+  .replace('src="health-popup.js"', 'src="/extension/health-popup.js"')
   .replace('<link rel="stylesheet" href="popup.css">', '<link rel="stylesheet" href="/extension/popup.css">')
   .replace('<script src="common.js" defer></script>', `<script src="/tests/chrome-shim.js"></script>${mac ? '<script src="/tests/mac-platform.js"></script>' : ""}${unrelated ? '<script>window.testTabURL="https://example.test/unrelated";</script>' : ""}<script src="/extension/common.js" defer></script>`)
   .replace('<script src="popup.js" defer></script>', '<script src="/extension/popup.js" defer></script>' + (run ? `<script src="/tests/${mac ? "test-popup-mac" : "test-popup"}.js" defer></script>` : ""));
@@ -38,7 +43,8 @@ const server = createServer(async (request, response) => {
   try {
     const route = new URL(request.url, "http://127.0.0.1").pathname;
     let text;
-    if (route === "/tasks/1/jobs/1") text = fixture;
+    if (route === '/tasks/1/jobs/15' || route === '/tests/health-demo') text = popupFixture(false).replace('</body>', route.includes('/jobs/')?'<script src="/tests/test-health-popup.js" defer></script></body>':'<script>window.addEventListener("load",()=>document.getElementById("screen-health").click());</script></body>');
+    else if (route === "/tasks/1/jobs/1") text = fixture;
     else if (route === "/tasks/1/jobs/11") text = fixture.replace("/tests/test-content.js", "/tests/test-polygon.js")
       .replace('<script src="/tests/label-fixture.js"></script>', '<script src="/tests/polygon-fixture.js"></script><script src="/tests/label-fixture.js"></script>');
     else if (route === "/tasks/1/jobs/10") text = fixture.replace("/tests/test-content.js", "/tests/test-native-repeat.js")
@@ -75,8 +81,8 @@ if (process.argv.includes("--serve")) {
 await mkdir(path.join(root, "tests", ".browser-profiles"), {recursive: true});
 const summaries = [];
 try {
-  const routes = ["/tasks/1/jobs/1", "/tests/popup-test", "/tasks/1/jobs/2", "/tests/popup-mac", "/tasks/1/jobs/3", "/tasks/1/jobs/4", "/tasks/1/jobs/5", "/tasks/1/jobs/6", "/tasks/1/jobs/8", "/tasks/1/jobs/9", "/tasks/1/jobs/10", "/tasks/1/jobs/11"];
-  for (const route of process.argv.includes("--native-only") ? ["/tasks/1/jobs/10"] : process.argv.includes("--popup-only") ? ["/tests/popup-test"] : process.argv.includes("--polygon-only") ? routes.slice(-1) : routes) {
+  const routes = ["/tasks/1/jobs/1", "/tests/popup-test", "/tasks/1/jobs/2", "/tests/popup-mac", "/tasks/1/jobs/3", "/tasks/1/jobs/4", "/tasks/1/jobs/5", "/tasks/1/jobs/6", "/tasks/1/jobs/8", "/tasks/1/jobs/9", "/tasks/1/jobs/10", "/tasks/1/jobs/15", "/tasks/1/jobs/11"];
+  for (const route of process.argv.includes("--health-only") ? ["/tasks/1/jobs/15"] : process.argv.includes("--native-only") ? ["/tasks/1/jobs/10"] : process.argv.includes("--popup-only") ? ["/tests/popup-test"] : process.argv.includes("--polygon-only") ? routes.slice(-1) : routes) {
     const profile = await mkdtemp(path.join(root, "tests", ".browser-profiles", "isolated-"));
     const args = ["--headless=new", "--disable-gpu", "--disable-gpu-compositing", "--disable-software-rasterizer",
       "--no-first-run", "--no-default-browser-check", "--disable-extensions",
@@ -106,6 +112,7 @@ try {
   }
 } finally {await new Promise((resolve) => server.close(resolve));}
 const report = {testedAt: new Date().toISOString(), browser: chromePath, environment: "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data", staticChecks: "passed", passed: summaries.reduce((count, suite) => count + suite.passed, 0), failed: summaries.reduce((count, suite) => count + suite.failed, 0), suites: summaries};
-await writeFile(path.join(root, "tests", "test-results.json"), JSON.stringify(report, null, 2) + "\n");
-console.log(`Report: ${path.join(root, "tests", "test-results.json")}`);
+const reportName=process.argv.includes('--health-only')?'health-popup-results.json':'test-results.json';
+await writeFile(path.join(root, "tests", reportName), JSON.stringify(report, null, 2) + "\n");
+console.log(`Report: ${path.join(root, "tests", reportName)}`);
 if (report.failed) process.exitCode = 1;

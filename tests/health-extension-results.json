@@ -1,0 +1,47 @@
+{
+  "environment": "Dedicated real Chrome extension APIs; unchanged production manifest without grant, plus fixture-only localhost pregrant; no personal browser or company data; permission dialog not automated",
+  "passed": 10,
+  "failed": 0,
+  "results": [
+    {
+      "name": "unchanged manifest starts without host grant and responds",
+      "passed": true
+    },
+    {
+      "name": "granted extension worker responds",
+      "passed": true
+    },
+    {
+      "name": "real popup starts monitoring without injecting an overlay",
+      "passed": true
+    },
+    {
+      "name": "real save, AI and HTTP 503 requests refresh inside health popup",
+      "passed": true
+    },
+    {
+      "name": "switching to shortcuts keeps measurement active",
+      "passed": true
+    },
+    {
+      "name": "requests while popup is closed appear on reopening",
+      "passed": true
+    },
+    {
+      "name": "webRequest wakes stopped worker without a page-side polling timer",
+      "passed": true
+    },
+    {
+      "name": "automatic reload monitors in background without page UI",
+      "passed": true
+    },
+    {
+      "name": "automatic monitoring resumes in another Job",
+      "passed": true
+    },
+    {
+      "name": "automatic off remains off after real reload",
+      "passed": true
+    }
+  ]
+}

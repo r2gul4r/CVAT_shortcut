@@ -1,5 +1,5 @@
 {
-  "testedAt": "2026-10-12T07:29:11.047Z",
+  "testedAt": "2026-10-15T23:41:54.587Z",
   "suite": "Real Chrome MAIN/isolated world communication",
   "environment": "Dedicated ephemeral headless Chrome; actual execution-world separation; Chrome APIs and CVAT/React state mocked; no user browser or company data",
   "passed": 15,

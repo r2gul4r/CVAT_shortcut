@@ -1,0 +1,25 @@
+(async()=>{
+  const results=[],sleep=ms=>new Promise(r=>setTimeout(r,ms)),$=id=>document.getElementById(id);
+  function check(name,condition){results.push({name,passed:Boolean(condition),error:condition?undefined:'Assertion failed'});}
+  await sleep(60);
+  check('shortcuts is default screen',!$('shortcuts-screen').hidden&&$('health-screen').hidden);
+  $('ai-assign').click();$('screen-health').click();await sleep(30);
+  check('switching away cancels shortcut recording',$('recording').hidden);
+  check('health is separate tab panel',$('shortcuts-screen').hidden&&!$('health-screen').hidden&&$('screen-health').getAttribute('aria-selected')==='true');
+  check('off state uses no stale success',$('health-status').textContent==='측정 꺼짐');
+  window.testHealthSnapshot={status:'ok',count:7,waiting:0,lastAt:Date.now(),server:0,network:0,limited:0,groups:[{kind:'save',median:180,count:7,failures:0}]};
+  $('health-toggle').click();await sleep(30);
+  check('start displays counts and median',$('health-count').textContent==='7'&&$('health-save-median').textContent==='180ms');
+  check('no connection overlay inserted',!document.getElementById('cvat-shortcuts-health'));
+  window.testHealthSnapshot={...window.testHealthSnapshot,status:'error',count:9,server:2};await sleep(2200);
+  check('open health tab refreshes without a server probe',$('health-status').textContent==='오류 감지'&&$('health-count').textContent==='9');
+  $('screen-shortcuts').click();await sleep(20);check('screen switch does not stop measurement',window.testHealthEnabled);
+  $('screen-shortcuts').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));await sleep(20);
+  check('keyboard tab navigation works',!$('health-screen').hidden&&document.activeElement===$('screen-health'));
+  window.testHealthFailure=true;await sleep(2200);check('communication failure does not claim healthy',$('health-status').textContent==='상태 확인 실패');window.testHealthFailure=false;
+  $('screen-shortcuts').click();$('screen-health').click();await sleep(30);
+  $('health-toggle').click();await sleep(30);check('stop clears displayed samples',$('health-count').textContent==='0'&&$('health-save-count').textContent==='0');
+  $('health-auto').click();await sleep(30);check('automatic option survives screen switch',window.testHealthAuto&&$('health-auto').checked);
+  const r=$('health-screen').getBoundingClientRect();check('health layout fits popup width',r.left>=0&&r.right<=400);
+  const pre=document.createElement('pre');pre.id='test-results';pre.textContent=JSON.stringify({suite:'Health popup tabs',passed:results.filter(r=>r.passed).length,failed:results.filter(r=>!r.passed).length,results});document.body.append(pre);
+})();

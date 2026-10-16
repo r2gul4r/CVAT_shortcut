@@ -1,0 +1,25 @@
+{
+  "version": "2.8.0",
+  "environment": "Windows Chrome, isolated profiles, synthetic CVAT data. HTTP cvat-http.test resolved to loopback only. No company data or deployed CVAT mutation.",
+  "tests": {
+    "bulk_logic": 52,
+    "bulk_actual_extension_insecure_http": 15,
+    "review_workspace_actual_extension": 36,
+    "health_logic": 53,
+    "review_logic_api": 48,
+    "synthetic_dom_regression": 478,
+    "release": 39
+  },
+  "passed": 721,
+  "failed": 0,
+  "runtime_files": 37,
+  "zip": "cvat-sidebar-shortcuts-2.8.0-ko.zip",
+  "sha256": "1a652fafc34f904be215b9a7470ea26a8e15cd3e8afac18d5ef1d5037315719b",
+  "limitations": [
+    "Real company CVAT native editing compatibility and server persistence were not tested.",
+    "Track edits require whole Job scope; Tag, Skeleton and protected objects are not edited.",
+    "macOS checks are metadata and input simulations in Windows Chrome, not Mac hardware tests."
+  ],
+  "github_pushed": false,
+  "web_store_submitted": false
+}

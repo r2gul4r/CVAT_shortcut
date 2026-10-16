@@ -40,6 +40,7 @@
   let sendingEscape = false;
   let labelChoice = null, labelSaveQueue = Promise.resolve(), labelEpoch = 0;
   let overlay = null, pasteLoop = null;
+  let contextExpired = false;
   const TOOLBOX = ".cvat-brush-tools-toolbox";
   const MAX_BRUSH_SIZE = 500;
   const BRUSH_STEP = 1;
@@ -515,6 +516,7 @@
   }
 
   async function enable() {
+    if (contextExpired) return {supported: Boolean(sidebar()), enabled: false, error: "CVAT 작업을 저장하고 페이지를 새로고침한 뒤 다시 활성화하세요."};
     pasteLoop?.stop('확장 상태가 변경됐습니다.');
     labelEpoch += 1; labelChoice = null;
     cancelPan();
@@ -566,7 +568,7 @@
     } else if (message?.type === "CVAT_SHORTCUTS_STATUS" || message?.type === "CVAT_SHORTCUTS_LABELS") {
       respond(status());
     } else if (message?.type === "CVAT_SHORTCUTS_OVERLAY_SHOW") {
-      if (enabled && sidebar()) overlay?.show({recover: message.recover === true});
+      if (enabled && sidebar()) overlay?.show({recover: message.recover === true,screen:message.screen});
       respond(status());
     } else if (message?.type === "CVAT_SHORTCUTS_DISABLE") {
       pasteLoop?.stop('확장을 일시정지했습니다.');
@@ -737,7 +739,19 @@
   });
   chrome.storage.onChanged.addListener(onStorage);
   chrome.runtime.onMessage.addListener(onMessage);
+  function onInvalidated() {
+    if (contextExpired) return;
+    contextExpired = true; enabled = false;
+    labelEpoch += 1; labelChoice = null; generation += 1;
+    pasteLoop?.stop('확장 연결이 갱신되어 중지했습니다.');
+    cancelPan(); cancelPending(); wheelSession = null;
+    heldCodes.clear(); claimedCodes.clear();
+    try { chrome.storage.onChanged.removeListener?.(onStorage); } catch {}
+    try { chrome.runtime.onMessage.removeListener?.(onMessage); } catch {}
+    notify('확장 연결이 종료됐습니다. CVAT 작업을 저장하고 페이지를 새로고침한 뒤 확장을 다시 켜주세요.');
+  }
   overlay = globalThis.CVATLabelOverlay?.create({shared,
+    onInvalidated,
     getState: () => ({supported: Boolean(sidebar()), path: location.pathname, selected: chosenLabel(),
       shortcuts: settings.labelShortcuts, catalog: shared.readLabelCatalog()}),
     onSelect: (name) => {

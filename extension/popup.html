@@ -11,12 +11,14 @@
   <script src="review-core.js" defer></script>
   <script src="review-api.js" defer></script>
   <script src="review-native.js" defer></script>
+  <script src="bulk-native.js" defer></script>
+  <script src="bulk-panel.js" defer></script>
   <script src="review-popup.js" defer></script>
 </head>
 <body>
   <main>
     <header class="app-header">
-      <div><h1>CVAT 단축키 <small>2.5.1</small></h1><p class="subtitle">작업에 맞게 키와 라벨을 설정하세요.</p></div>
+      <div><h1>CVAT 단축키 <small>2.8.0</small></h1><p class="subtitle">작업에 맞게 키와 라벨을 설정하세요.</p></div>
       <nav class="header-links" aria-label="도움말"><a id="open-guide" class="guide-button" href="guide.html" target="_blank" rel="noopener">사용 가이드</a><a id="open-updates" class="guide-button" href="updates.html" target="_blank" rel="noopener">업데이트 내역</a></nav>
     </header>
     <nav class="screen-tabs" role="tablist" aria-label="확장 화면">
@@ -67,8 +69,8 @@
       <div class="section-heading"><h2 id="label-title">이 탭의 라벨 선택</h2><button id="label-refresh" type="button" class="text-button" disabled>목록 새로고침</button></div>
       <p class="section-note">이름을 누르면 다음 객체에 적용됩니다.</p>
       <div class="overlay-controls">
-        <label class="wheel-toggle"><input id="overlay-enabled" type="checkbox" disabled> 라벨 선택창 사용</label>
-        <button id="overlay-show" type="button" class="secondary" disabled title="기본 위치·크기·투명도로 다시 표시">선택창 복구</button>
+        <label class="wheel-toggle"><input id="overlay-enabled" type="checkbox" disabled> 작업 오버레이 사용</label>
+        <button id="overlay-show" type="button" class="secondary" disabled title="기본 위치·크기·투명도로 다시 표시">작업창 복구</button>
       </div>
       <div id="label-colors" hidden>
         <div class="list-heading" aria-hidden="true"><span>라벨</span><span>라벨 전환 단축키</span></div>
@@ -101,7 +103,7 @@
       <summary>단축키 · 라벨 사용 안내</summary>
       <p>AI·새 마스크·폴리곤과 N으로 새 객체를 시작할 때 선택한 라벨을 사용합니다. 기존 객체와 현재 그리는 객체의 라벨은 바뀌지 않습니다.</p>
       <p>N은 이전 도구와 설정을 불러옵니다. N을 확장 단축키로 지정하면 해당 확장 기능이 우선합니다.</p>
-      <p>라벨이나 색상이 없으면 CVAT의 Labels 또는 Overview를 열고 목록을 새로고침하세요. 선택창이 보이지 않으면 선택창 복구를 누르세요.</p>
+      <p>라벨이나 색상이 없으면 CVAT의 Labels 또는 Overview를 열고 목록을 새로고침하세요. 선택창이 보이지 않으면 작업창 복구를 누르세요.</p>
       <p>설정은 같은 Chrome 프로필의 탭들이 공유합니다. 페이지를 새로고침하면 확장을 다시 켜주세요. 선택창만 꺼도 단축키는 계속 작동합니다.</p>
       <p>지정한 확장 단축키는 CVAT보다 우선합니다. 입력칸·IME·대화상자에서는 기존 입력을 유지합니다.</p>
       <p id="platform-note"></p>
@@ -112,6 +114,7 @@
     </div>
     </div>
     <section id="health-screen" role="tabpanel" aria-labelledby="screen-health" hidden>
+      <button type="button" class="workspace-open secondary" data-popup-only data-open-workspace="health">작업 화면에서 연결 상태 열기 ↗</button><p data-popup-only class="section-note" role="status"></p>
       <div id="health-network" class="tool health-network" data-state="unknown"><h2>내 기기 연결</h2><p id="health-network-status" role="status">Chrome: 연결 여부 확인 중</p><p class="section-note">Chrome이 감지한 연결 여부입니다. Wi-Fi 신호 세기나 인터넷·CVAT 접속 성공을 보장하지 않습니다.</p></div>
       <div class="tool">
         <h2>내 CVAT 연결 상태</h2>
@@ -129,6 +132,9 @@
       <p class="section-note">열려 있는 동안 2초마다 갱신합니다. 추가 점검 요청이나 외부 전송은 없습니다. 응답 시간에는 서버·네트워크·다운로드 시간이 포함되며 저장 성공을 보장하지 않습니다.</p>
     </section>
     <section id="review-screen" role="tabpanel" aria-labelledby="screen-review" hidden>
+      <button type="button" class="workspace-open secondary" data-popup-only data-open-workspace="review">작업 화면에서 검수 열기 ↗</button><p data-popup-only class="section-note" role="status"></p>
+      <div class="review-modes" role="group" aria-label="검수 기능 선택"><button id="review-mode-inspect" type="button" aria-pressed="true">누락 검수</button><button id="review-mode-bulk" type="button" class="secondary" aria-pressed="false">삭제·라벨 변경</button></div>
+      <div id="review-inspection">
       <div class="tool">
         <div class="section-heading"><h2>필수 라벨 누락 검사</h2><button id="review-load" type="button" class="text-button">목록 새로고침</button></div>
         <p class="section-note">현재 Job의 모든 프레임에 있어야 할 라벨을 고르세요. 프레임마다 해당 라벨의 객체가 1개 이상 있는지 확인합니다.</p>
@@ -157,6 +163,40 @@
         </div>
       </div>
       <details class="help"><summary>검사 기준 · 데이터 보관</summary><p>저장된 Shape와 Track을 검사합니다. Track의 Outside 구간과 삭제 프레임은 제외하고, 화면에서 숨기거나 필터로 가린 객체도 포함합니다. Tag는 그린 객체로 세지 않습니다. Skeleton Track은 지원하지 않으며 검사 오류로 안내합니다.</p><p>라벨이 있으면 통과합니다. 객체 수·모양·손잡이 등 세부 누락은 판단하지 않습니다. 그림이나 라벨링을 자동으로 변경하거나 저장하지 않습니다.</p><p>검사를 누를 때 현재 CVAT 서버에서 데이터를 읽습니다. 이미지 조회와 외부 전송은 없습니다. 선택한 라벨과 마지막 결과(이름·누락 프레임·시각)는 이 Chrome 프로필에 보관하며, 좌표·마스크·속성은 보관하지 않습니다.</p></details>
+      </div>
+      <div id="bulk-editor" hidden>
+        <div class="tool">
+          <div class="section-heading"><h2>라벨 일괄 편집</h2><button id="bulk-load" type="button" class="text-button">목록 새로고침</button></div>
+          <p id="bulk-bounds" class="section-note">현재 Job 확인 전</p>
+          <p class="section-note">① 편집할 라벨을 고르고 스캔하세요. 해당 라벨이 있는 프레임을 새로 찾습니다.</p>
+          <div id="bulk-labels" class="review-labels" role="group" aria-label="편집 대상 라벨"></div>
+          <p class="section-note">먼저 CVAT 작업을 저장하세요. 숨김·필터로 가린 객체도 포함합니다.</p>
+          <button id="bulk-scan" type="button">선택 라벨 스캔 / 다시 스캔</button>
+        </div>
+        <div id="bulk-scan-results" class="tool" hidden>
+          <h2 id="bulk-scan-summary"></h2><div id="bulk-found-labels"></div>
+          <p class="section-note">선택한 라벨 중 하나라도 있는 프레임입니다. 번호는 CVAT 화면과 같습니다.</p>
+          <div id="bulk-found-frames" class="review-frames" aria-label="선택 라벨이 있는 프레임"></div>
+          <div class="review-pagination"><button id="bulk-page-previous" type="button" class="secondary">이전 목록</button><span id="bulk-page" class="muted"></span><button id="bulk-page-next" type="button" class="secondary">다음 목록</button></div>
+        </div>
+        <div id="bulk-edit-options" class="tool" hidden>
+          <h2>② 범위와 작업 선택</h2>
+          <label for="bulk-scope">편집할 프레임</label><select id="bulk-scope"><option value="range">번호·구간 지정</option><option value="all">검색된 전체 (현재 Job)</option></select>
+          <div id="bulk-range-row"><label for="bulk-frames">프레임 번호 또는 구간</label><input id="bulk-frames" type="text" placeholder="예: 3, 7, 20~40" maxlength="5000" autocomplete="off"><p class="section-note">쉼표로 여러 번호·구간을 함께 지정합니다. 해당 범위에 있는 선택 라벨의 객체만 편집합니다.</p></div>
+          <label for="bulk-operation">할 작업</label><select id="bulk-operation"><option value="delete">객체 삭제</option><option value="relabel">다른 라벨로 변경</option></select>
+          <div id="bulk-target-row" hidden><label for="bulk-target">변경 후 라벨</label><select id="bulk-target"><option value="">변경 후 라벨 선택</option></select></div>
+          <p class="section-note">클래스 목록과 객체 모양은 유지합니다. Track이 포함되면 검색된 전체를 선택해야 합니다.</p>
+          <button id="bulk-preview" type="button">대상 확인</button>
+        </div>
+        <div id="bulk-confirmation" class="tool" hidden>
+          <h2>③ 적용 전 확인</h2><p id="bulk-summary" class="bulk-summary"></p>
+          <label class="wheel-toggle"><input id="bulk-confirm" type="checkbox">대상 라벨·프레임·객체 수를 확인했어요</label>
+          <button id="bulk-apply" type="button" class="danger" disabled>확인한 객체 삭제</button>
+          <p class="section-note">적용 후 CVAT에서 확인하고 저장하세요. CVAT 자동 저장을 켰다면 해당 설정에 따라 저장될 수 있습니다. 라벨 변경 시 속성은 새 라벨 기준으로 바뀝니다.</p>
+        </div>
+        <p id="bulk-status" class="section-note" role="status" aria-live="polite"></p>
+        <details class="help"><summary>편집 범위와 제한</summary><p>마스크·폴리곤 등 Shape를 지원합니다. Track의 프레임 목록은 Outside 구간을 제외하지만 편집은 검색된 전체에서 Track 단위로 적용합니다. Tag·Skeleton은 대상이 아니며, 잠금·보호 객체 또는 확인할 수 없는 객체가 포함되면 실행하지 않습니다.</p><p>스캔은 현재 저장된 객체 정보 기준입니다. 삭제된 프레임에 객체 정보가 남아 있으면 목록에 포함될 수 있으며, 편집 연결을 확인하지 못하면 중단합니다. 스캔 후 데이터가 바뀌거나 5분이 지나면 다시 스캔하세요.</p><p>CVAT의 현재 작업에 반영하며 확장이 저장 버튼을 누르지는 않습니다. 되돌리기는 CVAT의 실행 취소를 사용합니다. 여러 객체는 여러 단계로 기록될 수 있습니다.</p></details>
+      </div>
     </section>
   </main>
 </body>

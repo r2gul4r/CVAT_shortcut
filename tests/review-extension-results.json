@@ -1,6 +1,6 @@
 {
   "environment": "Disposable Chrome MV3 with localhost-only pregrant and synthetic CVAT Redux/input. No company data or personal browser. Permission prompt and deployed CVAT are not tested.",
-  "passed": 17,
+  "passed": 36,
   "failed": 0,
   "results": [
     {
@@ -69,6 +69,82 @@
     },
     {
       "name": "changing required labels invalidates old result",
+      "passed": true
+    },
+    {
+      "name": "popup opens review in existing movable shell and preserves Job selection",
+      "passed": true
+    },
+    {
+      "name": "trusted clicks operate review buttons and checkboxes without reaching CVAT",
+      "passed": true
+    },
+    {
+      "name": "overlay executes vendor JSON review and displays the same missing results",
+      "passed": true
+    },
+    {
+      "name": "overlay frame navigation uses validated service worker MAIN bridge",
+      "passed": true
+    },
+    {
+      "name": "native select keyboard changes the filter without leaking shortcuts to CVAT",
+      "passed": true
+    },
+    {
+      "name": "native bridge rejects another Job, unknown actions and invalid frames, ignoring a spoofed target tab",
+      "passed": true
+    },
+    {
+      "name": "review grid adapts to width; switching views retains position, size and transparency",
+      "passed": true
+    },
+    {
+      "name": "overlay observes actual existing requests with no network probes",
+      "passed": true
+    },
+    {
+      "name": "popup and overlay share monitoring statistics and alert settings",
+      "passed": true
+    },
+    {
+      "name": "minimized launcher remains draggable and restores the active view",
+      "passed": true
+    },
+    {
+      "name": "close removes the whole overlay while passive monitoring continues",
+      "passed": true
+    },
+    {
+      "name": "popup can reopen closed overlay directly into a chosen view without losing review",
+      "passed": true
+    },
+    {
+      "name": "Job navigation discards the old visible report instead of showing it for another Job",
+      "passed": true
+    },
+    {
+      "name": "health remains available after SPA Job change and closing/reopening the overlay",
+      "passed": true
+    },
+    {
+      "name": "manual monitoring starts and counts only new requests after changing Job",
+      "passed": true
+    },
+    {
+      "name": "automatic monitoring follows another SPA Job while health overlay stays open",
+      "passed": true
+    },
+    {
+      "name": "offline and reconnection notices still work after SPA navigation without probes",
+      "passed": true
+    },
+    {
+      "name": "returning through the task list restores the health overlay on the current Job",
+      "passed": true
+    },
+    {
+      "name": "native review bridge accepts the current Job after multiple SPA route changes",
       "passed": true
     }
   ]

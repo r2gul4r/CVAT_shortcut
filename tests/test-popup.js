@@ -79,7 +79,7 @@
       assert(fixtureAPI.metrics.injections === 2 && fixtureAPI.metrics.world === "ISOLATED");
       assert(fixtureAPI.metrics.history[0].world === "MAIN" && fixtureAPI.metrics.history[0].files.join(",") === "native-repeat.js");
       assert(fixtureAPI.metrics.history.slice(0,2).every(entry => entry.tabId === 7));
-      assert(fixtureAPI.metrics.files.join(",") === "common.js,overlay.js,paste-repeat.js,content.js" && !$("disable").hidden);
+      assert(fixtureAPI.metrics.files.join(",") === "common.js,review-core.js,review-api.js,bulk-panel.js,review-popup.js,workspace-views.js,workspace-panels.js,overlay.js,paste-repeat.js,content.js" && !$("disable").hidden);
       $("disable").click(); await delay(20); assert($("disable").hidden && !$("enable").disabled);
     });
     await test("MAIN adapter injection failure retains existing tool shortcuts and reports N limitation", async () => {

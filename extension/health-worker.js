@@ -1,5 +1,5 @@
 /* Observes existing requests only, after an explicit optional host grant. */
-importScripts('health-core.js');
+importScripts('health-core.js','review-native.js','bulk-native.js');
 const health = globalThis.CVATHealth;
 const sessions = new Map();
 const starts = new Map();
@@ -21,6 +21,36 @@ function persist() {
   return writeQueue;
 }
 function supported(url) { try { const u=new URL(url); return /^https?:$/.test(u.protocol) && /^\/tasks\/\d+\/jobs\/\d+\/?$/.test(u.pathname); } catch { return false; } }
+async function verifyOverlay(sender,context){
+  if(sender.id!==chrome.runtime.id || sender.frameId!==0 || !Number.isInteger(sender.tab?.id) || sender.documentLifecycle&&sender.documentLifecycle!=='active')throw Error('CVAT 작업 오버레이에서 사용하세요.');
+  const source=new URL(sender.url),tab=await chrome.tabs.get(sender.tab.id),current=new URL(tab.url);
+  // A content-script context can retain its original sender.url after pushState.
+  // Bind to the live top document instead of treating that old pathname as the Job.
+  if(!context || !/^https?:$/.test(source.protocol) || !supported(tab.url) || source.origin!==current.origin || current.origin!==context.origin || current.pathname!==context.path)throw Error('Job이 바뀌었습니다. 현재 Job에서 다시 시도하세요.');
+  const values=await chrome.scripting.executeScript({target:{tabId:sender.tab.id,frameIds:[0]},world:'ISOLATED',func:()=>({origin:location.origin,path:location.pathname})});
+  const top=values.find(value=>value.frameId===0),live=top?.result;
+  if(!live || live.origin!==context.origin || live.path!==context.path || sender.documentId&&sender.documentId!==top.documentId)throw Error('페이지 연결이 바뀌었습니다. 현재 Job에서 다시 시도하세요.');
+  return sender.tab.id;
+}
+chrome.runtime.onMessage.addListener((message,sender,respond)=>{
+  if(message?.type==='CVAT_WORKSPACE_BULK' && sender.id===chrome.runtime.id){
+    void(async()=>{
+      const tabId=await verifyOverlay(sender,message.context),value=message.request;
+      if(!value||!['catalog','scan','preview','apply'].includes(value.action))throw Error('잘못된 일괄 편집 요청입니다.');
+      const request={...message.context,action:value.action,operation:value.operation,labels:value.labels,target:value.target,scope:value.scope,frames:value.frames,scanToken:value.scanToken,token:value.token,confirm:value.confirm};
+      const values=await chrome.scripting.executeScript({target:{tabId,frameIds:[0]},world:'MAIN',func:CVATBulkEditNative,args:[request]});
+      return values?.find(item=>item.frameId===0)?.result||{error:'일괄 편집 결과를 확인하지 못했습니다.'};
+    })().then(respond,error=>respond({error:error.message||'일괄 편집 실패'}));return true;
+  }
+  if(message?.type!=='CVAT_WORKSPACE_NATIVE' || sender.id!==chrome.runtime.id)return;
+  void(async()=>{
+    const tabId=await verifyOverlay(sender,message.context);
+    if(!['status','navigate'].includes(message.action) || message.action==='navigate'&&!Number.isSafeInteger(message.frame))throw Error('잘못된 검수 화면 요청입니다.');
+    const values=await chrome.scripting.executeScript({target:{tabId,frameIds:[0]},world:'MAIN',func:CVATReviewNative,args:[{...message.context,action:message.action,frame:message.frame}]});
+    return values.find(value=>value.frameId===0)?.result || {error:'CVAT 화면 응답을 받지 못했습니다.'};
+  })().then(respond,error=>respond({error:error.message}));
+  return true;
+});
 async function pageMessage(id,session,message){
   return chrome.tabs.sendMessage(id,{...message,pageId:session.pageId,origin:session.origin,jobPath:session.jobPath},{frameId:0});
 }
@@ -34,7 +64,10 @@ async function attachPage(id,session){
   try{
     const config={type:'CVAT_HEALTH_PAGE_START',alerts:alertsEnabled};
     let response;
-    try{response=await pageMessage(id,session,config);}catch{
+    try{response=await pageMessage(id,session,config);}catch{/* No receiver yet. */}
+    // Other extension content handlers can keep sendMessage connected while the
+    // health listener was disposed on a Job change. An empty reply also needs setup.
+    if(response?.ready!==true){
       if(sessions.get(id)!==session)return;
       await chrome.scripting.executeScript({target:{tabId:id},files:['health-page.js']});
       if(sessions.get(id)!==session)return;
@@ -176,8 +209,10 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
   if (!message?.type?.startsWith('CVAT_HEALTH_') || sender.id!==chrome.runtime.id) return;
   void ready.then(async()=>{
     const fromPopup = !sender.tab && sender.url===chrome.runtime.getURL('popup.html');
+    let fromOverlay=false;
+    if(!fromPopup&&message.type!=='CVAT_HEALTH_NETWORK'){await verifyOverlay(sender,message.context);fromOverlay=true;}
     if(message.type==='CVAT_HEALTH_ALERTS'){
-      if(!fromPopup||typeof message.enabled!=='boolean')throw new Error('Popup required');
+      if((!fromPopup&&!fromOverlay)||typeof message.enabled!=='boolean')throw new Error('Popup required');
       alertsWrite=alertsWrite.catch(()=>{}).then(async()=>{
         await chrome.storage.local.set({[ALERT_KEY]:message.enabled});alertsEnabled=message.enabled;
         await Promise.all([...sessions].map(([tabId,value])=>pageMessage(tabId,value,{type:'CVAT_HEALTH_PAGE_SETTINGS',alerts:alertsEnabled}).catch(()=>{})));
@@ -189,15 +224,16 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
     if (!Number.isInteger(id)) throw new Error('Invalid tab');
     if(message.type==='CVAT_HEALTH_NETWORK'){
       const session=sessions.get(id);
-      let url;try{url=new URL(sender.url);}catch{}
-      if(!session||!sender.tab||sender.frameId!==0||!url||url.origin!==session.origin||url.pathname!==session.jobPath||message.pageId!==session.pageId||typeof message.online!=='boolean')throw new Error('Inactive page');
+      if(!session||message.pageId!==session.pageId||typeof message.online!=='boolean')throw new Error('Inactive page');
+      await verifyOverlay(sender,{origin:session.origin,path:session.jobPath});
+      if(sessions.get(id)!==session)throw new Error('Inactive page');
       if(message.online===false)void notify(id,session,'offline');
       return {accepted:true};
     }else if (message.type==='CVAT_HEALTH_START') {
-      if (!fromPopup) throw new Error('Popup required');
+      if (!fromPopup&&!fromOverlay) throw new Error('Popup required');
       await startTab(id);
     } else if(message.type==='CVAT_HEALTH_AUTO'){
-      if(!fromPopup)throw new Error('Popup required');
+      if(!fromPopup&&!fromOverlay)throw new Error('Popup required');
       const tab=await chrome.tabs.get(id);
       if(!supported(tab.url))throw new Error('CVAT Job 탭에서 사용하세요.');
       const origin=new URL(tab.url).origin;

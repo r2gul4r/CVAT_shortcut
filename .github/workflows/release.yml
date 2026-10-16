@@ -41,6 +41,8 @@ jobs:
         run: |
           python tools/release_notes.py --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/build-overlay-views.py --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/release_gate.py
       - name: Test release failure and retry handling
         run: python -m unittest discover -s tests -p test_release.py -v
@@ -52,8 +54,18 @@ jobs:
         run: node --test tests/test-health.cjs
       - name: Test required-label review logic and API failures
         run: node --test tests/test-review.cjs
+      - name: Test bulk edit boundaries and stale previews
+        run: node --test tests/test-bulk.cjs
+      - name: Test bulk edit in real Chrome extension
+        run: node tests/run-bulk-extension.mjs
       - name: Test review in real Chrome extension
         run: node tests/run-review-extension.mjs
+      - name: Test extension reload with each overlay view
+        run: |
+          foreach ($screen in @('labels', 'review', 'health')) {
+            node tests/run-context-extension.mjs $screen
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
       - name: Test Chrome execution worlds
         run: node tests/run-world-tests.mjs
       - name: Test real Chrome extension APIs

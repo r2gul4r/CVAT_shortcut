@@ -248,7 +248,7 @@
     else save(recording, candidate);
   }, true);
 
-  $("enable").addEventListener("click", async () => {
+  async function enableTab() {
     if (!activeTab || !shared.supportedURL(activeTab.url)) return;
     $("enable").disabled = true;
     try {
@@ -257,7 +257,7 @@
         await chrome.scripting.executeScript({target:{tabId:activeTab.id},files:["native-repeat.js"],world:"MAIN"});
       } catch { repeatBridgeLoaded = false; }
       const results = await chrome.scripting.executeScript({
-        target: {tabId: activeTab.id}, files: ["common.js", "overlay.js", "paste-repeat.js", "content.js"], world: "ISOLATED"
+        target: {tabId: activeTab.id}, files: ["common.js", "review-core.js", "review-api.js", "bulk-panel.js", "review-popup.js", "workspace-views.js", "workspace-panels.js", "overlay.js", "paste-repeat.js", "content.js"], world: "ISOLATED"
       });
       const status = results.find((entry) => entry.frameId === 0)?.result;
       showTabStatus(status);
@@ -265,10 +265,24 @@
       else if (!status.enabled) notice("설정을 읽지 못해 단축키가 일시정지 상태입니다.", true);
       else notice(repeatBridgeLoaded ? "이 탭에서 단축키를 사용할 수 있습니다. N도 선택한 라벨로 시작합니다." :
         "도구 단축키는 활성화됐지만 N 연동 코드를 불러오지 못했습니다. 페이지를 새로고침하고 다시 켜세요.", !repeatBridgeLoaded);
+      return status;
     } catch {
       showTabStatus(null);
       notice("단축키를 활성화하지 못했습니다. 작업 페이지를 새로고침한 뒤 다시 시도하세요. 브라우저 정책으로 확장 사용이 제한될 수 있습니다.", true);
     }
+  }
+  $("enable").addEventListener("click",()=>void enableTab());
+  for(const button of document.querySelectorAll('[data-open-workspace]'))button.addEventListener('click',async()=>{
+    const feedback=button.nextElementSibling;button.disabled=true;
+    try{
+      const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
+      if(!tab || tab.id!==activeTab?.id || tab.url!==activeTab?.url || !shared.supportedURL(tab.url))throw Error('CVAT Job 탭에서 팝업을 다시 열어주세요.');
+      if(!tabEnabled){const status=await enableTab();if(!status?.enabled)throw Error('작업창을 켜지 못했습니다. 단축키 탭의 안내를 확인하세요.');}
+      await chrome.storage.local.set({[OVERLAY_ENABLED_KEY]:true});overlayEnabled=true;render();
+      const result=await chrome.tabs.sendMessage(tab.id,{type:'CVAT_SHORTCUTS_OVERLAY_SHOW',screen:button.dataset.openWorkspace});
+      if(result?.overlay?.screen!==button.dataset.openWorkspace)throw Error('업데이트한 작업창을 불러오려면 CVAT 작업을 저장하고 페이지를 새로고침한 뒤 확장을 다시 켜주세요.');
+      window.close();
+    }catch(error){feedback.textContent=error.message;}finally{button.disabled=false;}
   });
   for (const action of ['start','stop']) $('paste-'+action).addEventListener('click', async () => {
     try {

@@ -1,4 +1,4 @@
-/* Movable label palette. Only selected names and palette geometry are stored locally. */
+/* Shared movable shell for labels, required-label review and connection status. */
 (() => {
   "use strict";
   const KEY = "cvatLabelOverlayV1";
@@ -10,9 +10,10 @@
     width: Number.isFinite(value?.width) ? Math.max(220, Math.min(2400, value.width)) : 248,
     height: Number.isFinite(value?.height) ? Math.max(320, Math.min(2400, value.height)) : 480,
     view: ["collapsed", "launcher"].includes(value?.view) ? "launcher" : "panel",
+    screen: ["review", "health"].includes(value?.screen) ? value.screen : "labels",
     transparency: Number.isFinite(value?.transparency) ? Math.max(0, Math.min(70, Math.round(value.transparency / 5) * 5)) : 0
   });
-  function create({shared, getState, onSelect}) {
+  function create({shared, getState, onSelect, onInvalidated}) {
     const host = document.createElement("div");
     host.id = "cvat-shortcuts-label-overlay";
     host.style.cssText = HOST_STYLE;
@@ -53,21 +54,40 @@
       input[type=range] {display:block;width:100%;margin:8px 0 4px;accent-color:#3979cf;cursor:pointer;}
       .range-ends {display:flex;justify-content:space-between;font-size:10px;}
       .launcher {font:13px system-ui;color:#fff;background:#203c61;border:1px solid #6982a2;border-radius:20px;padding:9px 13px;box-shadow:0 4px 15px #172c4530;max-width:calc(100vw - 16px);cursor:grab;touch-action:none;user-select:none;}
+      .workspace-tabs {display:flex;gap:3px;flex-shrink:0;padding:6px;background:#eef3f9;border-bottom:1px solid #dce5ef;}
+      .workspace-tabs button {flex:1;min-width:0;padding:7px 2px;background:transparent;color:#536578;font-size:12px;white-space:nowrap;}
+      .workspace-tabs [aria-selected=true] {background:#fff;color:#204e8c;font-weight:650;box-shadow:0 1px 4px #20304418;}
+      .workspace-content {flex:1;min-height:0;overflow:auto;padding:9px;overscroll-behavior:contain;scrollbar-gutter:stable;color:#203044;}
+      ${globalThis.CVATWorkspaceViews?.css || ''}
+      .workspace-content .section-heading,.workspace-content .review-label-actions,.workspace-content .health-actions,.workspace-content .buttons {flex-wrap:wrap;}
+      .workspace-content .tool {padding:9px;}
+      .workspace-content .review-labels {grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));}
+      .workspace-content .review-label {min-width:0;}
+      .workspace-content .review-pagination {flex-wrap:wrap;}
+      .workspace-content #health-screen {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));align-items:start;gap:8px;}
+      .workspace-content .workspace-health-main {grid-column:1/-1;}
+      .workspace-content select {max-width:100%;}
     `;
     const el = (tag, cls, text) => {const node = document.createElement(tag); if (cls) node.className = cls; if (text) node.textContent = text; return node;};
     const control = (text, action, cls, label) => {
       const node = el("button", cls, text); node.type = "button"; node.dataset.action = action;
       if (label) node.setAttribute("aria-label", label); return node;
     };
-    const panel = el("section", "panel"); panel.setAttribute("aria-label", "확장 라벨 선택창");
+    const panel = el("section", "panel"); panel.setAttribute("aria-label", "CVAT 작업 오버레이");
     const header = el("header"), dragHandle = control("⠿ 라벨 선택", "drag", "drag", "라벨창 이동: 드래그 또는 방향키");
     const fold = control("−", "fold", "icon", "라벨창 최소화");
     const hide = control("×", "hide", "icon", "라벨 선택창 끄기"); header.append(dragHandle, fold, hide);
+    const screenNames={labels:'라벨 선택',review:'검수',health:'연결 상태'};
+    const tabs=el('nav','workspace-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','작업 화면');
+    const tabButtons=Object.entries(screenNames).map(([name,text])=>{const button=control(text,'screen-'+name);button.setAttribute('role','tab');button.id='workspace-tab-'+name;button.setAttribute('aria-controls',name==='labels'?'workspace-labels':name+'-screen');tabs.append(button);return button;});
     const selected = el("div", "selected"), selectedName = el("strong");
     selected.append(el("span", "caption", "다음 객체의 기본 라벨"), selectedName);
     const body = el("div", "body"), list = el("div", "list"); list.setAttribute("role", "group"); list.setAttribute("aria-label", "사용할 수 있는 라벨");
+    list.id='workspace-labels';
+    const workspaceContent=el('div','workspace-content');workspaceContent.hidden=true;
+    const workspace=globalThis.CVATWorkspacePanels?.create(workspaceContent);
     const footer = el("footer"), hint = el("div", null, "현재 그리는 객체는 그대로 유지됩니다.");
-    const refresh = control("목록 새로고침", "refresh", "refresh"); footer.append(hint, refresh); body.append(list, footer);
+    const refresh = control("목록 새로고침", "refresh", "refresh"); footer.append(hint, refresh); body.append(list, workspaceContent, footer);
     const transparency = el("label", "transparency"), transparencyTitle = el("span", "transparency-title"), transparencyValue = el("span");
     const slider = el("input"); slider.type = "range"; slider.min = "0"; slider.max = "70"; slider.step = "5"; slider.setAttribute("aria-label", "오버레이 투명도");
     transparencyTitle.append(el("span", null, "오버레이 투명도"), transparencyValue);
@@ -76,7 +96,7 @@
     const resizeHandle = control("◢", "resize", "resize", "라벨창 크기 조절: 드래그 또는 방향키");
     resizeHandle.dataset.edge = "se";
     resizeHandle.title = "드래그해서 크기 조절";
-    panel.append(header, selected, body, resizeHandle);
+    panel.append(header, tabs, selected, body, resizeHandle);
     const resizeHandles = [resizeHandle];
     for (const [edge, name] of Object.entries({n:"위",s:"아래",e:"오른쪽",w:"왼쪽",nw:"왼쪽 위",ne:"오른쪽 위",sw:"왼쪽 아래"})) {
       const handle = control("", "resize", "resize-edge", name + " 가장자리 크기 조절");
@@ -90,6 +110,19 @@
     let ready = false, suppressClick = false, dead = false, externalPress = false, adjusting = false, overlayEnabled = true;
     const listeners = [];
     const heldControls = new Set();
+    function destroy() {
+      if (dead) return;
+      dead = true; enabled = false; clearInterval(timer);
+      workspace?.destroy(); resetInteraction(false); host.remove();
+      for (const remove of listeners) remove();
+      // Chrome also rejects listener cleanup after extension reload/unload.
+      try { chrome.storage.onChanged.removeListener?.(storage); } catch {}
+    }
+    function live() {
+      if (dead) return false;
+      try { if (chrome.runtime?.id) return true; } catch {}
+      destroy(); onInvalidated?.(); return false;
+    }
     const on = (target, type, listener, options) => { target.addEventListener(type, listener, options); listeners.push(() => target.removeEventListener(type, listener, options)); };
     const ownsEvent = (event) => event.composedPath().includes(host);
     function applyTransparency() {
@@ -135,8 +168,8 @@
     }
     function save() {
       const snapshot = {...prefs};
-      saved = saved.catch(() => {}).then(() => chrome.storage.local.set({[KEY]: snapshot})).catch(() => {
-        hint.textContent = "라벨창 설정을 저장하지 못했습니다. 다시 조절해 주세요.";
+      saved = saved.catch(() => {}).then(() => live() ? chrome.storage.local.set({[KEY]: snapshot}) : undefined).catch(() => {
+        if (live()) hint.textContent = "라벨창 설정을 저장하지 못했습니다. 다시 조절해 주세요.";
       });
     }
     function resizeFrom(origin, edge, dx, dy) {
@@ -154,21 +187,27 @@
       Object.assign(prefs, place());
     }
     function render(force = false) {
-      if (dead || !ready) return;
+      if (!live() || !ready) return;
       const state = getState();
       const show = enabled && overlayEnabled && state.supported;
       host.style.setProperty("display", show ? "block" : "none", "important");
-      if (!show) { resetInteraction(false); return; }
+      if (!show) { workspace?.setView(null);resetInteraction(false); return; }
       // Elements outside an element-fullscreen subtree are not painted, regardless of z-index.
       const container = document.fullscreenElement || document.documentElement;
       if (host.parentElement !== container) { container.append(host); force = true; }
       applyTransparency();
       const catalog = state.catalog;
-      const nextSignature = JSON.stringify([state.path, state.selected, state.shortcuts, catalog, prefs.view]);
+      workspace?.setView(prefs.view==='panel'&&!document.hidden?prefs.screen:null);
+      const nextSignature = JSON.stringify([state.path, state.selected, state.shortcuts, catalog, prefs.view,prefs.screen]);
       if (!force && nextSignature === signature) { if (!drag) place(); return; }
       signature = nextSignature;
       panel.hidden = prefs.view === "launcher"; launcher.hidden = !panel.hidden;
       body.hidden = prefs.view !== "panel";
+      selected.hidden=prefs.screen!=='labels';list.hidden=prefs.screen!=='labels';workspaceContent.hidden=prefs.screen==='labels';
+      hint.hidden=refresh.hidden=prefs.screen!=='labels';
+      dragHandle.textContent='⠿ '+screenNames[prefs.screen];launcher.textContent=screenNames[prefs.screen];
+      dragHandle.setAttribute('aria-label','작업창 이동: 드래그 또는 방향키');fold.setAttribute('aria-label','작업창 최소화');hide.setAttribute('aria-label','작업창 끄기');launcher.setAttribute('aria-label',screenNames[prefs.screen]+' 작업창 펼치기');
+      for(const button of tabButtons){const active=button.dataset.action==='screen-'+prefs.screen;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;}
       for (const handle of resizeHandles) handle.hidden = body.hidden;
       selectedName.textContent = state.selected || "라벨을 선택하세요";
       selectedName.title = state.selected || "라벨을 선택하세요";
@@ -207,16 +246,18 @@
           state = document.elementFromPoint(x, y) === host ? "visible" : "covered";
         }
       }
-      return {state, view: prefs.view};
+      return {state, view: prefs.view,screen:prefs.screen};
     }
     function action(button) {
-      if (button.disabled || !enabled || !overlayEnabled || !getState().supported) return;
+      if (!live() || button.disabled || !enabled || !overlayEnabled || !getState().supported) return;
       if (button.dataset.action === "select") { onSelect(button.value); render(true); return; }
       if (button.dataset.action === "refresh") { render(true); return; }
+      if(button.dataset.action.startsWith('screen-')){prefs.screen=button.dataset.action.slice(7);render(true);save();return;}
       if (button.dataset.action === "fold") prefs.view = "launcher";
       else if (button.dataset.action === "hide") {
         overlayEnabled = false; render(true);
-        chrome.storage.local.set({[ENABLED_KEY]: false}).catch(() => {
+        Promise.resolve().then(() => live() ? chrome.storage.local.set({[ENABLED_KEY]: false}) : undefined).catch(() => {
+          if (!live()) return;
           overlayEnabled = true; render(true); hint.textContent = "닫기 설정을 저장하지 못했습니다. 다시 시도하세요.";
         });
         return;
@@ -243,7 +284,7 @@
       root.activeElement?.blur();
     }
     function pointer(event) {
-      if (!enabled || !overlayEnabled || dead) return;
+      if (!enabled || !overlayEnabled || !live()) return;
       if (adjusting && /move$/.test(event.type) && !(event.buttons & 1)) finishAdjustment(true);
       const own = ownsEvent(event);
       if (["pointerdown", "mousedown"].includes(event.type) && !own && !drag && event.buttons) externalPress = true;
@@ -261,6 +302,21 @@
         if (["pointerup", "pointercancel", "lostpointercapture"].includes(event.type)) finishAdjustment(true);
         if (event.type === "click") { event.preventDefault(); slider.blur(); }
         // Keep native range dragging; capture prevents CVAT from receiving the pointer.
+        return;
+      }
+      if(!drag && event.composedPath().includes(workspaceContent)){
+        const target=event.composedPath().find(node=>node instanceof Element && workspaceContent.contains(node));
+        const nativeInput=target?.closest('select,textarea,input:not([type=checkbox]):not([type=range])');
+        if(nativeInput){if(event.type==='pointerdown')nativeInput.focus({preventScroll:true});return;}
+        // A checkbox is already toggled by the browser before its click listener.
+        // Let its native change fire; cancelling or clicking again would undo it.
+        if(event.type==='click'&&target?.matches('input[type=checkbox]')){target.focus({preventScroll:true});return;}
+        if(event.type!=='wheel')event.preventDefault();
+        if(event.type==='click'&&event.button===0){
+          const control=target?.closest('button,input,summary,label');
+          const input=control?.tagName==='LABEL'?control.querySelector('input'):control;
+          if(input&&!input.disabled){input.focus({preventScroll:true});if(input.tagName==='SUMMARY')input.parentElement.open=!input.parentElement.open;else input.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:false,cancelable:true}));}
+        }
         return;
       }
       if (event.type !== "wheel") event.preventDefault();
@@ -285,6 +341,7 @@
       }
     }
     function handleKey(event) {
+      if (!live()) return false;
       // CVAT must receive modifier releases even if focus moved into the overlay.
       if (/^(Control|Shift|Alt|Meta)(Left|Right)$/.test(event.code)) return false;
       if (heldControls.has(event.code)) {
@@ -292,12 +349,24 @@
         event.preventDefault(); event.stopImmediatePropagation(); return true;
       }
       if (!ownsEvent(event)) return false;
+      if(event.composedPath().includes(workspaceContent)){
+        event.stopImmediatePropagation();
+        const target=event.composedPath().find(node=>node instanceof Element && workspaceContent.contains(node));
+        if(target?.matches('button,input[type=checkbox],summary')&&['Space','Enter'].includes(event.code)){
+          event.preventDefault();
+          if(event.type==='keydown'&&!event.repeat&&!target.disabled){if(target.tagName==='SUMMARY')target.parentElement.open=!target.parentElement.open;else target.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:false,cancelable:true}));}
+        }
+        return true;
+      }
       if (event.composedPath().includes(slider)) {
         event.stopImmediatePropagation();
         if (event.type === "keyup") save();
         return true;
       }
       const button = event.composedPath().find((node) => node instanceof HTMLButtonElement && root.contains(node));
+      if(button?.dataset.action.startsWith('screen-')&&['ArrowLeft','ArrowRight','Home','End'].includes(event.code)){
+        event.preventDefault();event.stopImmediatePropagation();if(event.type==='keydown'){const index=tabButtons.indexOf(button),next=event.code==='Home'?0:event.code==='End'?2:(index+(event.code==='ArrowRight'?1:2))%3;action(tabButtons[next]);tabButtons[next].focus({preventScroll:true});}return true;
+      }
       if (!button || !["Space", "Enter", "Escape", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.code)) return false;
       event.preventDefault(); event.stopImmediatePropagation();
       if (event.type === "keydown" && !event.repeat) {
@@ -323,32 +392,35 @@
       on(window.visualViewport, "scroll", () => { if (!drag) place(); });
     }
     on(window, "blur", () => resetInteraction(true));
-    on(document, "visibilitychange", () => { if (document.hidden) resetInteraction(true); });
+    on(document, "visibilitychange", () => { if (document.hidden) resetInteraction(true);render(); });
     on(document, "fullscreenchange", () => { resetInteraction(true); render(true); });
     const storage = (changes, area) => {
       if (area !== "local") return;
       if (changes[ENABLED_KEY]) { overlayEnabled = changes[ENABLED_KEY].newValue !== false; if (!overlayEnabled) resetInteraction(true); }
-      if (changes[KEY] && !drag && !adjusting) prefs = normalize(changes[KEY].newValue);
+      // Geometry is shared, but changing another tab's screen must not start a review here.
+      if (changes[KEY] && !drag && !adjusting) prefs = {...normalize(changes[KEY].newValue),screen:prefs.screen};
       if (changes[ENABLED_KEY] || changes[KEY]) render(true);
     };
-    chrome.storage.onChanged.addListener(storage);
-    Promise.all([chrome.storage.local.get(KEY), chrome.storage.local.get(ENABLED_KEY)]).then(([value, toggle]) => {
+    if (live()) chrome.storage.onChanged.addListener(storage);
+    Promise.resolve().then(() => live() ? Promise.all([chrome.storage.local.get(KEY), chrome.storage.local.get(ENABLED_KEY)]) : [{}, {}]).then(([value, toggle]) => {
       prefs = normalize(value[KEY]); overlayEnabled = toggle[ENABLED_KEY] !== false;
     }).catch(() => {}).finally(() => { ready = true; render(true); });
     return {
       ownsEvent, handleKey, status, isDragging: () => Boolean(drag),
       refresh: () => render(),
-      enable() { enabled = true; clearInterval(timer); timer = setInterval(render, 500); render(true); },
-      disable() { enabled = false; clearInterval(timer); resetInteraction(true); host.remove(); },
-      show({recover = false} = {}) {
+      enable() { if (!live()) return; enabled = true; clearInterval(timer); timer = setInterval(render, 500); render(true); },
+      disable() { enabled = false; clearInterval(timer); workspace?.setView(null);resetInteraction(true); host.remove(); },
+      show({recover = false,screen} = {}) {
+        if (!live()) return;
         if (recover) {
           resetInteraction(true);
           prefs = normalize(null);
           host.hidden = false; host.style.cssText = HOST_STYLE;
         }
+        if(Object.hasOwn(screenNames,screen))prefs.screen=screen;
         prefs.view = "panel"; render(true); save();
       },
-      destroy() { dead = true; enabled = false; clearInterval(timer); resetInteraction(false); host.remove(); for (const remove of listeners) remove(); chrome.storage.onChanged.removeListener?.(storage); }
+      destroy
     };
   }
   globalThis.CVATLabelOverlay = Object.freeze({create});

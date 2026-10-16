@@ -28,7 +28,7 @@
       },
       onChanged: {addListener(listener) { listeners.storage.push(listener); }}
     },
-    runtime: {async sendMessage(message) {
+    runtime: {id: 'synthetic-extension-id', async sendMessage(message) {
       if(message.type==='CVAT_HEALTH_AUTO'){window.testHealthAuto=message.enabled;window.testHealthEnabled=message.enabled;}
       if (message.type === 'CVAT_HEALTH_START') window.testHealthEnabled = true;
       if (message.type === 'CVAT_HEALTH_STOP') window.testHealthEnabled = false;

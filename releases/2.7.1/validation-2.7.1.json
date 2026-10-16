@@ -1,0 +1,35 @@
+{
+  "version": "2.7.1",
+  "passed": 160,
+  "failed": 0,
+  "suites": {
+    "healthLogicAndNavigationGuards": 53,
+    "reviewAndWorkspaceExtension": 36,
+    "bulkExtension": 10,
+    "healthExtension": 19,
+    "extensionReload": 3,
+    "release": 39
+  },
+  "runtimeFiles": 37,
+  "zipSha256": "4b518aefbe08f33df1909695cbe1c846e2f75257bf63e467f44785c05cbfdba2",
+  "reproduced": {
+    "priorVersion": "2.7.0",
+    "error": "상태 확인 실패 / Job이 바뀌었습니다. 오버레이를 다시 열어주세요.",
+    "senderPath": "/tasks/1/jobs/12",
+    "currentTabPath": "/tasks/1/jobs/99",
+    "closeAndReopenStillFailed": true
+  },
+  "fixes": [
+    "Verify current top-document origin/path and documentId when available instead of the original sender URL pathname",
+    "Retain rejection of mismatched Job, origin, frame, inactive lifecycle and old documents",
+    "Reattach health-page listeners on an unanswered START as well as a rejected sendMessage",
+    "Use the same live-page verification for offline notifications after SPA Job changes"
+  ],
+  "environment": "Windows Chrome disposable profiles, localhost synthetic CVAT only. No company data or personal browser.",
+  "limits": [
+    "Actual deployed company CVAT remains unverified",
+    "This turn reran affected suites (160), not all 744 checks from 2.7.0",
+    "Legacy Chrome without documentId uses the live top-frame origin/path validation; only current Chrome executed"
+  ],
+  "published": false
+}

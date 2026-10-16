@@ -1,0 +1,25 @@
+{
+  "version": "2.6.0",
+  "passed": 691,
+  "failed": 0,
+  "suites": {
+    "domAndPopup": 478,
+    "labelLogic": 12,
+    "healthLogicAndMessaging": 48,
+    "reviewLogicAndAPI": 48,
+    "executionWorlds": 17,
+    "healthExtension": 19,
+    "reviewAndWorkspaceExtension": 30,
+    "release": 39
+  },
+  "runtimeFiles": 35,
+  "zipSha256": "b268cab233441d238d645f47b5259109abeb9391e910abefcd77fa5700e6f4f6",
+  "environment": "Disposable Chrome profiles and synthetic localhost CVAT fixtures. No company data or personal browser.",
+  "limitations": [
+    "Actual deployed CVAT unverified",
+    "Actual site-permission prompt unverified",
+    "Physical Mac unverified",
+    "Final per-screen scroll and tab-state adjustments verified by rerunning the 30-check Chrome workspace integration suite; totals combine latest successful suite runs"
+  ],
+  "published": false
+}

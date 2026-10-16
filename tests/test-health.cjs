@@ -57,7 +57,7 @@ function worker(saved={},granted=true){
     permissions:{async getAll(){return {permissions:chrome.granted?['webRequest']:[],origins:chrome.granted?['http://cvat.test/*']:[]};},async contains(){return chrome.granted;},async remove(){chrome.granted=false;},onAdded:event('permissionAdded'),onRemoved:event('permissionRemoved')},
     storage:{session:{async get(keys){return Object.fromEntries((Array.isArray(keys)?keys:[keys]).map(key=>[key,structuredClone(storage[key])]));},async set(values){Object.assign(storage,structuredClone(values));}},local:{async get(key){return {[key]:structuredClone(storage[key])};},async set(values){Object.assign(storage,structuredClone(values));}}},
     tabs:{async get(id){if(!tabs[id])throw Error('No tab');return tabs[id];},async query(){return Object.values(tabs);},async sendMessage(id,message,options){pageMessages.push({id,...structuredClone(message),options});if(chrome.pageFailure)throw Error('No receiver');return {ready:true,online:true};},onRemoved:event('removed'),onUpdated:event('updated')},
-    scripting:{async executeScript(){if(chrome.deny)throw Error('Permission denied');return [{frameId:0,result:{visible:true}}];}},
+    scripting:{async executeScript({target}){if(chrome.deny)throw Error('Permission denied');const u=new URL(tabs[target.tabId].url);return [{frameId:0,documentId:tabs[target.tabId].documentId||'document-'+target.tabId,result:{origin:u.origin,path:u.pathname}}];}},
     get webRequest(){return chrome.granted?requestAPI:undefined;}};
   const requestAPI={onBeforeRequest:event('begin'),onCompleted:event('finish'),onErrorOccurred:event('error')};
   const ctx=vm.createContext({URL,chrome,console,Date:Clock,Map});ctx.importScripts=()=>vm.runInContext(core,ctx);
@@ -246,4 +246,67 @@ test('denied alert setting save leaves the previous setting active',async()=>{
   const w=worker();await w.send('CVAT_HEALTH_START');w.chrome.storage.local.set=async()=>{throw Error('Storage unavailable');};
   const result=await w.send('CVAT_HEALTH_ALERTS',7,undefined,{enabled:false});assert(result.error);assert.equal(result.alerts,true);
   await finishRequest(w);assert.equal(notices(w).length,1);
+});
+
+test('validated overlay controls only its own Job and shares popup monitoring state',async()=>{
+  const w=worker(),sender={id:'test-extension',tab:{id:7},frameId:0,url:w.tabs[7].url};
+  const context={origin:'http://cvat.test',path:'/tasks/1/jobs/12'};
+  assert.equal((await w.send('CVAT_HEALTH_START',8,sender,{context})).enabled,true);
+  assert.equal((await w.send('CVAT_HEALTH_STATUS',7)).enabled,true);
+  assert.equal((await w.send('CVAT_HEALTH_STATUS',8)).enabled,false);
+  assert.equal((await w.send('CVAT_HEALTH_ALERTS',7,sender,{context,enabled:false})).alerts,false);
+  assert.equal((await w.send('CVAT_HEALTH_STATUS',7)).alerts,false);
+  assert.equal((await w.send('CVAT_HEALTH_STOP',8,sender,{context})).enabled,false);
+});
+test('overlay cannot start monitoring without prior site permission',async()=>{
+  const w=worker({},false),sender={id:'test-extension',tab:{id:7},frameId:0,url:w.tabs[7].url};
+  assert((await w.send('CVAT_HEALTH_START',7,sender,{context:{origin:'http://cvat.test',path:'/tasks/1/jobs/12'}})).error);
+  assert.equal((await w.send('CVAT_HEALTH_STATUS')).enabled,false);
+});
+test('overlay messages reject subframes, stale Jobs, mismatched origin and missing context',async()=>{
+  const w=worker(),sender={id:'test-extension',tab:{id:7},frameId:0,url:w.tabs[7].url};
+  const context={origin:'http://cvat.test',path:'/tasks/1/jobs/12'};
+  for(const [from,extra] of [[{...sender,frameId:1},{context}],[sender,{}],[sender,{context:{...context,path:'/tasks/1/jobs/13'}}],[sender,{context:{...context,origin:'http://other.test'}}]]){
+    assert((await w.send('CVAT_HEALTH_START',7,from,extra)).error);
+  }
+  w.tabs[7].url='http://cvat.test/tasks/1/jobs/99';
+  assert((await w.send('CVAT_HEALTH_START',7,sender,{context})).error);
+  assert.equal((await w.send('CVAT_HEALTH_STATUS')).enabled,false);
+});
+
+test('same-document navigation accepts the live Job despite the original sender URL',async()=>{
+  for(const original of ['/tasks/1/jobs/12','/tasks']){
+    const w=worker();w.tabs[7].url='http://cvat.test/tasks/1/jobs/99';
+    const sender={id:'test-extension',tab:{id:7},frameId:0,url:'http://cvat.test'+original,documentId:'document-7',documentLifecycle:'active'};
+    const context={origin:'http://cvat.test',path:'/tasks/1/jobs/99'};
+    assert.equal((await w.send('CVAT_HEALTH_START',8,sender,{context})).enabled,true);
+    assert.equal((await w.send('CVAT_HEALTH_STATUS',8)).enabled,false);
+    assert.equal((await w.send('CVAT_HEALTH_STOP',8,sender,{context})).enabled,false);
+  }
+});
+test('another document or inactive lifecycle cannot impersonate the current Job',async()=>{
+  const w=worker(),context={origin:'http://cvat.test',path:'/tasks/1/jobs/12'};
+  const sender={id:'test-extension',tab:{id:7},frameId:0,url:w.tabs[7].url,documentId:'document-7',documentLifecycle:'active'};
+  for(const change of [{documentId:'old-document'},{documentLifecycle:'cached'},{documentLifecycle:'prerender'}])assert((await w.send('CVAT_HEALTH_START',7,{...sender,...change},{context})).error);
+  assert.equal((await w.send('CVAT_HEALTH_STATUS')).enabled,false);
+});
+test('navigation during live-page verification rejects the outdated request',async()=>{
+  const w=worker(),context={origin:'http://cvat.test',path:'/tasks/1/jobs/12'},sender={id:'test-extension',tab:{id:7},frameId:0,url:w.tabs[7].url};
+  const inject=w.chrome.scripting.executeScript;w.chrome.scripting.executeScript=async args=>{w.tabs[7].url='http://cvat.test/tasks/1/jobs/99';return inject(args);};
+  assert((await w.send('CVAT_HEALTH_START',7,sender,{context})).error);assert.equal((await w.send('CVAT_HEALTH_STATUS')).enabled,false);
+});
+test('new Job connection events accept the same live document but reject the previous session',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');const old=w.storage.cvatHealthSessions['7'].pageId;
+  const sender={id:'test-extension',tab:{id:7},frameId:0,url:w.tabs[7].url,documentId:'document-7'};
+  w.tabs[7].url='http://cvat.test/tasks/1/jobs/99';w.events.updated(7,{url:w.tabs[7].url});await w.flush();
+  await w.send('CVAT_HEALTH_START');const pageId=w.storage.cvatHealthSessions['7'].pageId;
+  assert((await w.send('CVAT_HEALTH_NETWORK',7,sender,{pageId:old,online:false})).error);
+  assert((await w.send('CVAT_HEALTH_NETWORK',7,sender,{pageId,online:false})).accepted);await w.flush();assert.equal(notices(w).at(-1).category,'offline');
+});
+test('page listeners are reinjected when another content handler leaves START unanswered',async()=>{
+  const w=worker();let attempts=0,injections=0;
+  const send=w.chrome.tabs.sendMessage,inject=w.chrome.scripting.executeScript;
+  w.chrome.tabs.sendMessage=async(...args)=>{const value=await send(...args);if(args[1].type==='CVAT_HEALTH_PAGE_START'&&++attempts===1)return undefined;return value;};
+  w.chrome.scripting.executeScript=async args=>{if(args.files?.includes('health-page.js'))injections++;return inject(args);};
+  const value=await w.send('CVAT_HEALTH_START');assert.equal(value.pageReady,true);assert.equal(injections,1);assert.equal(attempts,2);
 });

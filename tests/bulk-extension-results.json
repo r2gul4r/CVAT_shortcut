@@ -1,0 +1,67 @@
+{
+  "environment": "Disposable Chrome MV3; insecure HTTP cvat-http.test resolved to 127.0.0.1, synthetic native CVAT model. No company data or actual deployed CVAT.",
+  "passed": 15,
+  "failed": 0,
+  "results": [
+    {
+      "name": "HTTP fixture reproduces LAN secure-context restrictions without mocked crypto",
+      "passed": true
+    },
+    {
+      "name": "missing frame results stay separate from existing-label editing",
+      "passed": true
+    },
+    {
+      "name": "popup switches from inspection to bulk editing within the review screen",
+      "passed": true
+    },
+    {
+      "name": "independent scan lists frames where the selected label exists on insecure HTTP",
+      "passed": true
+    },
+    {
+      "name": "preview reports selected class and numbered frames without editing; confirmation required",
+      "passed": true
+    },
+    {
+      "name": "delete changes only intended native objects and leaves CVAT save to the user",
+      "passed": true
+    },
+    {
+      "name": "whole Job relabel keeps object ID and geometry",
+      "passed": true
+    },
+    {
+      "name": "overlay text input accepts frame lists without triggering CVAT keys",
+      "passed": true
+    },
+    {
+      "name": "overlay performs confirmed range deletion through the validated MAIN bridge",
+      "passed": true
+    },
+    {
+      "name": "bridge rejects wrong Job, unknown action, and forged apply token",
+      "passed": true
+    },
+    {
+      "name": "changes after preview stop application before mutation",
+      "passed": true
+    },
+    {
+      "name": "closing popup during apply leaves review invalidated and completes only the confirmed object",
+      "passed": true
+    },
+    {
+      "name": "large present-frame results paginate in groups of 30 without losing frames",
+      "passed": true
+    },
+    {
+      "name": "changing source labels invalidates scan and prevents stale preview",
+      "passed": true
+    },
+    {
+      "name": "empty label scan shows no matches and hides edit controls",
+      "passed": true
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 (() => {
   'use strict';
-  const $=id=>document.getElementById(id),core=globalThis.CVATReviewCore;
+  function create(root=document,transport=null){
+  const $=id=>root.querySelector('#'+id),core=globalThis.CVATReviewCore;
   let tab,context,key,prefsKey,catalog=[],selected=[],report=null,busy=false,initializing=false,initialized=false,closed=false,pageIndex=0,currentFrame=-1;
   let saveQueue=Promise.resolve();
   const supported=url=>{try{const u=new URL(url);return /^https?:$/.test(u.protocol)&&/^\/tasks\/\d+\/jobs\/\d+\/?$/.test(u.pathname);}catch{return false;}};
@@ -18,6 +19,8 @@
     $('review-next').disabled=busy||!report?.missingCount;
   }
   async function verify(){
+    if(closed)throw Error('검수 화면이 닫혔습니다.');
+    if(transport)return transport.verify(context);
     const [active]=await chrome.tabs.query({active:true,currentWindow:true});
     if(active?.id!==tab?.id || !supported(active.url)){throw Error('CVAT 탭이 바뀌었습니다. 팝업을 다시 열어주세요.');}
     const u=new URL(active.url);
@@ -25,6 +28,7 @@
   }
   async function call(action,extra={}) {
     await verify();
+    if(transport){const value=await transport.call({...context,action,...extra});if(!value||value.error)throw Error(value?.error||'검수 응답을 받지 못했습니다.');return value;}
     const values=await chrome.scripting.executeScript({target:{tabId:tab.id},world:'ISOLATED',func:CVATReviewRequest,args:[{...context,action,...extra}]});
     const value=values?.find(item=>item.frameId===0)?.result;
     if(!value || value.error)throw Error(value?.error||'검수 응답을 받지 못했습니다.');
@@ -32,11 +36,40 @@
   }
   async function native(action,extra={}) {
     await verify();
+    if(transport){const value=await transport.native({...context,action,...extra});if(!value||value.error)throw Error(value?.error||'CVAT 화면 상태를 확인하지 못했습니다.');return value;}
     const values=await chrome.scripting.executeScript({target:{tabId:tab.id},world:'MAIN',func:CVATReviewNative,args:[{...context,action,...extra}]});
     const value=values?.find(item=>item.frameId===0)?.result;
     if(!value || value.error)throw Error(value?.error||'CVAT 화면 상태를 확인하지 못했습니다.');
     return value;
   }
+  async function bulkRequest(action,extra={}) {
+    if(!context){
+      if(transport)tab=await transport.tab();else [tab]=await chrome.tabs.query({active:true,currentWindow:true});
+      if(!supported(tab?.url))throw Error('CVAT Job 탭에서 열어주세요.');
+      const url=new URL(tab.url);context={origin:url.origin,path:url.pathname};
+    }
+    await verify();let value;
+    // Retire the saved report before starting a write: the action popup may close
+    // while MAIN continues, so its eventual result callback is not guaranteed.
+    if(action==='apply')await chrome.storage.local.set({[key||`cvatReviewReportV1:${context.origin}${context.path.replace(/\/$/,'')}`]:{state:'idle'}});
+    if(transport)value=await transport.bulk({action,...extra});
+    else{const values=await chrome.scripting.executeScript({target:{tabId:tab.id},world:'MAIN',func:CVATBulkEditNative,args:[{...context,action,...extra}]});value=values?.find(item=>item.frameId===0)?.result;}
+    if(!value||value.error){const error=Error(value?.error||'일괄 편집 응답을 받지 못했습니다. CVAT 화면을 확인하세요.');error.partial=value?.partial;throw error;}
+    return value;
+  }
+  const bulkPanel=globalThis.CVATBulkEditPanel?.create(root,bulkRequest,()=>{
+    report=null;drawReport();$('review-saved').checked=false;
+    message('일괄 편집 후에는 CVAT에서 저장하고 다시 검사하세요.');
+    if(key)void Promise.resolve().then(()=>chrome.storage.local.set({[key]:{state:'idle'}})).catch(()=>{});
+  });
+  function mode(name){
+    if(busy||initializing||bulkPanel?.isBusy())return;
+    $('review-inspection').hidden=name!=='inspect';$('bulk-editor').hidden=name!=='bulk';
+    for(const value of ['inspect','bulk']){const button=$('review-mode-'+value);button.setAttribute('aria-pressed',String(value===name));button.classList.toggle('secondary',value!==name);}
+    if(name==='bulk')bulkPanel?.activate();
+  }
+  $('review-mode-inspect').addEventListener('click',()=>mode('inspect'));
+  $('review-mode-bulk').addEventListener('click',()=>mode('bulk'));
   function drawLabels(){
     const list=$('review-labels');list.replaceChildren();
     for(const item of catalog){
@@ -112,17 +145,18 @@
     if(closed||initializing||busy||initialized&&!force)return;
     initializing=true;controls();message('현재 Job의 라벨 목록을 읽는 중…');
     try{
-      [tab]=await chrome.tabs.query({active:true,currentWindow:true});
+      if(transport)tab=await transport.tab();else [tab]=await chrome.tabs.query({active:true,currentWindow:true});
       if(!supported(tab?.url))throw Error('CVAT Job 탭에서 검수를 열어주세요.');
       const url=new URL(tab.url);context={origin:url.origin,path:url.pathname};
       key=`cvatReviewReportV1:${url.origin}${url.pathname.replace(/\/$/,'')}`;prefsKey=key.replace('Report','Labels');
       const savedPrefs=(await chrome.storage.local.get(prefsKey))[prefsKey];selected=Array.isArray(savedPrefs)?savedPrefs:[];
-      await chrome.scripting.executeScript({target:{tabId:tab.id},world:'ISOLATED',files:['review-core.js']});
+      if(!transport)await chrome.scripting.executeScript({target:{tabId:tab.id},world:'ISOLATED',files:['review-core.js']});
       const running=await call('status');
       if(running.running){
         const stored=(await chrome.storage.local.get(key))[key];busy=true;initialized=true;await applyStored(stored);return;
       }
       const value=await call('catalog');catalog=value.catalog;
+      if(closed)return;
       selected=selected.filter(id=>catalog.some(label=>label.id===id));
       initialized=true;drawLabels();message(catalog.length?'필수 라벨을 선택하고 CVAT에서 저장한 뒤 검사하세요.':'이 Job에 등록된 라벨이 없습니다.');
       await applyStored((await chrome.storage.local.get(key))[key]);
@@ -131,15 +165,17 @@
   }
   async function scan(){
     if(busy||!selected.length||!$('review-saved').checked)return;
+    const required=[...selected];
     busy=true;report=null;drawReport();controls();message('저장 상태 확인 중…');
     try{
       await saveQueue;
       let status;try{status=await native('status');}catch{/* An explicit saved confirmation still permits a server snapshot. */}
       if(status?.dirty===true){$('review-saved').checked=false;throw Error('미저장 변경 사항이 있습니다. CVAT에서 저장한 뒤 다시 검사하세요.');}
       message('저장된 라벨링을 읽고 전체 프레임 검사 중…');
-      const result=await call('scan',{required:[...selected]});
-      report=result.report;pageIndex=0;$('review-saved').checked=false;
-      message('검사 완료. 누락 번호를 누르면 해당 프레임으로 이동합니다.');drawReport();
+      const result=await call('scan',{required});
+      if(closed)return;
+      pageIndex=0;$('review-saved').checked=false;
+      await applyStored({state:'done',report:result.report});
     }catch(error){message(error.message,true);try{await chrome.storage.local.set({[key]:{state:'error',error:error.message}});}catch{}}
     finally{busy=false;controls();}
   }
@@ -157,8 +193,9 @@
     if(next===null){message(direction>0?'이후 누락 프레임이 없습니다.':'이전 누락 프레임이 없습니다.');return;}
     await navigate(next);
   }
-  $('screen-review').addEventListener('click',()=>void initialize());
-  document.addEventListener('cvat-popup-screen',event=>{if(event.detail==='review')void initialize();});
+  const activate=()=>void initialize();
+  const screenChanged=event=>{if(event.detail==='review')activate();};
+  if(!transport){$('screen-review').addEventListener('click',activate);document.addEventListener('cvat-popup-screen',screenChanged);}
   $('review-load').addEventListener('click',()=>void initialize(true));
   $('review-saved').addEventListener('change',controls);
   $('review-run').addEventListener('click',()=>void scan());
@@ -168,20 +205,32 @@
   $('review-page-previous').addEventListener('click',()=>{pageIndex--;drawFrames();});
   $('review-page-next').addEventListener('click',()=>{pageIndex++;drawFrames();});
   $('review-previous').addEventListener('click',()=>void move(-1));$('review-next').addEventListener('click',()=>void move(1));
-  $('review-copy').addEventListener('click',()=>{if(report)void navigator.clipboard.writeText(core.text(report)).then(()=>message('검사 결과를 복사했어요.'),()=>message('복사하지 못했습니다. CSV 저장을 사용하세요.',true));});
+  $('review-copy').addEventListener('click',()=>{if(report)void Promise.resolve().then(()=>transport?.copy?transport.copy(core.text(report)):navigator.clipboard.writeText(core.text(report))).then(()=>message('검사 결과를 복사했어요.'),()=>message('복사하지 못했습니다. CSV 저장을 사용하세요.',true));});
   $('review-csv').addEventListener('click',()=>{
     if(!report)return;
     try{const url=URL.createObjectURL(new Blob([core.csv(report)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`cvat-job-${report.jobId}-missing-labels.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);message('CSV 다운로드를 시작했어요.');}
     catch(error){message(error.message,true);}
   });
-  chrome.storage.onChanged.addListener((changes,area)=>{
-    if(area!=='local'||!key||!initialized||closed||!changes[key])return;
+  const storageChanged=(changes,area)=>{
+    if(area!=='local'||!key||!initialized||closed)return;
+    if(changes[prefsKey]){
+      const next=changes[prefsKey].newValue;
+      const valid=(Array.isArray(next)?next:[]).filter(id=>catalog.some(label=>label.id===id));
+      if(JSON.stringify([...valid].sort((a,b)=>a-b))!==JSON.stringify([...selected].sort((a,b)=>a-b))){selected=valid;$('review-saved').checked=false;report=null;drawLabels();drawReport();controls();}
+    }
+    if(!changes[key])return;
     // Result writes from the injected scan survive closing/reopening the popup.
     const value=changes[key].newValue;
-    if(value?.state==='done' || value?.state==='error'){
+    if(value?.state==='done' || value?.state==='error' || value?.state==='idle' || value?.state==='running'){
       $('review-saved').checked=false;
       void applyStored(value).then(()=>{if(!catalog.length)setTimeout(()=>void initialize(true),100);}).catch(error=>message(error.message,true));
     }
-  });
-  window.addEventListener('pagehide',()=>{closed=true;},{once:true});controls();
+  };
+  chrome.storage.onChanged.addListener(storageChanged);
+  const destroy=()=>{closed=true;bulkPanel?.destroy();try{chrome.storage.onChanged.removeListener?.(storageChanged);}catch{/* Extension reload can invalidate cleanup APIs. */}document.removeEventListener('cvat-popup-screen',screenChanged);window.removeEventListener('pagehide',destroy);};
+  window.addEventListener('pagehide',destroy,{once:true});controls();
+  return {activate,destroy};
+  }
+  globalThis.CVATReviewPanel=Object.freeze({create});
+  if(chrome.tabs?.query && document.getElementById('screen-review'))create();
 })();

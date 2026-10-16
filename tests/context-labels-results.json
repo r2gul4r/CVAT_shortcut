@@ -1,0 +1,12 @@
+{
+  "environment": "Actual MV3 reload in disposable Chrome with synthetic localhost only.",
+  "passed": 1,
+  "failed": 0,
+  "exceptions": [],
+  "results": [
+    {
+      "name": "labels: actual extension reload retires old overlay without uncaught errors or further requests",
+      "passed": true
+    }
+  ]
+}

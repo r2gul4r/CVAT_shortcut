@@ -1,0 +1,23 @@
+{
+  "version": "2.6.1",
+  "passed": 579,
+  "failed": 0,
+  "suites": {
+    "domAndPopup": 478,
+    "labelLogic": 12,
+    "extensionReload": 3,
+    "reviewAndWorkspaceExtension": 30,
+    "executionWorlds": 17,
+    "release": 39
+  },
+  "runtimeFiles": 35,
+  "zipSha256": "6d3075f27b096215b34c47d15190940d14d9af89866296da751cbf136222e07a",
+  "regression": "Reproduced uncaught Extension context invalidated at overlay.js action/pointer after actual MV3 reload; all three overlay views now retire without unhandled exceptions.",
+  "environment": "Disposable Chrome and synthetic localhost only; no company data or personal browser.",
+  "limitations": [
+    "Actual company CVAT unverified",
+    "Affected suites rerun; not a rerun of all 691 checks from 2.6.0",
+    "CDP-loaded extension reload invalidates its content context; installation UI and post-reload recovery were not automated"
+  ],
+  "published": false
+}

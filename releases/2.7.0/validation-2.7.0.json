@@ -1,0 +1,37 @@
+{
+  "version": "2.7.0",
+  "passed": 744,
+  "failed": 0,
+  "suites": {
+    "domAndPopup": 478,
+    "labelLogic": 12,
+    "healthLogic": 48,
+    "reviewLogic": 48,
+    "bulkLogic": 40,
+    "bulkExtension": 10,
+    "reviewAndWorkspaceExtension": 30,
+    "extensionReload": 3,
+    "executionWorlds": 17,
+    "healthExtension": 19,
+    "release": 39
+  },
+  "runtimeFiles": 37,
+  "zipSha256": "d7054ab395cb77ef468764492455cc89d5a234a48ebb99bf79a738b15d1efc23",
+  "environment": "Windows Chrome disposable profiles and synthetic native CVAT fixtures only; no company data or personal browser. Mac behavior is simulated, not hardware-tested.",
+  "verified": [
+    "Selected label and inclusive frame ranges only; whole Job option",
+    "Native delete/relabel preserves other labels, frames and geometry",
+    "Saved IDs, native state, confirmation token, stale data, expiry and locks validated",
+    "Partial failure is not reported as completion; post-edit structural checks",
+    "Popup closing during apply invalidates the old review result before mutation",
+    "Existing review, health, shortcuts and reload regression checks"
+  ],
+  "limitations": [
+    "Actual deployed CVAT internal ObjectState/Redux compatibility remains unverified",
+    "Track edits are whole Job only; Tag excluded; Skeleton and protected/locked objects blocked",
+    "No direct server writes or extension-triggered save; native CVAT autosave follows user settings",
+    "Partial native failure can leave some edits; native undo may require one step per object",
+    "Preview state expires after five minutes; no persistent backup or automatic rollback"
+  ],
+  "published": false
+}

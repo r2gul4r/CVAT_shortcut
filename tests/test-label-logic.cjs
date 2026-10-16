@@ -20,7 +20,7 @@ let url = 'https://synthetic.test/tasks/1/jobs/1';
 let enabled = false;
 let catalog = {state: 'ready', labels: [{name:'alpha', duplicate:false}, {name:'unused', duplicate:false}]};
 const status = () => ({supported:true, enabled, jobPath:new URL(url).pathname, catalog});
-const document = {getElementById:id => elements[id], createElement:()=>new Element(), addEventListener() {}, activeElement:null};
+const document = {getElementById:id => elements[id], querySelectorAll:()=>[], createElement:()=>new Element(), addEventListener() {}, activeElement:null};
 const context = vm.createContext({document, URL, setTimeout, clearTimeout, navigator:{platform:'Win32'}, window:{addEventListener() {}},
   Option: class {constructor(text, value) {this.textContent=text; this.value=value;}},
   chrome:{storage:{local:{async get(key) {return {[key]:stored};}, async set(data) {

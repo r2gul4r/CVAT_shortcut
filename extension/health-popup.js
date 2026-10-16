@@ -47,22 +47,24 @@
   }
   function schedule(){clearTimeout(timer);if(!closed&&currentScreen==='health')timer=setTimeout(async()=>{if(!busy)await refresh();schedule();},2000);}
   function selectScreen(name,focus=false){
-    if(name==='health'&&!$('recording').hidden)$('cancel').click();
+    if(name!=='shortcuts'&&!$('recording').hidden)$('cancel').click();
     currentScreen=name;
-    for(const value of ['shortcuts','health']){
+    for(const value of ['shortcuts','health','review']){
       const active=value===name,control=$('screen-'+value);
       control.setAttribute('aria-selected',String(active));control.tabIndex=active?0:-1;$(value+'-screen').hidden=!active;
     }
     if(focus)$('screen-'+name).focus();
     window.scrollTo(0,0);
     if(name==='health'&&!busy)void refresh();
+    document.dispatchEvent(new CustomEvent('cvat-popup-screen',{detail:name}));
     schedule();
   }
-  for(const name of ['shortcuts','health']){
+  for(const name of ['shortcuts','health','review']){
     $('screen-'+name).addEventListener('click',()=>selectScreen(name));
     $('screen-'+name).addEventListener('keydown',event=>{
       if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
-      event.preventDefault();selectScreen(event.key==='Home'?'shortcuts':event.key==='End'?'health':name==='health'?'shortcuts':'health',true);
+      const names=['shortcuts','health','review'];
+      event.preventDefault();selectScreen(event.key==='Home'?'shortcuts':event.key==='End'?'review':names[(names.indexOf(name)+(event.key==='ArrowRight'?1:2))%3],true);
     });
   }
   function grant(){const u=new URL(tab.url);return chrome.permissions.request({permissions:['webRequest'],origins:[`${u.protocol}//${u.hostname}/*`]});}

@@ -1,0 +1,11 @@
+{
+  "version": "2.5.0",
+  "passed": 670,
+  "failed": 0,
+  "suites": {"syntheticChrome": 478, "healthLogic": 45, "labelLogic": 12, "chromeWorlds": 17, "healthExtension": 19, "release": 39, "reviewLogicAndAPI": 45, "reviewExtension": 15},
+  "runtimeFiles": 33,
+  "zipSha256": "2475a3771fb76c566a8da22bfe9fde2439dfc39ff42a2e7a0b665d965b01f6d8",
+  "environment": "Isolated Chrome profiles with synthetic localhost CVAT fixtures. Actual extension APIs and execution worlds. Localhost grant only in test copy. No company data or personal browser.",
+  "limitations": ["Deployed company CVAT and permission prompt unverified", "Tag and Skeleton Track not supported", "Presence only; no geometry or fine-part verification", "Saved snapshot; recheck after saving edits"],
+  "published": false
+}

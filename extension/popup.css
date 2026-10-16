@@ -98,3 +98,22 @@ details summary { cursor:pointer; font-size:12px; color:#445970; }
 #health-alerts { margin:0; }
 #health-network-status { font-size:13px; font-weight:600; margin:8px 0; }
 .health-network[data-state=offline] #health-network-status,#health-alert-warning { color:#a63426; }
+.review-label-actions { display:flex; align-items:center; gap:10px; margin:8px 0; }
+.review-label-actions > span { flex:1; }
+.review-labels { max-height:180px; overflow-y:auto; display:grid; gap:5px; margin:8px 0; }
+.review-label { display:flex; align-items:center; gap:8px; padding:7px; border:1px solid #e0e7ef; border-radius:6px; cursor:pointer; }
+.review-label span:last-child { min-width:0; overflow-wrap:anywhere; }
+.review-saved { margin:10px 0; font-size:12px; }
+#review-run { width:100%; }
+#review-status { margin-top:10px; overflow-wrap:anywhere; }
+.review-error { color:#ab2929; }
+.review-table { width:100%; border-collapse:collapse; font-size:11px; margin:12px 0; table-layout:fixed; }
+.review-table th,.review-table td { border-bottom:1px solid #e3e9f1; padding:7px 3px; text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+.review-table th:first-child { width:27%; }.review-table th:nth-child(2) { width:18%; }
+.review-frame { font-size:11px; min-height:26px; padding:2px 6px; margin:2px; }
+#review-filter { width:100%; margin:6px 0 10px; padding:6px; color:inherit; background:white; border:1px solid #c9d4e2; border-radius:6px; }
+.review-frames { max-height:230px; overflow:auto; margin:10px 0; }
+.review-frame-row { display:grid; grid-template-columns:64px minmax(0,1fr); gap:8px; align-items:center; border-bottom:1px solid #edf0f5; padding:4px 0; }
+.review-frame-row span { font-size:11px; overflow-wrap:anywhere; }
+.review-pagination { display:flex; align-items:center; justify-content:space-between; gap:5px; }
+.review-pagination button { font-size:11px; padding:3px 5px; }

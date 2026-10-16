@@ -50,6 +50,10 @@ jobs:
         run: node tests/test-label-logic.cjs
       - name: Test passive connection monitoring
         run: node --test tests/test-health.cjs
+      - name: Test required-label review logic and API failures
+        run: node --test tests/test-review.cjs
+      - name: Test review in real Chrome extension
+        run: node tests/run-review-extension.mjs
       - name: Test Chrome execution worlds
         run: node tests/run-world-tests.mjs
       - name: Test real Chrome extension APIs

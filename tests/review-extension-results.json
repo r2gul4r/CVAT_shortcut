@@ -1,0 +1,75 @@
+{
+  "environment": "Disposable Chrome MV3 with localhost-only pregrant and synthetic CVAT Redux/input. No company data or personal browser. Permission prompt and deployed CVAT are not tested.",
+  "passed": 17,
+  "failed": 0,
+  "results": [
+    {
+      "name": "CVAT vendor JSON fixture reproduces HTTP 406 for the old plain JSON request",
+      "passed": true
+    },
+    {
+      "name": "opening ordinary popup performs no review requests",
+      "passed": true
+    },
+    {
+      "name": "review tab loads current Job label IDs and colors only on demand",
+      "passed": true
+    },
+    {
+      "name": "scan requires selected labels and explicit saved-work confirmation",
+      "passed": true
+    },
+    {
+      "name": "real same-origin MV3 fetch reports D=45 and B=12 excluding deleted frame",
+      "passed": true
+    },
+    {
+      "name": "catalog and scan negotiate vendor JSON in actual Chrome extension requests",
+      "passed": true
+    },
+    {
+      "name": "only missing summaries and chosen IDs persist; geometry and attributes do not",
+      "passed": true
+    },
+    {
+      "name": "requests are GET metadata/annotations only; no image or write requests",
+      "passed": true
+    },
+    {
+      "name": "review panel fits the 400px Chrome action popup",
+      "passed": true
+    },
+    {
+      "name": "frame button uses normal CVAT input and confirms actual frame change across worlds",
+      "passed": true
+    },
+    {
+      "name": "previous missing navigation follows actual current CVAT frame",
+      "passed": true
+    },
+    {
+      "name": "navigation during drawing is blocked without cancelling the tool",
+      "passed": true
+    },
+    {
+      "name": "Job-specific selection and last result survive closing popup",
+      "passed": true
+    },
+    {
+      "name": "detected unsaved changes block scan instead of showing a fresh success",
+      "passed": true
+    },
+    {
+      "name": "HTTP error hides previous success and explains failed inspection",
+      "passed": true
+    },
+    {
+      "name": "scan finishes and saves result while popup is closed, including reopen during scan",
+      "passed": true
+    },
+    {
+      "name": "changing required labels invalidates old result",
+      "passed": true
+    }
+  ]
+}

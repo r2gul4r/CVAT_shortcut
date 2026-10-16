@@ -1,0 +1,19 @@
+{
+  "version": "2.5.1",
+  "passed": 104,
+  "failed": 0,
+  "suites": {
+    "reviewLogicAndAPI": 48,
+    "reviewExtension": 17,
+    "release": 39
+  },
+  "runtimeFiles": 33,
+  "zipSha256": "90975242b220183b06c80a8c367c0f3bdfed5fba60cd2bb4e558e7d0b426c4e6",
+  "regression": "Old Accept header reproduced HTTP 406; vendor and standard JSON negotiation passed after fix.",
+  "environment": "Disposable Chrome MV3 with localhost synthetic CVAT fixtures. No company data or personal browser.",
+  "limitations": [
+    "Actual deployed CVAT unverified",
+    "Only affected suites rerun; prior full 2.5.0 suite not rerun"
+  ],
+  "published": false
+}

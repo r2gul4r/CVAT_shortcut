@@ -1,5 +1,5 @@
 {
-  "testedAt": "2026-10-16T00:11:16.674Z",
+  "testedAt": "2026-10-16T02:22:44.306Z",
   "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
   "staticChecks": "passed",

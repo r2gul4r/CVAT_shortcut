@@ -1,19 +1,35 @@
 # CVAT Sidebar Shortcuts
 
-현재 소스 버전: **2.4.0** · Chrome Manifest V3 확장프로그램
+현재 소스 버전: **2.5.1** · Chrome Manifest V3 확장프로그램
 
-CVAT의 AI·새 마스크·폴리곤 도구 단축키, 라벨 선택 오버레이, 브러쉬 크기 조절, Space 화면 이동, 개인 연결 상태 확인과 한글 가이드를 제공합니다.
+CVAT의 AI·새 마스크·폴리곤 도구 단축키, 라벨 선택 오버레이, 필수 라벨 누락 검수, 붙여넣기 반복, Space 화면 이동, 개인 연결 상태 확인과 한글 가이드를 제공합니다.
 
 ## 작업 위치와 배포 파일
 
 - 로컬 작업 폴더: `C:\git\cvat_shortcut`
 - 확장 소스: [`extension/`](extension/)
-- 배포 ZIP: [최신 GitHub 릴리스](https://github.com/r2gul4r/CVAT_shortcut/releases/latest) · 로컬 `releases/2.4.0/cvat-sidebar-shortcuts-2.4.0-ko.zip`
+- 배포 ZIP: [최신 GitHub 릴리스](https://github.com/r2gul4r/CVAT_shortcut/releases/latest) · 로컬 `releases/2.5.1/cvat-sidebar-shortcuts-2.5.1-ko.zip` (게시 여부는 GitHub에서 확인)
 - [2.2.0 패치노트](releases/2.2.0/release-notes-2.2.0.txt)
 - [적용 가이드](extension/guide.html)
 
 2.2.0은 폴리곤 도구 단축키를 추가합니다. 팝업의 **새 폴리곤 → 지정**에서 사용할 키를 정하고, 오버레이에서 라벨을 고른 뒤 해당 키를 누르세요. Number of points를 공란으로, Simplify를 OFF로 맞추고 Shape로 시작합니다. 기존 설정은 유지되며 새 단축키는 미지정으로 시작합니다. 초기 2.2.0 로컬 빌드에서 폴리라인에 지정했던 키는 폴리곤으로 이어받습니다.
 
+
+## 필수 라벨 누락 검수
+
+1. CVAT의 현재 Job에서 확장 팝업을 열고 **검수** 탭을 누릅니다. 단축키 기능 활성화와 독립적으로 사용할 수 있습니다.
+2. 모든 프레임에 최소 하나 있어야 하는 라벨을 체크합니다. 선택은 서버 origin과 Job별로 기억합니다.
+3. CVAT에서 작업을 저장한 뒤 **CVAT에서 작업을 저장했어요 → 전체 프레임 검사**를 누릅니다.
+4. `D가 없는 프레임: 45`처럼 라벨별 결과를 확인합니다. 프레임 번호 클릭 또는 **이전/다음 누락으로 이동**으로 해당 화면을 엽니다. 라벨별 필터와 30개 단위 목록을 제공합니다.
+5. 수정하고 CVAT에서 저장한 뒤 다시 검사합니다. **결과 복사 / CSV 저장**으로 기록을 가져갈 수 있습니다.
+
+조회는 현재 로그인한 CVAT 서버의 Job, 라벨, 프레임 메타데이터, 저장된 주석 API를 사용합니다. 이미지를 읽거나 외부로 전송하지 않습니다. 마지막 결과의 라벨 이름·ID·색상·누락 프레임·검사 시각은 Chrome 로컬 저장소에 보관하며 좌표·마스크·속성은 보관하지 않습니다. 검사를 시작하면 팝업을 닫아도 완료 결과가 저장됩니다. 페이지를 새로고침하거나 Job을 바꾸면 완료되지 않은 검사는 다시 실행해야 합니다.
+
+Shape와 Track의 Outside 구간, 삭제 프레임, 원본 영상의 frame step을 반영합니다. Tag는 그린 객체로 세지 않으며, Skeleton Track은 검사 실패로 안내합니다. 객체 수·모양·세부 누락은 검사하지 않습니다. 전체 프레임에 존재하지 않는 것이 정상인 라벨은 필수로 선택하지 마세요. 검사 범위는 최대 20만 프레임·200개 라벨 및 1천만 프레임-라벨 조합이며 원본 응답은 64MB, 저장 결과는 2MB, CSV는 누락 항목 20만 행으로 제한합니다.
+
+조회 실패는 정상으로 처리하지 않습니다. 검사는 저장된 작업의 한 시점이며 자동으로 최신화하지 않습니다. 프레임 이동은 CVAT의 기존 입력칸을 사용하고 그리기·재생·저장 중에는 차단합니다. 내부 연결을 지원하지 않는 CVAT에서는 번호를 직접 입력해 이동할 수 있습니다.
+
+[2.5.0 검수 검증 보고서](reports/review-2.5.0.md) · [2.5.1 HTTP 406 수정 검증](reports/review-2.5.1.md)
 
 ## 붙여넣기 반복 사용법
 
@@ -58,6 +74,8 @@ Node.js와 Chrome이 필요합니다. Windows 기본 Chrome 경로를 사용하�
 ```powershell
 node tests/run-tests.mjs
 node tests/test-label-logic.cjs
+node --test tests/test-review.cjs
+node tests/run-review-extension.mjs
 node tests/run-world-tests.mjs
 python -m unittest discover -s tests -p test_release.py
 python tools/release_notes.py --check
@@ -71,6 +89,19 @@ python tools/package-extension.py
 ## 구현·업데이트 이력
 
 **최신 버전 → 이전 버전** 순서로 정리했습니다.
+
+### 2.5.1 — 검수 조회 HTTP 406 오류 수정
+
+- 검수 API 요청이 CVAT 전용 JSON과 일반 JSON을 모두 허용하도록 수정했습니다.
+- CVAT의 응답 형식 조건을 반영한 회귀 검사와 실제 Chrome 확장 통합 검사를 추가했습니다.
+
+### 2.5.0 — 필수 라벨 누락 검수
+
+- 팝업 검수 탭에서 현재 Job의 필수 라벨을 대표색과 함께 선택하고 Job별로 저장합니다.
+- 저장된 Shape·Track을 읽어 누락 프레임을 라벨별로 정리하며 Outside 구간과 삭제 프레임을 반영합니다.
+- 프레임 번호 클릭, 이전·다음 누락 이동, 필터·페이지 이동, 결과 복사와 CSV 저장을 지원합니다.
+- 마지막 결과는 로컬에 보관합니다. 검사 중 팝업을 닫아도 완료 결과를 저장합니다. 라벨링·이미지를 외부로 전송하거나 자동 수정하지 않습니다.
+- API 오류, 형식 불일치, Skeleton Track 등 미지원 조건은 검사 실패로 표시합니다. 세부 모양 검수는 포함하지 않습니다.
 
 ### 2.4.0 — 붙여넣기 반복 매크로
 

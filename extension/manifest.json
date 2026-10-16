@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "CVAT Sidebar Shortcuts",
-  "version": "2.4.0",
-  "description": "CVAT 라벨 선택 오버레이, N 이전 도구의 라벨 연동, AI·브러쉬·폴리곤 단축키, Space 화면 이동, 크기·투명도 조절과 한글 가이드를 제공합니다.",
+  "version": "2.5.1",
+  "description": "CVAT 도구 단축키, 라벨 선택창, 필수 라벨 누락 검수, 붙여넣기 반복, 연결 상태 확인과 한글 가이드를 제공합니다.",
   "minimum_chrome_version": "102",
   "permissions": [
     "activeTab",

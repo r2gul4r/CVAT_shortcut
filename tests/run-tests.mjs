@@ -15,13 +15,14 @@ assert.deepEqual(manifest.optional_permissions, ['webRequest']);
 assert.deepEqual(manifest.background, {service_worker:'health-worker.js'});
 assert.deepEqual(manifest.optional_host_permissions, ['http://*/*', 'https://*/*']);
 for (const forbidden of ["host_permissions", "content_scripts", "externally_connectable", "web_accessible_resources"]) assert.equal(manifest[forbidden], undefined, forbidden);
-for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js", "health-core.js", "health-worker.js", "health-popup.js", "health-page.js", "paste-repeat.js"]) {
+for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js", "health-core.js", "health-worker.js", "health-popup.js", "health-page.js", "paste-repeat.js", "review-core.js", "review-native.js", "review-popup.js"]) {
   const source = await readFile(path.join(root, "extension", name), "utf8");
   assert(!/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon|captureVisibleTab|getImageData|toDataURL)\s*\(/.test(source), `${name}: forbidden network/image API`);
   execFileSync(process.execPath, ["--check", path.join(root, "extension", name)], {windowsHide: true});
 }
 
 const files = new Map();
+for(const name of ['review-core.js','review-api.js','review-native.js','review-popup.js'])files.set('/extension/'+name,path.join(root,'extension',name));
 for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js", "popup.css", "health-popup.js", "health-core.js", "paste-repeat.js"]) files.set("/extension/" + name, path.join(root, "extension", name));
 files.set('/tests/test-health-popup.js',path.join(root,'tests/test-health-popup.js'));
 for (const name of ["chrome-shim.js", "label-fixture.js", "mac-platform.js", "test-content.js", "test-popup.js", "test-popup-mac.js", "test-wheel.js", "test-conflicts.js", "test-space-pan.js", "test-label-shortcuts.js", "test-overlay.js", "test-native-repeat.js", "test-polygon.js", "test-paste.js"]) files.set("/tests/" + name, path.join(root, "tests", name));
@@ -35,6 +36,7 @@ for (const name of ["01-enable", "02-label", "03-ai-key", "04-brush-key", "05-wh
 const fixture = await readFile(path.join(root, "tests", "fixture.html"), "utf8");
 const popup = await readFile(path.join(root, "extension", "popup.html"), "utf8");
 const popupFixture = (run, unrelated = false, mac = false) => popup
+  .replace(/src="(review-[\w-]+\.js)"/g,'src="/extension/$1"')
   .replace('src="health-popup.js"', 'src="/extension/health-popup.js"')
   .replace('<link rel="stylesheet" href="popup.css">', '<link rel="stylesheet" href="/extension/popup.css">')
   .replace('<script src="common.js" defer></script>', `<script src="/tests/chrome-shim.js"></script>${mac ? '<script src="/tests/mac-platform.js"></script>' : ""}${unrelated ? '<script>window.testTabURL="https://example.test/unrelated";</script>' : ""}<script src="/extension/common.js" defer></script>`)

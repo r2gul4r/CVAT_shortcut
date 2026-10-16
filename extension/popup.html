@@ -8,16 +8,21 @@
   <script src="common.js" defer></script>
   <script src="popup.js" defer></script>
   <script src="health-popup.js" defer></script>
+  <script src="review-core.js" defer></script>
+  <script src="review-api.js" defer></script>
+  <script src="review-native.js" defer></script>
+  <script src="review-popup.js" defer></script>
 </head>
 <body>
   <main>
     <header class="app-header">
-      <div><h1>CVAT 단축키 <small>2.4.0</small></h1><p class="subtitle">작업에 맞게 키와 라벨을 설정하세요.</p></div>
+      <div><h1>CVAT 단축키 <small>2.5.1</small></h1><p class="subtitle">작업에 맞게 키와 라벨을 설정하세요.</p></div>
       <nav class="header-links" aria-label="도움말"><a id="open-guide" class="guide-button" href="guide.html" target="_blank" rel="noopener">사용 가이드</a><a id="open-updates" class="guide-button" href="updates.html" target="_blank" rel="noopener">업데이트 내역</a></nav>
     </header>
     <nav class="screen-tabs" role="tablist" aria-label="확장 화면">
       <button id="screen-shortcuts" type="button" role="tab" aria-selected="true" aria-controls="shortcuts-screen">단축키</button>
       <button id="screen-health" type="button" role="tab" aria-selected="false" aria-controls="health-screen" tabindex="-1">연결 상태</button>
+      <button id="screen-review" type="button" role="tab" aria-selected="false" aria-controls="review-screen" tabindex="-1">검수</button>
     </nav>
     <div id="shortcuts-screen" role="tabpanel" aria-labelledby="screen-shortcuts">
     <div class="tab-controls">
@@ -122,6 +127,36 @@
       <div class="tool"><label class="wheel-toggle"><input id="health-auto" type="checkbox" disabled> 이 CVAT 서버에서 자동 측정</label><p class="section-note">새로고침·Job 이동·Chrome 재시작 후 작업 화면에서 다시 시작합니다. 체크를 해제하면 이 서버의 측정을 끕니다.</p></div>
       <div class="tool"><label class="wheel-toggle"><input id="health-alerts" type="checkbox" checked disabled> 오류·연결 끊김 알림</label><p class="section-note">측정 중인 CVAT 화면 오른쪽 위에 8초간 표시합니다. 같은 종류는 1분에 한 번만 알리며 직접 닫을 수 있습니다.</p><p id="health-alert-warning" class="section-note" hidden>이 탭의 알림을 연결하지 못했습니다. 측정은 계속됩니다. 작업을 저장한 뒤 페이지를 새로고침하고 다시 켜주세요.</p></div>
       <p class="section-note">열려 있는 동안 2초마다 갱신합니다. 추가 점검 요청이나 외부 전송은 없습니다. 응답 시간에는 서버·네트워크·다운로드 시간이 포함되며 저장 성공을 보장하지 않습니다.</p>
+    </section>
+    <section id="review-screen" role="tabpanel" aria-labelledby="screen-review" hidden>
+      <div class="tool">
+        <div class="section-heading"><h2>필수 라벨 누락 검사</h2><button id="review-load" type="button" class="text-button">목록 새로고침</button></div>
+        <p class="section-note">현재 Job의 모든 프레임에 있어야 할 라벨을 고르세요. 프레임마다 해당 라벨의 객체가 1개 이상 있는지 확인합니다.</p>
+        <div class="review-label-actions"><span id="review-selection-count" class="muted">라벨 확인 전</span><button id="review-all" type="button" class="text-button">전체 선택</button><button id="review-none" type="button" class="text-button">해제</button></div>
+        <div id="review-labels" class="review-labels" role="group" aria-label="필수 라벨 선택"></div>
+        <p class="section-note">선택은 이 서버의 Job별로 기억합니다.</p>
+      </div>
+      <div class="tool">
+        <p class="section-note">먼저 CVAT에서 작업을 저장하세요. 미저장 수정은 검사에 포함되지 않습니다.</p>
+        <label class="wheel-toggle review-saved"><input id="review-saved" type="checkbox"> CVAT에서 작업을 저장했어요</label>
+        <button id="review-run" type="button" disabled>전체 프레임 검사 / 다시 검사</button>
+        <p id="review-status" class="section-note" role="status" aria-live="polite">CVAT Job 탭에서 열어주세요.</p>
+      </div>
+      <div id="review-results" hidden>
+        <div class="tool">
+          <h2 id="review-summary"></h2><p id="review-time" class="section-note"></p>
+          <p class="section-note">이전 검사 결과입니다. 수정·저장 후 다시 검사하세요. 번호는 CVAT 화면과 같습니다.</p>
+          <table class="review-table"><thead><tr><th scope="col">라벨</th><th scope="col">누락 수</th><th scope="col">누락 프레임</th></tr></thead><tbody id="review-rows"></tbody></table>
+          <div class="buttons"><button id="review-copy" type="button" class="secondary">결과 복사</button><button id="review-csv" type="button" class="secondary">CSV 저장</button></div>
+        </div>
+        <div class="tool">
+          <label for="review-filter">확인할 누락 프레임</label><select id="review-filter"><option value="0">모든 누락 프레임</option></select>
+          <div class="buttons"><button id="review-previous" type="button" class="secondary">이전 누락으로 이동</button><button id="review-next" type="button">다음 누락으로 이동</button></div>
+          <div id="review-frames" class="review-frames"></div>
+          <div class="review-pagination"><button id="review-page-previous" type="button" class="secondary">이전 목록</button><span id="review-page" class="muted"></span><button id="review-page-next" type="button" class="secondary">다음 목록</button></div>
+        </div>
+      </div>
+      <details class="help"><summary>검사 기준 · 데이터 보관</summary><p>저장된 Shape와 Track을 검사합니다. Track의 Outside 구간과 삭제 프레임은 제외하고, 화면에서 숨기거나 필터로 가린 객체도 포함합니다. Tag는 그린 객체로 세지 않습니다. Skeleton Track은 지원하지 않으며 검사 오류로 안내합니다.</p><p>라벨이 있으면 통과합니다. 객체 수·모양·손잡이 등 세부 누락은 판단하지 않습니다. 그림이나 라벨링을 자동으로 변경하거나 저장하지 않습니다.</p><p>검사를 누를 때 현재 CVAT 서버에서 데이터를 읽습니다. 이미지 조회와 외부 전송은 없습니다. 선택한 라벨과 마지막 결과(이름·누락 프레임·시각)는 이 Chrome 프로필에 보관하며, 좌표·마스크·속성은 보관하지 않습니다.</p></details>
     </section>
   </main>
 </body>

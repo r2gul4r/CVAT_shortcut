@@ -170,9 +170,15 @@ try{
   await clickOverlay('[data-action=screen-health]');await pause(300);
   const movedHealth=await evaluate(jobPage,`${shadow}.querySelector('#health-status').textContent+' / '+${shadow}.querySelector('#health-note').textContent`);
   console.log('Health after SPA Job change:',movedHealth);
-  await clickOverlay('[data-action=hide]');send=await open();await evaluate(send,"document.querySelector('[data-open-workspace=health]').click()");
+  await clickOverlay('[data-action=hide]');send=await open();
+  // Opening the workspace closes the action popup. Finish popup-side diagnostics
+  // first; evaluating a pending promise in its destroyed renderer can time out.
   console.log('SPA identity:',await evaluate(send,"(async()=>{const [tab]=await chrome.tabs.query({active:true,currentWindow:true});const values=await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>chrome.runtime.sendMessage({type:'TEST_NAVIGATION_IDENTITY'})});return values[0].result;})()"));
-  await until(jobPage,"document.getElementById('cvat-shortcuts-label-overlay').style.display==='block'");await browser('Target.closeTarget',{targetId:popup.id});await pause(300);
+  await evaluate(send,"document.querySelector('[data-open-workspace=health]').click()");
+  await until(jobPage,"document.getElementById('cvat-shortcuts-label-overlay').style.display==='block'");
+  let popupClosed=false;
+  for(let i=0;i<100;i++){const {targetInfos}=await browser('Target.getTargets');if(!targetInfos.some(t=>t.targetId===popup.id)){popupClosed=true;break;}await pause(60);}
+  assert(popupClosed,'Opening workspace must close its popup');pass('workspace reopen closes popup before further checks use the live Job renderer');
   const reopenedHealth=await evaluate(jobPage,`${shadow}.querySelector('#health-status').textContent+' / '+${shadow}.querySelector('#health-note').textContent`);
   assert(!reopenedHealth.includes('상태 확인 실패'),reopenedHealth);pass('health remains available after SPA Job change and closing/reopening the overlay');
   assert.equal(await evaluate(jobPage,`${shadow}.querySelector('#health-count').textContent`),'0');

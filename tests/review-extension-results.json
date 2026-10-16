@@ -1,6 +1,6 @@
 {
   "environment": "Disposable Chrome MV3 with localhost-only pregrant and synthetic CVAT Redux/input. No company data or personal browser. Permission prompt and deployed CVAT are not tested.",
-  "passed": 36,
+  "passed": 37,
   "failed": 0,
   "results": [
     {
@@ -121,6 +121,10 @@
     },
     {
       "name": "Job navigation discards the old visible report instead of showing it for another Job",
+      "passed": true
+    },
+    {
+      "name": "workspace reopen closes popup before further checks use the live Job renderer",
       "passed": true
     },
     {

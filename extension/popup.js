@@ -154,6 +154,9 @@
   function showTabStatus(status) {
     const on = status?.supported && status?.enabled;
     tabEnabled = Boolean(on);
+    $('paste-start').disabled = !on || Boolean(status?.paste?.running);
+    $('paste-stop').disabled = !on || !status?.paste?.running;
+    if (status?.paste?.message) $('paste-status').textContent = status.paste.message;
     catalog = on && status.catalog ? status.catalog : {state: "inactive", labels: []};
     $("enable").disabled = !activeTab || !shared.supportedURL(activeTab.url) || on;
     $("enable").hidden = Boolean(on);
@@ -254,7 +257,7 @@
         await chrome.scripting.executeScript({target:{tabId:activeTab.id},files:["native-repeat.js"],world:"MAIN"});
       } catch { repeatBridgeLoaded = false; }
       const results = await chrome.scripting.executeScript({
-        target: {tabId: activeTab.id}, files: ["common.js", "overlay.js", "content.js"], world: "ISOLATED"
+        target: {tabId: activeTab.id}, files: ["common.js", "overlay.js", "paste-repeat.js", "content.js"], world: "ISOLATED"
       });
       const status = results.find((entry) => entry.frameId === 0)?.result;
       showTabStatus(status);
@@ -266,6 +269,16 @@
       showTabStatus(null);
       notice("단축키를 활성화하지 못했습니다. 작업 페이지를 새로고침한 뒤 다시 시도하세요. 브라우저 정책으로 확장 사용이 제한될 수 있습니다.", true);
     }
+  });
+  for (const action of ['start','stop']) $('paste-'+action).addEventListener('click', async () => {
+    try {
+      const [current] = await chrome.tabs.query({active:true,currentWindow:true});
+      if (current?.id !== activeTab?.id || current?.url !== activeTab?.url) throw Error('탭이 바뀌었습니다. 팝업을 다시 열어주세요.');
+      const status = await chrome.tabs.sendMessage(activeTab.id, {type:'CVAT_SHORTCUTS_PASTE_'+action.toUpperCase()});
+      showTabStatus(status);
+      if (!status?.paste) notice('반복 기능을 불러오지 못했습니다. CVAT 페이지를 새로고침하고 확장을 다시 켜세요.', true);
+      else if (action === 'start' && status.paste.running) window.close();
+    } catch (error) { notice(error.message || '반복 상태 확인 실패', true); }
   });
   $("disable").addEventListener("click", async () => {
     try {

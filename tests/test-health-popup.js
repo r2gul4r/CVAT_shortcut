@@ -21,5 +21,12 @@
   $('health-toggle').click();await sleep(30);check('stop clears displayed samples',$('health-count').textContent==='0'&&$('health-save-count').textContent==='0');
   $('health-auto').click();await sleep(30);check('automatic option survives screen switch',window.testHealthAuto&&$('health-auto').checked);
   const r=$('health-screen').getBoundingClientRect();check('health layout fits popup width',r.left>=0&&r.right<=400);
+  $('health-alerts').click();await sleep(30);check('alerts can be disabled without stopping measurement',!$('health-alerts').checked&&window.testHealthEnabled&&window.testHealthAlerts===false);
+  $('screen-shortcuts').click();$('screen-health').click();await sleep(30);check('alert choice survives refresh',!$('health-alerts').checked);
+  Object.defineProperty(navigator,'onLine',{configurable:true,value:false});window.dispatchEvent(new Event('offline'));
+  check('offline event immediately updates separate device connection hint',$('health-network-status').textContent==='Chrome: 연결 끊김 감지'&&$('health-network').dataset.state==='offline');
+  Object.defineProperty(navigator,'onLine',{configurable:true,value:true});window.dispatchEvent(new Event('online'));
+  check('online does not claim wifi quality or CVAT success',$('health-network-status').textContent==='Chrome: 네트워크 연결 감지'&&$('health-network').textContent.includes('보장하지 않습니다'));
+  delete navigator.onLine;
   const pre=document.createElement('pre');pre.id='test-results';pre.textContent=JSON.stringify({suite:'Health popup tabs',passed:results.filter(r=>r.passed).length,failed:results.filter(r=>!r.passed).length,results});document.body.append(pre);
 })();

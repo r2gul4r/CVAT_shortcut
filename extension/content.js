@@ -39,7 +39,7 @@
   let wheelSession = null;
   let sendingEscape = false;
   let labelChoice = null, labelSaveQueue = Promise.resolve(), labelEpoch = 0;
-  let overlay = null;
+  let overlay = null, pasteLoop = null;
   const TOOLBOX = ".cvat-brush-tools-toolbox";
   const MAX_BRUSH_SIZE = 500;
   const BRUSH_STEP = 1;
@@ -447,6 +447,13 @@
   }
 
   function onKey(event) {
+    if (pasteLoop?.isSending()) return;
+    if (pasteLoop?.status().running) {
+      pasteLoop.interrupt(event);
+      if (!["Control","Alt","Meta","Shift"].includes(event.key)) {
+        event.preventDefault(); event.stopImmediatePropagation(); claimedCodes.add(event.code); return;
+      }
+    }
     if (sendingEscape) return;
     if (overlay?.handleKey(event)) return;
     if (onPanKey(event)) return;
@@ -479,6 +486,7 @@
     if (event.repeat || mouseButtons || event.buttons || panDrain || overlay?.isDragging()) return;
     if (labelBinding) { selectLabelShortcut(labelBinding.name); return; }
     if (pending || performance.now() < cooldownUntil) return;
+    if (action === 'paste') { pasteLoop?.start(); return; }
     const tool = TOOLS[action];
     const candidates = [...side.querySelectorAll(tool.selector)].filter(visible);
     if (candidates.length !== 1) {
@@ -507,6 +515,7 @@
   }
 
   async function enable() {
+    pasteLoop?.stop('확장 상태가 변경됐습니다.');
     labelEpoch += 1; labelChoice = null;
     cancelPan();
     cancelPending();
@@ -546,17 +555,21 @@
   function status() {
     const supported = Boolean(sidebar());
     return {supported, enabled, jobPath: location.pathname,
-      overlay: overlay?.status?.() || {state: "missing"},
+      overlay: overlay?.status?.() || {state: "missing"}, paste: pasteLoop?.status(),
       catalog: supported && enabled ? shared.readLabelCatalog() : {state: "inactive", labels: []}};
   }
 
   function onMessage(message, _sender, respond) {
-    if (message?.type === "CVAT_SHORTCUTS_STATUS" || message?.type === "CVAT_SHORTCUTS_LABELS") {
+    if (message?.type === 'CVAT_SHORTCUTS_PASTE_START' || message?.type === 'CVAT_SHORTCUTS_PASTE_STOP') {
+      if (message.type.endsWith('_START')) pasteLoop?.start(); else pasteLoop?.stop();
+      respond(status());
+    } else if (message?.type === "CVAT_SHORTCUTS_STATUS" || message?.type === "CVAT_SHORTCUTS_LABELS") {
       respond(status());
     } else if (message?.type === "CVAT_SHORTCUTS_OVERLAY_SHOW") {
       if (enabled && sidebar()) overlay?.show({recover: message.recover === true});
       respond(status());
     } else if (message?.type === "CVAT_SHORTCUTS_DISABLE") {
+      pasteLoop?.stop('확장을 일시정지했습니다.');
       labelEpoch += 1; labelChoice = null;
       cancelPan();
       enabled = false;
@@ -681,6 +694,7 @@
   window.addEventListener("pagehide", cancelPan);
   window.addEventListener("keydown", onKey, true);
   window.addEventListener("keypress", (event) => {
+    if (pasteLoop?.isSending()) return;
     if (overlay?.handleKey(event)) return;
     if ((claimedCodes.has(event.code) || panKeyClaimed && event.code === "Space") &&
         shared.supportedURL(location.href) && !composing && !typing(event)) {
@@ -688,6 +702,7 @@
     }
   }, true);
   window.addEventListener("keyup", (event) => {
+    if (pasteLoop?.isSending()) return;
     if (event.code === "Space" && panKeyClaimed) {
       panKeyClaimed = false; cancelPan(); consumePan(event); return;
     }
@@ -731,6 +746,10 @@
       }
       selectLabelShortcut(name);
     }
+  });
+  pasteLoop = globalThis.CVATPasteRepeat?.create({
+    available: () => enabled && Boolean(sidebar()) && !dialogOpen() && !focusedEditable() && !pending && !panDrag && !panDrain,
+    notify, isMac: () => shared.isMac()
   });
   globalThis[INSTANCE] = {enable};
   return enable();

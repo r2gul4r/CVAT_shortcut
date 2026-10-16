@@ -26,8 +26,10 @@
     if (!item || cached || error === 'net::ERR_ABORTED') return;
     const outcome = error ? 'network' : code === 401 || code === 403 ? 'auth' : code === 429 ? 'limited' :
       code >= 500 ? 'server' : code >= 400 ? 'request' : code >= 200 && code < 400 ? 'ok' : 'network';
-    state.samples.push({kind:item.kind, at, ms:Math.max(0, at-item.at), outcome});
+    const sample = {kind:item.kind, at, ms:Math.max(0, at-item.at), outcome};
+    state.samples.push(sample);
     prune(state, at);
+    return sample;
   }
   function summary(state, now) {
     prune(state, now);

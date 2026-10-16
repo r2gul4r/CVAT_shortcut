@@ -1,6 +1,6 @@
 {
   "environment": "Dedicated real Chrome extension APIs; unchanged production manifest without grant, plus fixture-only localhost pregrant; no personal browser or company data; permission dialog not automated",
-  "passed": 10,
+  "passed": 19,
   "failed": 0,
   "results": [
     {
@@ -17,6 +17,14 @@
     },
     {
       "name": "real save, AI and HTTP 503 requests refresh inside health popup",
+      "passed": true
+    },
+    {
+      "name": "HTTP error shows a notice at the top right of the Job",
+      "passed": true
+    },
+    {
+      "name": "notice close is accessible and does not activate drawing shortcuts",
       "passed": true
     },
     {
@@ -41,6 +49,34 @@
     },
     {
       "name": "automatic off remains off after real reload",
+      "passed": true
+    },
+    {
+      "name": "Chrome offline event alerts even with popup closed and no CVAT request",
+      "passed": true
+    },
+    {
+      "name": "reconnection removes stale offline notice",
+      "passed": true
+    },
+    {
+      "name": "connection change detection sends no probe request",
+      "passed": true
+    },
+    {
+      "name": "repeated errors remain counted without repeating dismissed notice",
+      "passed": true
+    },
+    {
+      "name": "alert preference leaves background measurement running",
+      "passed": true
+    },
+    {
+      "name": "notice automatically disappears after eight seconds",
+      "passed": true
+    },
+    {
+      "name": "stopped monitoring removes connection listeners and page notices",
       "passed": true
     }
   ]

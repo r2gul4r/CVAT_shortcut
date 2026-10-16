@@ -48,7 +48,7 @@ try{
   const {frameTree}=await send('Page.getFrameTree');
   const {executionContextId}=await send('Page.createIsolatedWorld',{frameId:frameTree.frame.id,worldName:'CVAT extension test isolated world'});
   await evaluate(await readFile(path.join(root,'tests','chrome-shim.js'),'utf8'),executionContextId);
-  for(const name of ['common.js','overlay.js'])await evaluate(await readFile(path.join(root,'extension',name),'utf8'),executionContextId);
+  for(const name of ['common.js','overlay.js','paste-repeat.js'])await evaluate(await readFile(path.join(root,'extension',name),'utf8'),executionContextId);
   await evaluate(`chrome.storage.local.set({cvatSidebarShortcutsV1:CVATShortcuts.normalize({defaultLabelName:'obstacle',labelShortcuts:[{name:'person',shortcut:{code:'Digit1'}}]}),cvatLabelOverlayEnabled:false})`,executionContextId);
   await evaluate(await readFile(path.join(root,'extension','content.js'),'utf8'),executionContextId);
   async function test(name,run){try{await run();results.push({name,passed:true});}catch(error){results.push({name,passed:false,error:error.message});}}
@@ -138,6 +138,47 @@ try{
       await evaluate(`document.documentElement.style.zoom='1.5'`);
       await pause(600);await assertInside();
     }finally{await evaluate(`document.documentElement.style.zoom=''`);}
+  });
+  await evaluate(await readFile(path.join(root,'reference','mousetrap-1.6.5.js'),'utf8'));
+  await evaluate(`
+    window.macroEvents=[];window.macroDelay=0;window.macroID=200;
+    document.querySelector('.cvat-brush-tools-toolbox').hidden=true;
+    const next=document.createElement('button');next.className='cvat-player-next-button';document.body.append(next);
+    const wrapper=document.createElement('div');wrapper.className='cvat_masks_canvas_wrapper';wrapper.style.cssText='position:fixed;left:100px;top:120px;width:400px;height:200px';
+    const target=document.createElement('canvas');target.className='upper-canvas';wrapper.append(target);document.body.append(wrapper);
+    window.resetMacroState=()=>{
+      testMode='idle';macroEvents=[];macroDelay=0;
+      const a=testState.annotation,copy={objectType:'shape',shapeType:'mask',label:{id:1}};
+      a.drawing.activeInitialState=copy;a.player.frame={number:1,fetching:false};a.job.instance.stopFrame=2;
+      a.annotations={states:[],filters:[]};a.canvas.activeControl='cursor';a.canvas.ready=true;
+      a.canvas.instance.view={masksHandler:{drawData:{initialState:copy},drawnObjects:[],isInsertion:false}};
+      testState.shortcuts.keyMap.PASTE_SHAPE={sequences:['ctrl+v']};testState.shortcuts.keyMap.NEXT_FRAME={sequences:['f']};
+    };
+    Mousetrap.bind('ctrl+v',()=>{macroEvents.push('paste');testMode='draw';const h=testState.annotation.canvas.instance.view.masksHandler;h.isInsertion=true;setTimeout(()=>{h.drawnObjects=[{}];},macroDelay);});
+    Mousetrap.bind('f',()=>{macroEvents.push('next');testState.annotation.player.frame.number++;testState.annotation.annotations.states=[];});
+    Mousetrap.bind('esc',()=>{testMode='idle';macroEvents.push('escape');});
+    target.addEventListener('mousedown',()=>{if(testMode!=='draw')return;macroEvents.push('click');const a=testState.annotation;a.annotations.states.push({clientID:++macroID,shapeType:'mask',frame:a.player.frame.number,label:{id:1}});testMode='idle';});
+    resetMacroState();
+  `);
+  await evaluate(`chrome.storage.local.set({cvatLabelOverlayEnabled:false,cvatSidebarShortcutsV1:CVATShortcuts.normalize({shortcuts:{ai:{code:'KeyF'},paste:{code:'F8'}}})})`,executionContextId);
+  await send('Page.bringToFront');
+  await test('Paste macro crosses real worlds and bypasses a conflicting extension F binding only for its own events',async()=>{
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:'F8',code:'F8',windowsVirtualKeyCode:119});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:'F8',code:'F8',windowsVirtualKeyCode:119});
+    let status;
+    for(let i=0;i<50;i++){await pause(70);status=await evaluate(`chrome.tabs.sendMessage(7,{type:'CVAT_SHORTCUTS_STATUS'})`,executionContextId);if(!status.paste?.running)break;}
+    assert.deepEqual(await evaluate('macroEvents'),['paste','click','next','paste','click']);assert.equal(status.paste.completed,2);
+  });
+  await test('Trusted Esc stops the actual isolated controller before a delayed MAIN-world paste preview is confirmed',async()=>{
+    await evaluate('resetMacroState();macroDelay=1000');
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:'F8',code:'F8',windowsVirtualKeyCode:119});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:'F8',code:'F8',windowsVirtualKeyCode:119});
+    await pause(450);
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+    await pause(1100);
+    const state=await evaluate(`chrome.tabs.sendMessage(7,{type:'CVAT_SHORTCUTS_STATUS'})`,executionContextId);
+    assert.equal(state.paste.running,false);assert.deepEqual(await evaluate('macroEvents'),['paste','escape']);
   });
 }finally{socket?.close();child.kill();await new Promise(resolve=>server.close(resolve));}
 const report={testedAt:new Date().toISOString(),suite:'Real Chrome MAIN/isolated world communication',

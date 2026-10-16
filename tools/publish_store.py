@@ -16,6 +16,34 @@ ITEM_ID = 'mphpnnnfkagcfnehdelfgabmaklmdnmm'
 API = 'https://chromewebstore.googleapis.com'
 
 
+def error_context(url, body):
+    """Only fixed stage names and allowlisted codes may reach CI logs."""
+    oauth = url == 'https://oauth2.googleapis.com/token'
+    stage = 'OAuth token exchange' if oauth else {
+        'fetchStatus': 'Web Store status check', 'upload': 'Web Store upload',
+        'publish': 'Web Store submission',
+    }.get(url.rsplit(':', 1)[-1], 'Web Store API')
+    detail = body.get('error') if isinstance(body, dict) else None
+    code = detail if oauth else detail.get('status') if isinstance(detail, dict) else None
+    hints = {
+        'invalid_grant': 'Refresh authorization was rejected. Reauthorize and replace CWS_REFRESH_TOKEN; check OAuth consent publishing status.',
+        'invalid_client': 'Check CWS_CLIENT_ID and CWS_CLIENT_SECRET for the configured OAuth client.',
+        'unauthorized_client': 'Check that the OAuth client is allowed to use the refresh-token flow.',
+        'invalid_scope': 'Check the Chrome Web Store OAuth scope.',
+        'access_denied': 'Check the account authorization and OAuth app access policy.',
+    } if oauth else {
+        'INVALID_ARGUMENT': 'Check publisher ID, extension package and request configuration in the Web Store dashboard.',
+        'UNAUTHENTICATED': 'Check Web Store authorization.',
+        'PERMISSION_DENIED': 'Check the publishing account and extension permissions.',
+        'NOT_FOUND': 'Check the configured publisher and extension IDs.',
+        'FAILED_PRECONDITION': 'Check the current item and review state in the Web Store dashboard.',
+        'RESOURCE_EXHAUSTED': 'Check API quota and retry only after checking dashboard status.',
+    }
+    if isinstance(code, str) and code in hints:
+        return stage, f' ({code})', hints[code]
+    return stage, '', 'Check the Web Store dashboard and credentials.'
+
+
 def request_json(url, data=None, token=None, content_type='application/json'):
     headers = {'Content-Type': content_type}
     if token:
@@ -25,10 +53,16 @@ def request_json(url, data=None, token=None, content_type='application/json'):
         with urllib.request.urlopen(request, timeout=60) as response:
             return json.load(response)
     except urllib.error.HTTPError as error:
-        # Server bodies can include credentials/request content. Never print them.
-        raise RuntimeError(f'API HTTP {error.code}; check the Web Store dashboard and credentials') from None
+        # Never echo descriptions, URLs, request content or arbitrary response values.
+        try:
+            body = json.loads(error.read(16384))
+        except (OSError, ValueError, AttributeError, TypeError):
+            body = None
+        stage, code, hint = error_context(url, body)
+        raise RuntimeError(f'{stage} failed: HTTP {error.code}{code}. {hint}') from None
     except (urllib.error.URLError, TimeoutError, ValueError):
-        raise RuntimeError('API response unavailable; check dashboard status before retrying') from None
+        stage, _, _ = error_context(url, None)
+        raise RuntimeError(f'{stage}: response unavailable; check dashboard status before retrying') from None
 
 
 def preflight(status, version):

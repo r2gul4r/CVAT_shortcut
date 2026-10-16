@@ -62,3 +62,10 @@
 실제 Google 계정 연결과 첫 심사 제출은 설정 후 확인해야 합니다. 로컬 자동화 검사는 모의 응답으로 실패·재시도·중복 제출 처리를 검증합니다.
 
 공식 근거: [v2 API 설정](https://developer.chrome.com/docs/webstore/using-api), [제출 옵션](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/publishers.items/publish), [API 리소스](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/publishers.items), [설명 변경](https://developer.chrome.com/docs/webstore/update/#update-the-listing-metadata).
+## 자동 배포 오류 확인
+
+웹스토어 단계가 실패하면 로그에서 실패한 작업을 먼저 확인합니다. `OAuth token exchange`는 인증 갱신, `Web Store status check`는 현재 등록 상태 조회, `Web Store upload`는 ZIP 업로드, `Web Store submission`은 심사 제출입니다. 로그에는 허용 목록에 있는 오류 코드만 표시하고 응답 원문이나 인증정보는 표시하지 않습니다.
+
+`OAuth token exchange failed: HTTP 400 (invalid_grant)`는 갱신 인증이 거절됐다는 뜻입니다. OAuth 앱의 게시 상태와 계정 승인을 확인하고 다시 인증한 후 GitHub의 `CWS_REFRESH_TOKEN`을 교체해야 합니다. 정확한 만료·취소 원인은 이 코드 하나로 확정할 수 없습니다. 인증값을 공개 코드나 이슈·로그에 올리지 마세요.
+
+기존 심사 중인 버전을 발견하면 자동화는 제출을 취소하거나 덮어쓰지 않고 중지합니다. GitHub 릴리스 생성, 웹스토어 심사 제출, Google의 심사 승인은 서로 다른 상태입니다.

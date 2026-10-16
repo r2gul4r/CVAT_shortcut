@@ -1,16 +1,23 @@
 (() => {
   'use strict';
-  const $=id=>document.getElementById(id), button=$('health-toggle'), note=$('health-note'), automatic=$('health-auto');
-  let tab,enabled=false,busy=false,auto=false,currentScreen='shortcuts',timer,closed=false,requestNumber=0;
+  const $=id=>document.getElementById(id), button=$('health-toggle'), note=$('health-note'), automatic=$('health-auto'), alertsControl=$('health-alerts');
+  let tab,enabled=false,busy=false,auto=false,alerts=true,currentScreen='shortcuts',timer,closed=false,requestNumber=0;
   const supported=url=>{try{const u=new URL(url);return /^https?:$/.test(u.protocol)&&/^\/tasks\/\d+\/jobs\/\d+\/?$/.test(u.pathname);}catch{return false;}};
   const texts={ok:'응답 정상',slow:'응답 지연',error:'오류 감지',auth:'로그인·권한 확인',request:'요청 오류 확인',idle:'최근 측정 없음'};
   const descriptions={ok:'최근 요청이 정상적으로 완료됐습니다.',slow:'느린 응답이 반복되거나 오래 기다리는 요청이 있습니다.',error:'서버 오류·연결 실패·요청 제한이 감지됐습니다. 원인은 확정할 수 없습니다.',auth:'로그인 만료 또는 접근 권한 문제일 수 있습니다.',request:'요청 오류(4xx)가 있습니다. 서버 장애와 구분해서 확인하세요.',idle:'최근 1분 동안 측정 가능한 완료 요청이 없습니다.'};
   function controls(){
     button.textContent=enabled?'이 탭 측정 끄기':'측정 시작';button.disabled=busy||!supported(tab?.url);
     automatic.checked=auto;automatic.disabled=busy||!supported(tab?.url);
+    alertsControl.checked=alerts;alertsControl.disabled=busy||!supported(tab?.url);
+  }
+  function renderConnection(){
+    const online=globalThis.navigator?.onLine;
+    $('health-network').dataset.state=online===false?'offline':online===true?'online':'unknown';
+    $('health-network-status').textContent=online===false?'Chrome: 연결 끊김 감지':online===true?'Chrome: 네트워크 연결 감지':'Chrome: 연결 여부 확인 불가';
   }
   function render(data){
-    enabled=Boolean(data.enabled);auto=Boolean(data.auto);controls();
+    enabled=Boolean(data.enabled);auto=Boolean(data.auto);alerts=data.alerts!==false;controls();renderConnection();
+    $('health-alert-warning').hidden=!(enabled&&alerts&&data.pageReady===false);
     const state=enabled?(data.status||'idle'):'idle';$('health-state').dataset.state=state;
     $('health-status').textContent=enabled?texts[state]:'측정 꺼짐';
     $('health-description').textContent=!supported(tab?.url)?'CVAT Job 탭에서 열어주세요.':enabled?descriptions[state]:'측정을 켜면 이 탭의 기존 요청부터 확인합니다.';
@@ -60,6 +67,16 @@
   }
   function grant(){const u=new URL(tab.url);return chrome.permissions.request({permissions:['webRequest'],origins:[`${u.protocol}//${u.hostname}/*`]});}
   async function verifyTab(){const [current]=await chrome.tabs.query({active:true,currentWindow:true});if(current?.id!==tab?.id||current?.url!==tab?.url)throw new Error('탭이 바뀌었습니다. 팝업을 다시 열어주세요.');}
+  alertsControl.addEventListener('change',async()=>{
+    if(busy)return;
+    const desired=alertsControl.checked;busy=true;++requestNumber;controls();
+    try{
+      const data=await chrome.runtime.sendMessage({type:'CVAT_HEALTH_ALERTS',enabled:desired});
+      if(!data||data.error)throw new Error(data?.error||'알림 설정 실패');
+      alerts=data.alerts!==false;note.textContent=alerts?'측정 중 오류나 연결 끊김이 감지되면 오른쪽 위에 알립니다.':'오류 알림을 껐습니다. 연결 상태 측정은 계속됩니다.';
+    }catch(error){failure(error);}
+    finally{busy=false;controls();schedule();}
+  });
   automatic.addEventListener('change',async()=>{
     if(busy)return;
     const desired=automatic.checked;busy=true;++requestNumber;controls();
@@ -84,6 +101,7 @@
     finally{busy=false;controls();schedule();}
   });
   window.addEventListener('pagehide',()=>{closed=true;clearTimeout(timer);++requestNumber;},{once:true});
+  window.addEventListener('online',renderConnection);window.addEventListener('offline',renderConnection);renderConnection();
   void(async()=>{
     try{[tab]=await chrome.tabs.query({active:true,currentWindow:true});await refresh();}
     catch(error){failure(error);}controls();

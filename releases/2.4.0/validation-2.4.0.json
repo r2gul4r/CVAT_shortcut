@@ -1,0 +1,23 @@
+{
+  "version": "2.4.0",
+  "scope": "User-started paste-confirm-next loop, synthetic CVAT state and isolated Chrome validation",
+  "passed": 610,
+  "failed": 0,
+  "suites": {
+    "synthetic_browser_including_21_paste_tests": 478,
+    "health_core_worker": 45,
+    "real_chrome_health_extension": 19,
+    "label_logic": 12,
+    "chrome_execution_worlds_including_2_paste_tests": 17,
+    "release_failure_retry": 39
+  },
+  "limits": [
+    "CVAT React/Redux and canvas internals are synthetic; company CVAT and company annotations were not inspected",
+    "Real Chrome MAIN/ISOLATED worlds, Mousetrap and trusted F8/Escape inputs were verified",
+    "Single copied Shape only; incompatible CVAT internals, tracks, multi-selection, object filters and special frame navigation fail closed",
+    "No Mac hardware validation",
+    "GitHub release and Web Store submission or approval must be checked separately in Actions"
+  ],
+  "privacy": "No direct server requests, external transmission, OS clipboard reads, image pixels, coordinates or annotation attributes extracted",
+  "package_files": 29
+}

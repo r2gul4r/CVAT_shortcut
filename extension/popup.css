@@ -95,3 +95,6 @@ details summary { cursor:pointer; font-size:12px; color:#445970; }
 #health-last { margin:8px 0; }
 #health-note { margin:8px 0; overflow-wrap:anywhere; }
 #health-auto { margin:0; }
+#health-alerts { margin:0; }
+#health-network-status { font-size:13px; font-weight:600; margin:8px 0; }
+.health-network[data-state=offline] #health-network-status,#health-alert-warning { color:#a63426; }

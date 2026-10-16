@@ -1,8 +1,8 @@
 /* Shared, dependency-free shortcut handling. Physical keys work across input layouts. */
 (() => {
   "use strict";
-  const ACTIONS = Object.freeze(["ai", "brush", "polygon"]);
-  const ACTION_LABELS = Object.freeze({ai: "AI 도구", brush: "새 마스크 (브러쉬)", polygon: "새 폴리곤"});
+  const ACTIONS = Object.freeze(["ai", "brush", "polygon", "paste"]);
+  const ACTION_LABELS = Object.freeze({ai: "AI 도구", brush: "새 마스크 (브러쉬)", polygon: "새 폴리곤", paste: "붙여넣기 반복"});
   const STORAGE_KEY = "cvatSidebarShortcutsV1";
   const VALID_CODE = /^(Key[A-Z]|Digit[0-9]|F([1-9]|1[0-9]|2[0-4])|Numpad([0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter|Equal|Comma)|Arrow(Up|Down|Left|Right)|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Enter|Space|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|IntlBackslash|IntlRo|IntlYen)$/;
 

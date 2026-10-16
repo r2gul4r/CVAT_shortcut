@@ -1,8 +1,8 @@
 {
-  "testedAt": "2026-10-15T23:41:54.587Z",
+  "testedAt": "2026-10-16T00:15:02.265Z",
   "suite": "Real Chrome MAIN/isolated world communication",
   "environment": "Dedicated ephemeral headless Chrome; actual execution-world separation; Chrome APIs and CVAT/React state mocked; no user browser or company data",
-  "passed": 15,
+  "passed": 17,
   "failed": 0,
   "results": [
     {
@@ -63,6 +63,14 @@
     },
     {
       "name": "A later page layout scale change is corrected without reopening the palette",
+      "passed": true
+    },
+    {
+      "name": "Paste macro crosses real worlds and bypasses a conflicting extension F binding only for its own events",
+      "passed": true
+    },
+    {
+      "name": "Trusted Esc stops the actual isolated controller before a delayed MAIN-world paste preview is confirmed",
       "passed": true
     }
   ]

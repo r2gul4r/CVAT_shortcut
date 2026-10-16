@@ -49,23 +49,24 @@ test('sample and pending memory are bounded',()=>{
 });
 
 function worker(saved={},granted=true){
+  const pageMessages=[];let now=Date.now();class Clock extends Date{static now(){return now;}}
   const events={};const storage={...saved};const tabs={7:{id:7,url:'http://cvat.test/tasks/1/jobs/12'},8:{id:8,url:'http://cvat.test/tasks/1/jobs/13'}};
   const event=name=>({addListener(fn){events[name]=fn;},removeListener(fn){if(events[name]===fn)delete events[name];}});
   const chrome={runtime:{id:'test-extension',getURL:name=>'chrome-extension://test-extension/'+name,onMessage:event('message'),onStartup:event('startup')},
     granted,
     permissions:{async getAll(){return {permissions:chrome.granted?['webRequest']:[],origins:chrome.granted?['http://cvat.test/*']:[]};},async contains(){return chrome.granted;},async remove(){chrome.granted=false;},onAdded:event('permissionAdded'),onRemoved:event('permissionRemoved')},
     storage:{session:{async get(keys){return Object.fromEntries((Array.isArray(keys)?keys:[keys]).map(key=>[key,structuredClone(storage[key])]));},async set(values){Object.assign(storage,structuredClone(values));}},local:{async get(key){return {[key]:structuredClone(storage[key])};},async set(values){Object.assign(storage,structuredClone(values));}}},
-    tabs:{async get(id){if(!tabs[id])throw Error('No tab');return tabs[id];},async query(){return Object.values(tabs);},onRemoved:event('removed'),onUpdated:event('updated')},
+    tabs:{async get(id){if(!tabs[id])throw Error('No tab');return tabs[id];},async query(){return Object.values(tabs);},async sendMessage(id,message,options){pageMessages.push({id,...structuredClone(message),options});if(chrome.pageFailure)throw Error('No receiver');return {ready:true,online:true};},onRemoved:event('removed'),onUpdated:event('updated')},
     scripting:{async executeScript(){if(chrome.deny)throw Error('Permission denied');return [{frameId:0,result:{visible:true}}];}},
     get webRequest(){return chrome.granted?requestAPI:undefined;}};
   const requestAPI={onBeforeRequest:event('begin'),onCompleted:event('finish'),onErrorOccurred:event('error')};
-  const ctx=vm.createContext({URL,chrome,console,Date,Map});ctx.importScripts=()=>vm.runInContext(core,ctx);
+  const ctx=vm.createContext({URL,chrome,console,Date:Clock,Map});ctx.importScripts=()=>vm.runInContext(core,ctx);
   vm.runInContext(fs.readFileSync(path.join(root,'extension/health-worker.js'),'utf8'),ctx);
   const sender={id:chrome.runtime.id,url:chrome.runtime.getURL('popup.html')};
   const send=(type,tabId=7,from=sender,extra={})=>new Promise(resolve=>events.message({type,tabId,...extra},from,resolve));
   const flush=()=>new Promise(resolve=>setImmediate(resolve));
-  const request=(overrides={})=>({tabId:7,frameId:0,requestId:'r',url:'http://cvat.test/api/jobs/12?token=SECRET',method:'GET',timeStamp:Date.now(),...overrides});
-  return {send,flush,events,storage,tabs,chrome,request};
+  const request=(overrides={})=>({tabId:7,frameId:0,requestId:'r',url:'http://cvat.test/api/jobs/12?token=SECRET',method:'GET',timeStamp:now,...overrides});
+  return {send,flush,events,storage,tabs,chrome,request,pageMessages,advance(ms){now+=ms;}};
 }
 test('worker captures only explicitly enabled tab, same origin, main frame API',async()=>{
   const w=worker();await w.send('CVAT_HEALTH_START');
@@ -103,9 +104,10 @@ test('content cannot start monitoring or inspect a different tab',async()=>{
   assert((await w.send('CVAT_HEALTH_START',8,from)).error);await w.send('CVAT_HEALTH_START',8);
   assert.equal((await w.send('CVAT_HEALTH_STATUS',8,from)).enabled,false);
 });
-test('unsupported pages never enable capture; valid monitoring needs no page injection',async()=>{
+test('unsupported pages never enable capture; a notice injection failure does not stop monitoring',async()=>{
   const w=worker();w.tabs[7].url='http://cvat.test/home';assert((await w.send('CVAT_HEALTH_START')).error);
-  w.tabs[7].url='http://cvat.test/tasks/1/jobs/12';w.chrome.scripting.executeScript=async()=>assert.fail('Health must not inject into the Job page');assert.equal((await w.send('CVAT_HEALTH_START')).enabled,true);
+  w.tabs[7].url='http://cvat.test/tasks/1/jobs/12';w.chrome.pageFailure=true;w.chrome.scripting.executeScript=async()=>{throw Error('Blocked by policy');};
+  const result=await w.send('CVAT_HEALTH_START');assert.equal(result.enabled,true);assert.equal(result.pageReady,false);
 });
 test('no host grant means no webRequest registration and no enabled session',async()=>{
   const w=worker({},false);await w.flush();
@@ -198,4 +200,50 @@ test('automatic startup skips discarded tabs and unavailable permissions',async(
 test('popup automatic checkbox requests access before saving and reverts denial',async()=>{
   const p=await popup(false);p.automatic.checked=true;await p.automatic.change();assert.equal(p.calls[0][0],'permission');assert.equal(p.calls.length,1);assert.equal(p.automatic.checked,false);
   const allowed=await popup();allowed.chrome.runtime.sendMessage=async m=>({enabled:m.enabled,auto:m.enabled});allowed.automatic.checked=true;await allowed.automatic.change();assert.equal(allowed.automatic.checked,true);assert.equal(allowed.button.textContent,'이 탭 측정 끄기');
+});
+
+const notices=w=>w.pageMessages.filter(m=>m.type==='CVAT_HEALTH_PAGE_NOTICE');
+async function finishRequest(w,extra={}){const r=w.request(extra);w.events.begin(r);w.events.finish({...r,statusCode:503,...extra});await w.flush();}
+test('failed requests show one bounded notice, never request URLs or response contents',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');await finishRequest(w);
+  assert.equal(notices(w).length,1);assert.equal(notices(w)[0].category,'server');assert.equal(notices(w)[0].options.frameId,0);
+  assert(!JSON.stringify(notices(w)).includes('SECRET'));assert(!JSON.stringify(notices(w)).includes('/api/'));
+  await finishRequest(w);assert.equal(notices(w).length,1);
+  w.advance(61000);await finishRequest(w);assert.equal(notices(w).length,2);
+});
+test('success, cache, cancellation, and another tab do not notify',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');
+  for(const extra of [{statusCode:200},{fromCache:true},{error:'net::ERR_ABORTED'},{tabId:8}])await finishRequest(w,extra);
+  assert.equal(notices(w).length,0);
+});
+test('notice cooldown survives service worker restart',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');await finishRequest(w);
+  const next=worker(w.storage);await next.flush();await finishRequest(next);assert.equal(notices(next).length,0);
+});
+test('alerts can be disabled persistently without stopping measurement',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');await w.send('CVAT_HEALTH_ALERTS',7,undefined,{enabled:false});
+  await finishRequest(w);assert.equal(notices(w).length,0);assert.equal((await w.send('CVAT_HEALTH_STATUS')).count,1);
+  assert.equal(w.storage.cvatHealthAlertsEnabled,false);
+  assert(w.pageMessages.some(m=>m.type==='CVAT_HEALTH_PAGE_SETTINGS'&&m.alerts===false));
+  const next=worker(w.storage);assert.equal((await next.send('CVAT_HEALTH_STATUS')).alerts,false);
+});
+test('only the currently enabled main frame can report offline',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');const pageId=w.storage.cvatHealthSessions['7'].pageId;
+  const from={id:'test-extension',tab:{id:7},frameId:0,url:w.tabs[7].url};
+  for(const sender of [{...from,frameId:1},{...from,url:'http://other.test/tasks/1/jobs/12'},{...from,tab:{id:8}}])assert((await w.send('CVAT_HEALTH_NETWORK',7,sender,{pageId,online:false})).error);
+  assert((await w.send('CVAT_HEALTH_NETWORK',7,from,{pageId:'old-session',online:false})).error);
+  assert((await w.send('CVAT_HEALTH_ALERTS',7,from,{enabled:false})).error);
+  assert.equal(notices(w).length,0);
+  assert((await w.send('CVAT_HEALTH_NETWORK',7,from,{pageId,online:false})).accepted);await w.flush();
+  assert.equal(notices(w)[0].category,'offline');assert.equal((await w.send('CVAT_HEALTH_STATUS')).count,0);
+  await w.send('CVAT_HEALTH_STOP');assert(w.pageMessages.some(m=>m.type==='CVAT_HEALTH_PAGE_STOP'));
+  assert((await w.send('CVAT_HEALTH_NETWORK',7,from,{pageId,online:false})).error);
+});
+test('late notice cannot reach another Job after navigation',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');w.tabs[7].url='http://cvat.test/tasks/1/jobs/99';await finishRequest(w);assert.equal(notices(w).length,0);
+});
+test('denied alert setting save leaves the previous setting active',async()=>{
+  const w=worker();await w.send('CVAT_HEALTH_START');w.chrome.storage.local.set=async()=>{throw Error('Storage unavailable');};
+  const result=await w.send('CVAT_HEALTH_ALERTS',7,undefined,{enabled:false});assert(result.error);assert.equal(result.alerts,true);
+  await finishRequest(w);assert.equal(notices(w).length,1);
 });

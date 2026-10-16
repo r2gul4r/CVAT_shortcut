@@ -18,7 +18,7 @@ assert not manifest.get('host_permissions')
 assert manifest['optional_host_permissions'] == ['http://*/*', 'https://*/*']
 expected = {'manifest.json', 'common.js', 'content.js', 'native-repeat.js',
             'overlay.js', 'popup.js', 'popup.html', 'popup.css', 'guide.html', 'guide.css', 'updates.html', 'updates.css',
-            'health-core.js', 'health-worker.js', 'health-popup.js'}
+            'health-core.js', 'health-worker.js', 'health-popup.js', 'health-page.js', 'paste-repeat.js'}
 expected.update(f'icons/icon{size}.png' for size in [16, 32, 48, 128])
 expected.update(f'guide-images/{name}.jpg' for name in [
     '01-enable', '02-label', '03-ai-key', '04-brush-key',

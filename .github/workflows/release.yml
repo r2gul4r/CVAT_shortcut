@@ -52,6 +52,8 @@ jobs:
         run: node --test tests/test-health.cjs
       - name: Test Chrome execution worlds
         run: node tests/run-world-tests.mjs
+      - name: Test real Chrome extension APIs
+        run: node tests/run-health-extension.mjs
       - name: Build verified package
         run: python tools/package-extension.py
       - uses: actions/upload-artifact@v4

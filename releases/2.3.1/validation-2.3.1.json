@@ -1,0 +1,25 @@
+{
+  "version": "2.3.1",
+  "scope": "Local extension-only error notices and Chrome online/offline hints; synthetic and localhost Chrome tests",
+  "passed": 582,
+  "failed": 0,
+  "suites": {
+    "synthetic_browser": 457,
+    "health_core_worker": 45,
+    "real_chrome_extension": 19,
+    "label_logic": 12,
+    "chrome_execution_worlds": 15,
+    "release_failure_retry": 34
+  },
+  "limits": [
+    "Real Chrome APIs tested with unchanged no-grant manifest and separate localhost-only pregranted fixture",
+    "Native permission dialog approval was not automated; user installed extension not inspected",
+    "Offline events simulated through Chrome DevTools Protocol, not physical Wi-Fi disconnection",
+    "Chrome online state does not establish Internet or CVAT reachability or Wi-Fi signal strength",
+    "Full Chrome restart modeled with a fresh worker plus stored settings; real reload and Job navigation verified",
+    "Company CVAT traffic not inspected",
+    "This local validation does not claim GitHub push or Chrome Web Store publication"
+  ],
+  "privacy": "No probe requests, no external transmission, no request/response bodies, credentials, SSID or RSSI retained",
+  "package_files": 28
+}

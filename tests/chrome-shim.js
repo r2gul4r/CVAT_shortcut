@@ -32,8 +32,9 @@
       if(message.type==='CVAT_HEALTH_AUTO'){window.testHealthAuto=message.enabled;window.testHealthEnabled=message.enabled;}
       if (message.type === 'CVAT_HEALTH_START') window.testHealthEnabled = true;
       if (message.type === 'CVAT_HEALTH_STOP') window.testHealthEnabled = false;
+      if (message.type === 'CVAT_HEALTH_ALERTS') window.testHealthAlerts = message.enabled;
       if(window.testHealthFailure)throw Error('Could not establish connection. Receiving end does not exist.');
-      return {...(window.testHealthEnabled?window.testHealthSnapshot||{}:{}),enabled:Boolean(window.testHealthEnabled),auto:Boolean(window.testHealthAuto)};
+      return {...(window.testHealthEnabled?window.testHealthSnapshot||{}:{}),enabled:Boolean(window.testHealthEnabled),auto:Boolean(window.testHealthAuto),alerts:window.testHealthAlerts!==false,pageReady:true};
     },onMessage: {addListener(listener) { listeners.message.push(listener); }}},
     tabs: {
       async query() { return [{id: 7, url: window.testTabURL || "http://127.0.0.1/tasks/1/jobs/1"}]; },

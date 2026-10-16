@@ -1,0 +1,102 @@
+{
+  "testedAt": "2026-10-16T00:32:28.838Z",
+  "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
+  "staticChecks": "passed",
+  "passed": 21,
+  "failed": 0,
+  "suites": [
+    {
+      "suite": "Paste repeat",
+      "passed": 21,
+      "failed": 0,
+      "results": [
+        {
+          "name": "Repeats paste, one confirmation and next frame in order until the last frame",
+          "passed": true
+        },
+        {
+          "name": "Does not click a mask before its asynchronous preview is ready",
+          "passed": true
+        },
+        {
+          "name": "Waits for the next frame load before pasting again",
+          "passed": true
+        },
+        {
+          "name": "Polygon uses the SVG content confirmation target",
+          "passed": true
+        },
+        {
+          "name": "Esc during preview cancels without confirming or moving",
+          "passed": true
+        },
+        {
+          "name": "Stop during frame loading never pastes in the following frame",
+          "passed": true
+        },
+        {
+          "name": "Starting again while running stops rather than creating two loops",
+          "passed": true
+        },
+        {
+          "name": "Missing clipboard prevents all input",
+          "passed": true
+        },
+        {
+          "name": "Tracks are rejected to avoid propagating a track as independent shapes",
+          "passed": true
+        },
+        {
+          "name": "An already active drawing is not canceled by Start",
+          "passed": true
+        },
+        {
+          "name": "Modified native F binding prevents the macro from starting",
+          "passed": true
+        },
+        {
+          "name": "Filtered frame navigation prevents the macro from starting",
+          "passed": true
+        },
+        {
+          "name": "Unknown canvas implementation fails without fake clicks",
+          "passed": true
+        },
+        {
+          "name": "Missing frame boundary fails closed",
+          "passed": true
+        },
+        {
+          "name": "Changing the clipboard stops instead of silently switching objects",
+          "passed": true
+        },
+        {
+          "name": "A changed job stops before confirmation",
+          "passed": true
+        },
+        {
+          "name": "An unrelated key stops the loop during preview",
+          "passed": true
+        },
+        {
+          "name": "Page blur stops the loop",
+          "passed": true
+        },
+        {
+          "name": "Disabled extension prevents all input",
+          "passed": true
+        },
+        {
+          "name": "Failed confirmation times out without moving or retrying the same frame",
+          "passed": true
+        },
+        {
+          "name": "Paste settings conflict with tool and label keys",
+          "passed": true
+        }
+      ],
+      "platformValidation": "Windows Chrome synthetic DOM"
+    }
+  ]
+}

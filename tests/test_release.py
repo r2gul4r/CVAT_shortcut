@@ -1,5 +1,6 @@
 """Release safety tests; all Web Store requests are mocked, no credentials needed."""
 import hashlib
+import io
 import json
 from pathlib import Path
 import subprocess
@@ -166,6 +167,40 @@ class ReleaseTests(unittest.TestCase):
         with store.zipfile.ZipFile(archive) as package:
             self.assertIn('updates.html', package.namelist())
             self.assertIn('updates.css', package.namelist())
+
+    def test_oauth_failure_reports_known_code_without_description(self):
+        error = store.urllib.error.HTTPError('https://oauth2.googleapis.com/token', 400, 'private', {}, io.BytesIO(json.dumps({
+            'error': 'invalid_grant', 'error_description': 'private-refresh-token',
+        }).encode()))
+        with patch.object(store.urllib.request, 'urlopen', side_effect=error), self.assertRaises(RuntimeError) as caught:
+            store.request_json('https://oauth2.googleapis.com/token', data=b'private-client-secret')
+        self.assertIn('OAuth token exchange failed: HTTP 400 (invalid_grant)', str(caught.exception))
+        self.assertNotIn('private', str(caught.exception))
+
+    def test_arbitrary_oauth_code_is_not_logged(self):
+        stage, code, hint = store.error_context('https://oauth2.googleapis.com/token', {'error': 'private-token'})
+        self.assertEqual(stage, 'OAuth token exchange')
+        self.assertNotIn('private', code + hint)
+
+    def test_web_store_error_has_operation_and_allowlisted_status(self):
+        for operation, stage in [('fetchStatus', 'status check'), ('upload', 'upload'), ('publish', 'submission')]:
+            with self.subTest(operation=operation):
+                actual, code, hint = store.error_context(store.API + '/v2/publishers/private-id/items/item:' + operation,
+                    {'error': {'status': 'PERMISSION_DENIED', 'message': 'private-token', 'details': ['private-body']}})
+                self.assertEqual(actual, 'Web Store ' + stage)
+                self.assertEqual(code, ' (PERMISSION_DENIED)')
+                self.assertNotIn('private', actual + code + hint)
+
+    def test_unexpected_error_body_is_not_echoed(self):
+        for body in [['private-token'], {'error': {'status': ['private-token']}}, {'error': {'status': 'private-token'}}, None]:
+            with self.subTest(body=body):
+                self.assertNotIn('private', ' '.join(store.error_context(store.API, body)))
+
+    def test_network_failure_identifies_stage_without_token(self):
+        with patch.object(store.urllib.request, 'urlopen', side_effect=store.urllib.error.URLError('private-token')), self.assertRaises(RuntimeError) as caught:
+            store.request_json(store.API + '/v2/item:fetchStatus', token='private-token')
+        self.assertIn('Web Store status check', str(caught.exception))
+        self.assertNotIn('private', str(caught.exception))
 
     def test_tampered_package_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

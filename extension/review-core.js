@@ -57,9 +57,10 @@
     for (const [start,end] of intervals) { const last=result[result.length-1]; if(last && start<=last[1]+1)last[1]=Math.max(last[1],end);else result.push([start,end]); }
     return result;
   }
-  function inspect(job, meta, annotations, catalog, required) {
+  function inspect(job, meta, annotations, catalog, required, mode='missing') {
+    if(!['missing','present'].includes(mode))fail('지원하지 않는 라벨 검사 방식입니다.');
     const available=labels(catalog), byId=new Map(available.map(label=>[label.id,label]));
-    if (!Array.isArray(required) || !required.length || required.length>200 || new Set(required).size!==required.length || required.some(id=>!byId.has(id))) fail('현재 Job의 필수 라벨을 다시 선택하세요.');
+    if (!Array.isArray(required) || !required.length || required.length>200 || new Set(required).size!==required.length || required.some(id=>!byId.has(id))) fail('현재 Job의 라벨을 다시 선택하세요.');
     const {values,excluded}=frames(job,meta);
     if (!values.length) fail('삭제 프레임을 제외하면 검사할 프레임이 없습니다.');
     if (values.length*required.length>10000000) fail('한 번에 검사할 라벨 수를 줄여주세요.');
@@ -84,14 +85,14 @@
     }
     // A frame tag is not a drawn object, even if it uses the same label ID.
     list(annotations.tags,'Tag 목록');
-    const missingUnion=new Set();
+    const matchedUnion=new Set(),field=mode==='present'?'present':'missing';
     const rows=required.map(id=>{
-      const intervals=merge(presence.get(id)), missing=values.filter(frame=>!contains(intervals,frame));
-      missing.forEach(frame=>missingUnion.add(frame));
-      return {...byId.get(id),count:missing.length,missing:ranges(missing)};
+      const intervals=merge(presence.get(id)), matched=values.filter(frame=>contains(intervals,frame)===(mode==='present'));
+      matched.forEach(frame=>matchedUnion.add(frame));
+      return {...byId.get(id),count:matched.length,[field]:ranges(matched)};
     });
-    return {schema:1,jobId:job.id,taskId:job.task_id,checkedAt:Date.now(),version:annotations.version,total:values.length,excluded,
-      start:job.start_frame,end:job.stop_frame,missingCount:missingUnion.size,missing:ranges([...missingUnion].sort((a,b)=>a-b)),rows};
+    return {schema:1,mode,jobId:job.id,taskId:job.task_id,checkedAt:Date.now(),version:annotations.version,total:values.length,excluded,
+      start:job.start_frame,end:job.stop_frame,[field+'Count']:matchedUnion.size,[field]:ranges([...matchedUnion].sort((a,b)=>a-b)),rows};
   }
   function page(intervals, offset=0, limit=30) {
     const result=[]; let skipped=0;
@@ -109,15 +110,20 @@
     return null;
   }
   const format = values => values.map(([a,b])=>a===b?String(a):`${a}~${b}`).join(', ');
-  function text(report) {return `Job ${report.jobId} · 저장된 작업 검사\n${new Date(report.checkedAt).toLocaleString('ko-KR')} · ${report.total}프레임 · 누락 프레임 ${report.missingCount}개\n`+report.rows.map(row=>`${row.name}가 없는 프레임: ${row.count?format(row.missing):'없음'} (${row.count}개)`).join('\n');}
+  const resultRanges=(report,row=report)=>row?.[report?.mode==='present'?'present':'missing']||[];
+  const resultCount=report=>report?.[report?.mode==='present'?'presentCount':'missingCount']||0;
+  function text(report) {
+    const present=report.mode==='present';
+    return `Job ${report.jobId} · 저장된 작업 ${present?'라벨 검색':'검사'}\n${new Date(report.checkedAt).toLocaleString('ko-KR')} · ${report.total}프레임 · ${present?'찾은':'누락'} 프레임 ${resultCount(report)}개\n`+report.rows.map(row=>`${row.name}가 ${present?'있는':'없는'} 프레임: ${row.count?format(resultRanges(report,row)):'없음'} (${row.count}개)`).join('\n');
+  }
   function csv(report) {
     if(report.rows.reduce((sum,row)=>sum+row.count,0)>200000)fail('CSV가 너무 큽니다. 라벨 수를 줄이거나 결과 복사를 사용하세요.');
     const cell=value=>'"'+String(value).replace(/^[\s]*[=+@-]/,value=>"'"+value).replaceAll('"','""')+'"';
-    const lines=[['job_id','label_id','label','missing_frame','checked_at']];
-    for(const row of report.rows)for(const [start,end] of row.missing)for(let frame=start;frame<=end;frame++)lines.push([report.jobId,row.id,row.name,frame,new Date(report.checkedAt).toISOString()]);
+    const lines=[['job_id','label_id','label',report.mode==='present'?'present_frame':'missing_frame','checked_at']];
+    for(const row of report.rows)for(const [start,end] of resultRanges(report,row))for(let frame=start;frame<=end;frame++)lines.push([report.jobId,row.id,row.name,frame,new Date(report.checkedAt).toISOString()]);
     return '\ufeff'+lines.map(line=>line.map(cell).join(',')).join('\r\n');
   }
-  const api=Object.freeze({labels,frames,inspect,ranges,contains,page,adjacent,format,text,csv});
+  const api=Object.freeze({labels,frames,inspect,ranges,contains,page,adjacent,format,resultRanges,resultCount,text,csv});
   globalThis.CVATReviewCore=api;
   if(typeof module!=='undefined')module.exports=api;
 })();

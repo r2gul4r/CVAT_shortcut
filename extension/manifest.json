@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "CVAT Sidebar Shortcuts",
-  "version": "2.8.0",
-  "description": "CVAT 도구 단축키, 라벨 선택창, 필수 라벨 누락 검수, 붙여넣기 반복, 연결 상태 확인과 한글 가이드를 제공합니다.",
+  "version": "2.9.0",
+  "description": "CVAT 도구 단축키, 라벨 선택창, 라벨 찾기·누락 검수, 붙여넣기 반복, 연결 상태 확인과 한글 가이드를 제공합니다.",
   "minimum_chrome_version": "102",
   "permissions": [
     "activeTab",

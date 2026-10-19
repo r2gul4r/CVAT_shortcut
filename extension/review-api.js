@@ -1,12 +1,13 @@
 /* Serialized by chrome.scripting into the Job's ISOLATED world on user action.
  * Only fixed, same-origin GET endpoints. Full annotation bodies never leave this
- * world: the popup/storage receive label metadata and compact missing ranges. */
+ * world: the popup/storage receive label metadata and compact matching frame ranges. */
 async function CVATReviewRequest(request) {
   'use strict';
   const match=/^\/tasks\/(\d+)\/jobs\/(\d+)\/?$/.exec(location.pathname);
   const valid=()=>window.top===window && /^https?:$/.test(location.protocol) && match && location.origin===request.origin && location.pathname===request.path;
   if(!valid())return {error:'CVAT Job 탭이 바뀌었습니다. 팝업을 다시 열어주세요.'};
   if(!['catalog','scan','status'].includes(request.action))return {error:'지원하지 않는 검수 요청입니다.'};
+  if(request.action==='scan'&&!['missing','present'].includes(request.mode??'missing'))return {error:'지원하지 않는 라벨 검사 방식입니다.'};
   const taskId=Number(match[1]),jobId=Number(match[2]), key=`cvatReviewReportV1:${location.origin}${location.pathname.replace(/\/$/,'')}`;
   const lockKey='__cvatShortcutsReviewRunV1';
   if(request.action==='status')return {running:Boolean(globalThis[lockKey]?.running),key};
@@ -53,9 +54,9 @@ async function CVATReviewRequest(request) {
     if(request.action==='catalog')return {catalog,key,jobId};
     const meta=await get(`/api/jobs/${jobId}/data/meta`);
     const annotations=await get(`/api/jobs/${jobId}/annotations`);
-    const report=globalThis.CVATReviewCore.inspect(job,meta,annotations,catalog,request.required);
+    const report=globalThis.CVATReviewCore.inspect(job,meta,annotations,catalog,request.required,request.mode??'missing');
     if(!valid())throw Error('검사 도중 Job이 바뀌었습니다. 다시 검사하세요.');
-    if(JSON.stringify(report).length>2000000)throw Error('누락 결과가 너무 큽니다. 필수 라벨 수를 줄여 검사하세요.');
+    if(JSON.stringify(report).length>2000000)throw Error('검사 결과가 너무 큽니다. 선택 라벨 수를 줄여 검사하세요.');
     await chrome.storage.local.set({[key]:{state:'done',report}});
     return {report,key};
   }catch(error){

@@ -69,3 +69,55 @@ test('pagination is constructed locally and does not follow an external next URL
 test('broken pagination and duplicate labels are not accepted as complete',async()=>{const h=harness({fetch:(url)=>new Response(JSON.stringify(new URL(url).pathname==='/api/labels'?{count:4,results:[]}:job),{headers:{'content-type':'application/json'}})});assert((await h.run()).error);});
 test('navigation during an API response discards the scan',async()=>{let h;h=harness({fetch:()=>{h.context.location.pathname='/tasks/1/jobs/99';return new Response(JSON.stringify(job),{headers:{'content-type':'application/json'}});}});assert((await h.run()).error);assert.equal(Object.values(h.storage)[0].state,'error');});
 test('concurrent scan is rejected, running status is observable, finally releases lock',async()=>{const h=harness();let release;const original=h.context.fetch;h.context.fetch=async(...args)=>{await new Promise(resolve=>release=resolve);h.context.fetch=original;return original(...args);};const pending=h.run();await new Promise(resolve=>setImmediate(resolve));assert.equal((await h.run({action:'status'})).running,true);assert.match((await h.run()).error,/이미 검사/);release();assert(!(await pending).error);assert.equal((await h.run({action:'status'})).running,false);});
+
+
+const find=(a=base(),j=job,m=meta,selected=[1])=>core.inspect(j,m,a,catalog,selected,'present');
+test('presence search returns one frame per label even for duplicate objects',()=>{
+  const a=base();a.shapes=a.shapes.filter(s=>s.label_id===1&&[0,45,99].includes(s.frame));a.shapes.push({...a.shapes[0]});
+  const before=JSON.stringify(a),r=find(a);assert.equal(r.mode,'present');assert.equal(r.presentCount,3);assert.equal(r.rows[0].count,3);
+  assert.deepEqual(r.present,[[0,0],[45,45],[99,99]]);assert.equal(r.missing,undefined);assert.equal(JSON.stringify(a),before);
+});
+test('multiple searched labels combine with OR and retain label-specific frame ranges',()=>{
+  const a=base();a.shapes=a.shapes.filter(s=>(s.label_id===1&&[0,45].includes(s.frame))||(s.label_id===2&&[45,99].includes(s.frame)));
+  const r=find(a,job,meta,[1,2]);assert.equal(r.presentCount,3);assert.deepEqual(r.rows.map(row=>row.count),[2,2]);
+  assert.deepEqual(core.resultRanges(r,r.rows[1]),[[45,45],[99,99]]);
+});
+test('presence search excludes deleted and sparse unselected source frames with correct numbering',()=>{
+  const a=base();a.shapes=a.shapes.map(s=>({...s,frame:s.frame+100}));
+  const r=find(a,{...job,start_frame:100,stop_frame:199},{...meta,start_frame:1200,stop_frame:1499,frame_filter:'step=3',included_frames:[1200,1230,1497],deleted_frames:[110]});
+  assert.deepEqual(r.present,[[100,100],[199,199]]);assert.equal(r.excluded,1);
+});
+test('presence search includes visible Track interpolation but excludes Outside intervals',()=>{
+  const a={version:1,tags:[],shapes:[],tracks:[{label_id:1,frame:10,shapes:[{frame:10,outside:false},{frame:20,outside:true},{frame:30,outside:false},{frame:40,outside:true}]}]};
+  const r=find(a);assert.deepEqual(r.present,[[10,19],[30,39]]);assert.equal(r.presentCount,20);
+});
+test('tags and outside shapes do not appear in presence search',()=>{
+  const r=find({version:1,tags:[{frame:4,label_id:1}],shapes:[{frame:5,label_id:1,type:'polygon',outside:true}],tracks:[]});
+  assert.equal(r.presentCount,0);assert.deepEqual(r.rows[0].present,[]);
+});
+test('presence pagination and adjacent navigation respect holes and frame zero',()=>{
+  const a=base();a.shapes=a.shapes.filter(s=>s.frame!==45);const r=find(a,job,{...meta,deleted_frames:[88]});
+  assert.equal(core.page(r.present,30,30).length,30);assert(!core.page(r.present,30,30).includes(45));
+  assert.equal(core.adjacent(r.present,-1,1),0);assert.equal(core.adjacent(r.present,44,1),46);assert.equal(core.adjacent(r.present,89,-1),87);assert.equal(core.adjacent(r.present,99,1),null);
+});
+test('presence text and CSV exports identify present rather than missing frames',()=>{
+  const a=base();a.shapes=a.shapes.filter(s=>s.frame===45);const r=find(a);
+  assert.match(core.text(r),/A가 있는 프레임: 45 \(1개\)/);assert(!core.text(r).includes('누락'));
+  const csv=core.csv(r);assert.match(csv,/present_frame/);assert(!csv.includes('missing_frame'));assert.equal(csv.split('\r\n').length,2);
+});
+test('old saved missing reports remain readable without a mode field',()=>{
+  const r=inspect({version:1,tags:[],shapes:[],tracks:[]});delete r.mode;
+  assert.equal(core.resultCount(r),100);assert.deepEqual(core.resultRanges(r),[[0,99]]);assert.match(core.csv(r),/missing_frame/);
+});
+test('unknown search modes fail without requests or persisted data',async()=>{
+  assert.throws(()=>core.inspect(job,meta,base(),catalog,[1],'unknown'));
+  const h=harness();assert((await h.run({mode:'unknown'})).error);assert.equal(h.calls.length,0);assert.equal(Object.keys(h.storage).length,0);
+});
+test('presence API persists compact present results through the same read-only endpoints',async()=>{
+  const h=harness(),r=await h.run({mode:'present',required:[1]});assert(!r.error,r.error);assert.equal(r.report.presentCount,100);
+  assert.equal(Object.values(h.storage)[0].report.mode,'present');assert.equal(h.calls.length,4);assert(h.calls.every(call=>call.options.method==='GET'));
+});
+test('presence API failure cannot become a no-results success',async()=>{
+  const h=harness({fetch:()=>new Response('{}',{status:503,headers:{'content-type':'application/json'}})}),r=await h.run({mode:'present'});
+  assert(r.error);assert(!r.report);assert.equal(Object.values(h.storage)[0].state,'error');
+});

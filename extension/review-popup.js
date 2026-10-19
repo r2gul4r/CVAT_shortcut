@@ -9,14 +9,15 @@
   function controls(){
     $('review-load').disabled=busy||initializing;
     $('review-run').disabled=busy||initializing||!initialized||!selected.length||!$('review-saved').checked;
+    $('review-find').disabled=$('review-run').disabled;
     $('review-saved').disabled=busy||initializing;
     $('review-all').disabled=busy||initializing||!catalog.length;
     $('review-none').disabled=busy||initializing||!selected.length;
     for(const input of $('review-labels').querySelectorAll('input'))input.disabled=busy||initializing;
     for(const id of ['review-copy','review-csv'])$(id).disabled=busy||!report;
     for(const button of $('review-results').querySelectorAll('button[data-frame]'))button.disabled=busy;
-    $('review-previous').disabled=busy||!report?.missingCount;
-    $('review-next').disabled=busy||!report?.missingCount;
+    $('review-previous').disabled=busy||!core.resultCount(report);
+    $('review-next').disabled=busy||!core.resultCount(report);
   }
   async function verify(){
     if(closed)throw Error('검수 화면이 닫혔습니다.');
@@ -88,10 +89,10 @@
     report=null;drawReport();drawLabels();controls();
     const selection=[...selected],target=prefsKey,targetReport=key;
     // Serialize writes so rapid checking/unchecking cannot restore older choices.
-    saveQueue=saveQueue.then(()=>chrome.storage.local.set({[target]:selection,[targetReport]:{state:'idle'}})).catch(()=>message('필수 라벨 선택을 저장하지 못했습니다.',true));
-    message('필수 라벨을 선택했어요. CVAT에서 저장한 뒤 검사하세요.');
+    saveQueue=saveQueue.then(()=>chrome.storage.local.set({[target]:selection,[targetReport]:{state:'idle'}})).catch(()=>message('라벨 선택을 저장하지 못했습니다.',true));
+    message('라벨을 선택했어요. CVAT에서 저장한 뒤 검사하세요.');
   }
-  function intervals(){const id=Number($('review-filter').value);return id?report?.rows.find(row=>row.id===id)?.missing||[]:report?.missing||[];}
+  function intervals(){const id=Number($('review-filter').value);return core.resultRanges(report,id?report?.rows.find(row=>row.id===id):report);}
   function frameButton(frame,label=String(frame)){
     const button=document.createElement('button');button.type='button';button.className='secondary review-frame';button.dataset.frame=String(frame);button.textContent=label;button.title=`${frame}번 프레임으로 이동`;
     button.addEventListener('click',()=>void navigate(frame));return button;
@@ -103,28 +104,34 @@
     pageIndex=Math.min(pageIndex,lastPage);
     for(const frame of core.page(values,pageIndex*30,30)){
       const line=document.createElement('div');line.className='review-frame-row';
-      const text=document.createElement('span');text.textContent=report.rows.filter(row=>core.contains(row.missing,frame)).map(row=>row.name).join(', ');
+      const text=document.createElement('span');text.textContent=report.rows.filter(row=>core.contains(core.resultRanges(report,row),frame)).map(row=>row.name).join(', ');
       line.append(frameButton(frame),text);list.append(line);
     }
-    $('review-page').textContent=total?`${pageIndex+1} / ${lastPage+1}쪽 · ${total}프레임`:'누락 없음';
+    $('review-page').textContent=total?`${pageIndex+1} / ${lastPage+1}쪽 · ${total}프레임`:report.mode==='present'?'찾은 프레임 없음':'누락 없음';
     $('review-page-previous').disabled=busy||pageIndex===0;$('review-page-next').disabled=busy||pageIndex===lastPage;
     controls();
   }
   function drawReport(){
     $('review-results').hidden=!report;
     if(!report){controls();return;}
-    $('review-summary').textContent=`${report.total}프레임 검사 · 누락 있는 프레임 ${report.missingCount}개`;
+    const present=report.mode==='present';
+    $('review-summary').textContent=present?`${report.total}프레임 검색 · 찾은 프레임 ${report.presentCount}개`:`${report.total}프레임 검사 · 누락 있는 프레임 ${report.missingCount}개`;
+    $('review-count-heading').textContent=present?'프레임 수':'누락 수';
+    $('review-frames-heading').textContent=present?'있는 프레임':'누락 프레임';
+    $('review-filter-heading').textContent=present?'확인할 라벨 프레임':'확인할 누락 프레임';
+    $('review-previous').textContent=present?'이전 결과로 이동':'이전 누락으로 이동';
+    $('review-next').textContent=present?'다음 결과로 이동':'다음 누락으로 이동';
     $('review-time').textContent=`Job ${report.jobId} · ${new Date(report.checkedAt).toLocaleString('ko-KR')} · 저장된 작업 기준 · 삭제 프레임 ${report.excluded}개 제외`;
     const body=$('review-rows');body.replaceChildren();
     for(const row of report.rows){
       const tr=document.createElement('tr'),label=document.createElement('th'),count=document.createElement('td'),missing=document.createElement('td');label.scope='row';
       label.textContent=row.name;count.textContent=String(row.count);
       if(!row.count)missing.textContent='없음';
-      else {for(const range of row.missing.slice(0,8))missing.append(frameButton(range[0],range[0]===range[1]?String(range[0]):`${range[0]}~${range[1]}`));if(row.missing.length>8){const more=document.createElement('span');more.textContent='… 아래 목록에서 전체 확인';missing.append(more);}}
+      else {for(const range of core.resultRanges(report,row).slice(0,8))missing.append(frameButton(range[0],range[0]===range[1]?String(range[0]):`${range[0]}~${range[1]}`));if(core.resultRanges(report,row).length>8){const more=document.createElement('span');more.textContent='… 아래 목록에서 전체 확인';missing.append(more);}}
       tr.append(label,count,missing);body.append(tr);
     }
     const filter=$('review-filter'),old=filter.value;filter.replaceChildren();
-    const all=document.createElement('option');all.value='0';all.textContent='모든 누락 프레임';filter.append(all);
+    const all=document.createElement('option');all.value='0';all.textContent=present?'찾은 모든 프레임':'모든 누락 프레임';filter.append(all);
     for(const row of report.rows){const option=document.createElement('option');option.value=String(row.id);option.textContent=`${row.name} (${row.count})`;filter.append(option);}
     filter.value=[...filter.options].some(option=>option.value===old)?old:'0';drawFrames();
   }
@@ -137,7 +144,7 @@
     }else if(value?.state==='done' && value.report?.schema===1){
       busy=false;
       if(JSON.stringify([...selected].sort((a,b)=>a-b))===JSON.stringify(value.report.rows.map(row=>row.id).sort((a,b)=>a-b))){report=value.report;message('검사 결과를 불러왔어요. 수정·저장 후에는 다시 검사하세요.');}
-      else{report=null;message('필수 라벨이 달라졌습니다. 다시 검사하세요.');}
+      else{report=null;message('라벨이 달라졌습니다. 다시 검사하세요.');}
     }else{report=null;busy=false;if(value?.state==='error')message(value.error,true);}
     drawReport();controls();
   }
@@ -158,12 +165,12 @@
       const value=await call('catalog');catalog=value.catalog;
       if(closed)return;
       selected=selected.filter(id=>catalog.some(label=>label.id===id));
-      initialized=true;drawLabels();message(catalog.length?'필수 라벨을 선택하고 CVAT에서 저장한 뒤 검사하세요.':'이 Job에 등록된 라벨이 없습니다.');
+      initialized=true;drawLabels();message(catalog.length?'라벨을 선택하고 CVAT에서 저장한 뒤 검사하세요.':'이 Job에 등록된 라벨이 없습니다.');
       await applyStored((await chrome.storage.local.get(key))[key]);
     }catch(error){initialized=false;message(error.message,true);}
     finally{initializing=false;controls();if(!closed&&initialized&&!busy&&!catalog.length&&report)setTimeout(()=>void initialize(true),100);}
   }
-  async function scan(){
+  async function scan(scanMode='missing'){
     if(busy||!selected.length||!$('review-saved').checked)return;
     const required=[...selected];
     busy=true;report=null;drawReport();controls();message('저장 상태 확인 중…');
@@ -171,8 +178,8 @@
       await saveQueue;
       let status;try{status=await native('status');}catch{/* An explicit saved confirmation still permits a server snapshot. */}
       if(status?.dirty===true){$('review-saved').checked=false;throw Error('미저장 변경 사항이 있습니다. CVAT에서 저장한 뒤 다시 검사하세요.');}
-      message('저장된 라벨링을 읽고 전체 프레임 검사 중…');
-      const result=await call('scan',{required});
+      message(scanMode==='present'?'저장된 라벨링에서 선택 라벨이 있는 프레임을 찾는 중…':'저장된 라벨링을 읽고 전체 프레임 검사 중…');
+      const result=await call('scan',{required,mode:scanMode});
       if(closed)return;
       pageIndex=0;$('review-saved').checked=false;
       await applyStored({state:'done',report:result.report});
@@ -190,7 +197,7 @@
     try{const value=await native('status');currentFrame=Number.isSafeInteger(value.frame)?value.frame:currentFrame;}
     catch(error){message(error.message,true);return;}
     const next=core.adjacent(intervals(),currentFrame,direction);
-    if(next===null){message(direction>0?'이후 누락 프레임이 없습니다.':'이전 누락 프레임이 없습니다.');return;}
+    if(next===null){const kind=report.mode==='present'?'검색 결과':'누락';message(`${direction>0?'이후':'이전'} ${kind} 프레임이 없습니다.`);return;}
     await navigate(next);
   }
   const activate=()=>void initialize();
@@ -199,6 +206,7 @@
   $('review-load').addEventListener('click',()=>void initialize(true));
   $('review-saved').addEventListener('change',controls);
   $('review-run').addEventListener('click',()=>void scan());
+  $('review-find').addEventListener('click',()=>void scan('present'));
   $('review-all').addEventListener('click',()=>{selected=catalog.map(label=>label.id);selectionChanged();});
   $('review-none').addEventListener('click',()=>{selected=[];selectionChanged();});
   $('review-filter').addEventListener('change',()=>{pageIndex=0;drawFrames();});
@@ -208,7 +216,7 @@
   $('review-copy').addEventListener('click',()=>{if(report)void Promise.resolve().then(()=>transport?.copy?transport.copy(core.text(report)):navigator.clipboard.writeText(core.text(report))).then(()=>message('검사 결과를 복사했어요.'),()=>message('복사하지 못했습니다. CSV 저장을 사용하세요.',true));});
   $('review-csv').addEventListener('click',()=>{
     if(!report)return;
-    try{const url=URL.createObjectURL(new Blob([core.csv(report)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`cvat-job-${report.jobId}-missing-labels.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);message('CSV 다운로드를 시작했어요.');}
+    try{const url=URL.createObjectURL(new Blob([core.csv(report)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`cvat-job-${report.jobId}-${report.mode==='present'?'present':'missing'}-labels.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);message('CSV 다운로드를 시작했어요.');}
     catch(error){message(error.message,true);}
   });
   const storageChanged=(changes,area)=>{

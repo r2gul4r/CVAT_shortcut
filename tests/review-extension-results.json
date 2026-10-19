@@ -1,6 +1,6 @@
 {
   "environment": "Disposable Chrome MV3 with localhost-only pregrant and synthetic CVAT Redux/input. No company data or personal browser. Permission prompt and deployed CVAT are not tested.",
-  "passed": 37,
+  "passed": 45,
   "failed": 0,
   "results": [
     {
@@ -52,6 +52,30 @@
       "passed": true
     },
     {
+      "name": "single label search shows only saved present frames with paged navigation",
+      "passed": true
+    },
+    {
+      "name": "presence frame click and previous/next navigation skip missing frames",
+      "passed": true
+    },
+    {
+      "name": "presence result mode and chosen label survive reopening the popup",
+      "passed": true
+    },
+    {
+      "name": "multiple labels use union while filter shows each label separately",
+      "passed": true
+    },
+    {
+      "name": "empty presence result clears old frames and disables navigation",
+      "passed": true
+    },
+    {
+      "name": "returning to missing inspection restores missing-only result labels and counts",
+      "passed": true
+    },
+    {
       "name": "Job-specific selection and last result survive closing popup",
       "passed": true
     },
@@ -93,6 +117,14 @@
     },
     {
       "name": "native bridge rejects another Job, unknown actions and invalid frames, ignoring a spoofed target tab",
+      "passed": true
+    },
+    {
+      "name": "real overlay supports presence search, frame zero and next-result navigation",
+      "passed": true
+    },
+    {
+      "name": "popup displays presence result produced in overlay",
       "passed": true
     },
     {

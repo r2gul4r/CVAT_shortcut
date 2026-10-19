@@ -133,36 +133,36 @@
     </section>
     <section id="review-screen" role="tabpanel" aria-labelledby="screen-review" hidden>
       <button type="button" class="workspace-open secondary" data-popup-only data-open-workspace="review">작업 화면에서 검수 열기 ↗</button><p data-popup-only class="section-note" role="status"></p>
-      <div class="review-modes" role="group" aria-label="검수 기능 선택"><button id="review-mode-inspect" type="button" aria-pressed="true">누락 검수</button><button id="review-mode-bulk" type="button" class="secondary" aria-pressed="false">삭제·라벨 변경</button></div>
+      <div class="review-modes" role="group" aria-label="검수 기능 선택"><button id="review-mode-inspect" type="button" aria-pressed="true">누락·라벨 찾기</button><button id="review-mode-bulk" type="button" class="secondary" aria-pressed="false">삭제·라벨 변경</button></div>
       <div id="review-inspection">
       <div class="tool">
-        <div class="section-heading"><h2>필수 라벨 누락 검사</h2><button id="review-load" type="button" class="text-button">목록 새로고침</button></div>
-        <p class="section-note">현재 Job의 모든 프레임에 있어야 할 라벨을 고르세요. 프레임마다 해당 라벨의 객체가 1개 이상 있는지 확인합니다.</p>
+        <div class="section-heading"><h2>누락 검사 · 라벨 찾기</h2><button id="review-load" type="button" class="text-button">목록 새로고침</button></div>
+        <p class="section-note">확인할 라벨을 고르세요. ‘누락 프레임 검사’는 라벨이 없는 프레임을, ‘선택 라벨 찾기’는 라벨이 있는 프레임을 보여줍니다.</p>
         <div class="review-label-actions"><span id="review-selection-count" class="muted">라벨 확인 전</span><button id="review-all" type="button" class="text-button">전체 선택</button><button id="review-none" type="button" class="text-button">해제</button></div>
-        <div id="review-labels" class="review-labels" role="group" aria-label="필수 라벨 선택"></div>
+        <div id="review-labels" class="review-labels" role="group" aria-label="검사·검색할 라벨 선택"></div>
         <p class="section-note">선택은 이 서버의 Job별로 기억합니다.</p>
       </div>
       <div class="tool">
         <p class="section-note">먼저 CVAT에서 작업을 저장하세요. 미저장 수정은 검사에 포함되지 않습니다.</p>
         <label class="wheel-toggle review-saved"><input id="review-saved" type="checkbox"> CVAT에서 작업을 저장했어요</label>
-        <button id="review-run" type="button" disabled>전체 프레임 검사 / 다시 검사</button>
+        <div class="review-scan-actions"><button id="review-run" type="button" class="secondary" disabled>누락 프레임 검사</button><button id="review-find" type="button" disabled>선택 라벨 찾기</button></div><p class="section-note">여러 라벨을 찾으면 선택한 라벨 중 하나라도 있는 프레임을 모아 보여줍니다.</p>
         <p id="review-status" class="section-note" role="status" aria-live="polite">CVAT Job 탭에서 열어주세요.</p>
       </div>
       <div id="review-results" hidden>
         <div class="tool">
           <h2 id="review-summary"></h2><p id="review-time" class="section-note"></p>
           <p class="section-note">이전 검사 결과입니다. 수정·저장 후 다시 검사하세요. 번호는 CVAT 화면과 같습니다.</p>
-          <table class="review-table"><thead><tr><th scope="col">라벨</th><th scope="col">누락 수</th><th scope="col">누락 프레임</th></tr></thead><tbody id="review-rows"></tbody></table>
+          <table class="review-table"><thead><tr><th scope="col">라벨</th><th id="review-count-heading" scope="col">누락 수</th><th id="review-frames-heading" scope="col">누락 프레임</th></tr></thead><tbody id="review-rows"></tbody></table>
           <div class="buttons"><button id="review-copy" type="button" class="secondary">결과 복사</button><button id="review-csv" type="button" class="secondary">CSV 저장</button></div>
         </div>
         <div class="tool">
-          <label for="review-filter">확인할 누락 프레임</label><select id="review-filter"><option value="0">모든 누락 프레임</option></select>
+          <label id="review-filter-heading" for="review-filter">확인할 누락 프레임</label><select id="review-filter"><option value="0">모든 누락 프레임</option></select>
           <div class="buttons"><button id="review-previous" type="button" class="secondary">이전 누락으로 이동</button><button id="review-next" type="button">다음 누락으로 이동</button></div>
           <div id="review-frames" class="review-frames"></div>
           <div class="review-pagination"><button id="review-page-previous" type="button" class="secondary">이전 목록</button><span id="review-page" class="muted"></span><button id="review-page-next" type="button" class="secondary">다음 목록</button></div>
         </div>
       </div>
-      <details class="help"><summary>검사 기준 · 데이터 보관</summary><p>저장된 Shape와 Track을 검사합니다. Track의 Outside 구간과 삭제 프레임은 제외하고, 화면에서 숨기거나 필터로 가린 객체도 포함합니다. Tag는 그린 객체로 세지 않습니다. Skeleton Track은 지원하지 않으며 검사 오류로 안내합니다.</p><p>라벨이 있으면 통과합니다. 객체 수·모양·손잡이 등 세부 누락은 판단하지 않습니다. 그림이나 라벨링을 자동으로 변경하거나 저장하지 않습니다.</p><p>검사를 누를 때 현재 CVAT 서버에서 데이터를 읽습니다. 이미지 조회와 외부 전송은 없습니다. 선택한 라벨과 마지막 결과(이름·누락 프레임·시각)는 이 Chrome 프로필에 보관하며, 좌표·마스크·속성은 보관하지 않습니다.</p></details>
+      <details class="help"><summary>검사 기준 · 데이터 보관</summary><p>저장된 Shape와 Track을 검사합니다. Track의 Outside 구간과 삭제 프레임은 제외하고, 화면에서 숨기거나 필터로 가린 객체도 포함합니다. Tag는 그린 객체로 세지 않습니다. Skeleton Track은 지원하지 않으며 검사 오류로 안내합니다.</p><p>라벨이 있으면 통과합니다. 객체 수·모양·손잡이 등 세부 누락은 판단하지 않습니다. 그림이나 라벨링을 자동으로 변경하거나 저장하지 않습니다.</p><p>검사를 누를 때 현재 CVAT 서버에서 데이터를 읽습니다. 이미지 조회와 외부 전송은 없습니다. 선택한 라벨과 마지막 결과(이름·누락 또는 찾은 프레임·시각)는 이 Chrome 프로필에 보관하며, 좌표·마스크·속성은 보관하지 않습니다.</p></details>
       </div>
       <div id="bulk-editor" hidden>
         <div class="tool">

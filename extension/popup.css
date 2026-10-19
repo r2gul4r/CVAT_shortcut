@@ -104,7 +104,8 @@ details summary { cursor:pointer; font-size:12px; color:#445970; }
 .review-label { display:flex; align-items:center; gap:8px; padding:7px; border:1px solid #e0e7ef; border-radius:6px; cursor:pointer; }
 .review-label span:last-child { min-width:0; overflow-wrap:anywhere; }
 .review-saved { margin:10px 0; font-size:12px; }
-#review-run { width:100%; }
+.review-scan-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.review-scan-actions > button { flex:1 1 140px; min-width:0; }
 #review-status { margin-top:10px; overflow-wrap:anywhere; }
 .review-error { color:#ab2929; }
 .review-table { width:100%; border-collapse:collapse; font-size:11px; margin:12px 0; table-layout:fixed; }

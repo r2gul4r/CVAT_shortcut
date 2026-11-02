@@ -123,8 +123,23 @@
     await test("A manually chosen polygon repeats with a compatible typed label",async()=>{
       state.annotation.drawing.activeShapeType="polygon";await settings({defaultLabelName:"polygon-label"});press();assert(starts[0].activeShapeType==="polygon"&&starts[0].activeLabelID===3);
     });
-    await test("A skeleton repeat uses a compatible label and preserves drawing parameters",async()=>{
-      state.annotation.drawing.activeShapeType="skeleton";await settings({defaultLabelName:"skeleton-label"});press();assert(starts[0].activeLabelID===6);
+    for(const shape of ["rectangle","skeleton"]){
+      await test(`${shape} native N preserves its fixed label and options then finishes normally`,async()=>{
+        const drawing=state.annotation.drawing;drawing.activeShapeType=shape;drawing.activeLabelID=shape==="skeleton"?6:1;
+        await settings({defaultLabelName:"obstacle"});assert(!press().defaultPrevented);
+        assert(starts.length===1&&actions.length===0&&Object.keys(drawing).every(key=>starts[0][key]===drawing[key]));
+        press();assert(starts.length===1&&finishes[0]===drawing.activeLabelID&&actions.length===0);
+      });
+      await test(`${shape} native N does not require an overlay label or read the label catalog`,async()=>{
+        state.annotation.drawing.activeShapeType=shape;state.annotation.drawing.activeLabelID=shape==="skeleton"?6:1;
+        Object.defineProperty(state.annotation.job,"labels",{get(){throw Error("Fixed-label repeat accessed label catalog");}});
+        for(const label of ["","unknown-overlay-label"]){idle();await settings({defaultLabelName:label});assert(!press().defaultPrevented);}
+        assert(starts.length===2&&actions.length===0&&starts.every(item=>item.activeLabelID===(shape==="skeleton"?6:1)));
+      });
+    }
+    await test("An AI interactor returning rectangles still follows the overlay label",async()=>{
+      state.annotation.drawing.activeShapeType="rectangle";state.annotation.drawing.activeInteractor={kind:"interactor",returnType:"rectangle"};
+      await settings({defaultLabelName:"obstacle"});press();assert(starts.length===1&&starts[0].activeLabelID===2&&actions.length===1);
     });
     await test("Tag labels are checked before a native tag repeat",async()=>{
       state.annotation.drawing.activeObjectType="tag";state.annotation.drawing.activeShapeType=null;await settings({defaultLabelName:"tag-label"});press();assert(starts[0].activeLabelID===4);

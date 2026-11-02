@@ -1,0 +1,53 @@
+{
+  "version": "2.13.0",
+  "passed": 731,
+  "failed": 0,
+  "checks": [
+    {
+      "suite": "DOM 회귀",
+      "passed": 572,
+      "failed": 0,
+      "report": "tests/test-results.json"
+    },
+    {
+      "suite": "location 실제 MV3",
+      "passed": 8,
+      "failed": 0,
+      "report": "tests/location-extension-results.json"
+    },
+    {
+      "suite": "화면 도구 실제 MV3",
+      "passed": 14,
+      "failed": 0,
+      "report": "tests/view-extension-results.json"
+    },
+    {
+      "suite": "그룹 실제 MV3",
+      "passed": 8,
+      "failed": 0,
+      "report": "tests/group-extension-results.json"
+    },
+    {
+      "suite": "문맥 만료",
+      "passed": 1,
+      "failed": 0,
+      "report": "tests/context-view-results.json"
+    },
+    {
+      "suite": "location 논리·서비스",
+      "passed": 34,
+      "failed": 0
+    },
+    {
+      "suite": "그룹 논리 회귀",
+      "passed": 55,
+      "failed": 0
+    },
+    {
+      "suite": "릴리스 자동화",
+      "passed": 39,
+      "failed": 0
+    }
+  ],
+  "limits": "Skeleton Shapes only. Tracks excluded explicitly. Synthetic CVAT + disposable Chrome MV3; company CVAT persistence not verified. No GitHub push or store submission."
+}

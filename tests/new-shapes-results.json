@@ -1,0 +1,162 @@
+{
+  "testedAt": "2026-11-02T02:37:03.447Z",
+  "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
+  "staticChecks": "passed",
+  "passed": 36,
+  "failed": 0,
+  "suites": [
+    {
+      "suite": "rotated rectangle and skeleton",
+      "passed": 36,
+      "failed": 0,
+      "results": [
+        {
+          "name": "Old settings retain existing shortcuts and leave both new tools unassigned",
+          "passed": true
+        },
+        {
+          "name": "Both new shortcuts reject collisions with every existing tool and label binding",
+          "passed": true
+        },
+        {
+          "name": "Rectangle preserves its CVAT label then commits Rotated and starts only Shape once",
+          "passed": true
+        },
+        {
+          "name": "An existing 4 Points setting is replaced with Rotated",
+          "passed": true
+        },
+        {
+          "name": "Already Rotated starts without toggling or touching other methods",
+          "passed": true
+        },
+        {
+          "name": "Rotated waits for controlled wrapper state, not transient native checked",
+          "passed": true
+        },
+        {
+          "name": "Rejected Rotated selection times out without fallback or repeated clicks",
+          "passed": true
+        },
+        {
+          "name": "Missing Rotated value stops instead of guessing by display text",
+          "passed": true
+        },
+        {
+          "name": "Disabled Rotated control never starts another drawing method",
+          "passed": true
+        },
+        {
+          "name": "Hidden Rotated wrapper is not actionable",
+          "passed": true
+        },
+        {
+          "name": "Duplicate method groups are rejected",
+          "passed": true
+        },
+        {
+          "name": "Duplicate Rotated options are rejected",
+          "passed": true
+        },
+        {
+          "name": "Skeleton preserves its existing CVAT label and starts Shape",
+          "passed": true
+        },
+        {
+          "name": "Skeleton does not wait for or change the overlay label",
+          "passed": true
+        },
+        {
+          "name": "An unrelated rectangle overlay label does not block skeleton",
+          "passed": true
+        },
+        {
+          "name": "An unrelated skeleton overlay label does not block rectangle",
+          "passed": true
+        },
+        {
+          "name": "rectangle ignores overlay label changes without changing the saved overlay choice",
+          "passed": true
+        },
+        {
+          "name": "rectangle starts with an empty overlay label",
+          "passed": true
+        },
+        {
+          "name": "rectangle starts with a single disabled fixed-label selector",
+          "passed": true
+        },
+        {
+          "name": "rectangle starts even without a label selector in the menu",
+          "passed": true
+        },
+        {
+          "name": "rectangle cancels an active brush before selecting its own Shape",
+          "passed": true
+        },
+        {
+          "name": "rectangle ignores another tool's visible Shape popover",
+          "passed": true
+        },
+        {
+          "name": "rectangle refuses disabled Shape",
+          "passed": true
+        },
+        {
+          "name": "rectangle refuses multiple matching popovers",
+          "passed": true
+        },
+        {
+          "name": "skeleton ignores overlay label changes without changing the saved overlay choice",
+          "passed": true
+        },
+        {
+          "name": "skeleton starts with an empty overlay label",
+          "passed": true
+        },
+        {
+          "name": "skeleton starts with a single disabled fixed-label selector",
+          "passed": true
+        },
+        {
+          "name": "skeleton starts even without a label selector in the menu",
+          "passed": true
+        },
+        {
+          "name": "skeleton cancels an active brush before selecting its own Shape",
+          "passed": true
+        },
+        {
+          "name": "skeleton ignores another tool's visible Shape popover",
+          "passed": true
+        },
+        {
+          "name": "skeleton refuses disabled Shape",
+          "passed": true
+        },
+        {
+          "name": "skeleton refuses multiple matching popovers",
+          "passed": true
+        },
+        {
+          "name": "Unknown skeleton toolbar support leaves existing work untouched",
+          "passed": true
+        },
+        {
+          "name": "Typing and modal dialogs preserve native keys for both tools",
+          "passed": true
+        },
+        {
+          "name": "Escape cancels a pending rotated setup before it starts",
+          "passed": true
+        },
+        {
+          "name": "Job navigation cancels pending rotation without starting in the next Job",
+          "passed": true
+        }
+      ],
+      "platformValidation": "Windows Chrome synthetic DOM"
+    }
+  ]
+}

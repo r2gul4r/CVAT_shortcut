@@ -1,0 +1,63 @@
+{
+  "environment": "Disposable Chrome MV3 with localhost-only pregrant, synthetic CVAT DOM. No company data or personal browser; deployed CVAT/OpenCV initialization not tested.",
+  "passed": 14,
+  "failed": 0,
+  "results": [
+    {
+      "name": "actual popup injects both display worlds and connects the Job catalog",
+      "passed": true
+    },
+    {
+      "name": "trusted eye click hides matching objects without changing the active skeleton label",
+      "passed": true
+    },
+    {
+      "name": "trusted screen-tab rotation applies exactly one degree through MAIN",
+      "passed": true
+    },
+    {
+      "name": "angle entry and grid checkbox work with real trusted pointer events",
+      "passed": true
+    },
+    {
+      "name": "grid spacing and color persist while the grid stays unrotated",
+      "passed": true
+    },
+    {
+      "name": "trusted drag keeps the new six-joint skeleton preview horizontal on a rotated image",
+      "passed": true
+    },
+    {
+      "name": "trusted release submits original-image joints through the native completion callback",
+      "passed": true
+    },
+    {
+      "name": "returning to zero degrees preserves the completed original-image coordinates",
+      "passed": true
+    },
+    {
+      "name": "trusted zero reset exits group mode and restores rotation while normal angle controls stay locked",
+      "passed": true
+    },
+    {
+      "name": "trusted reset cancels only the unfinished skeleton preview before returning to zero",
+      "passed": true
+    },
+    {
+      "name": "next frame keeps label hiding while angle remains frame-specific",
+      "passed": true
+    },
+    {
+      "name": "native raster drawing resets a fine angle before its handler starts",
+      "passed": true
+    },
+    {
+      "name": "SPA Job changes isolate and restore each Job display preferences",
+      "passed": true
+    },
+    {
+      "name": "pause restores extension visibility and grid, preserves manual hiding and makes no annotation saves",
+      "passed": true
+    }
+  ]
+}

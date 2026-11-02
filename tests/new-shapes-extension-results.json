@@ -1,0 +1,35 @@
+{
+  "environment": "Disposable Chrome MV3 with localhost-only pregrant, synthetic CVAT DOM. No company data or personal browser; deployed CVAT/OpenCV initialization not tested.",
+  "passed": 7,
+  "failed": 0,
+  "results": [
+    {
+      "name": "real action popup assigns and persists both new shortcuts",
+      "passed": true
+    },
+    {
+      "name": "popup activation injects new tools into isolated extension world",
+      "passed": true
+    },
+    {
+      "name": "trusted rectangle shortcut preserves the single fixed label and selects Rotated before Shape",
+      "passed": true
+    },
+    {
+      "name": "trusted skeleton key cancels rectangle and starts Shape with its fixed label",
+      "passed": true
+    },
+    {
+      "name": "changing overlay labels never touches fixed-label selectors or blocks skeleton",
+      "passed": true
+    },
+    {
+      "name": "disabled Rotated cannot fall back to classic Shape",
+      "passed": true
+    },
+    {
+      "name": "reopened popup preserves keys and no Track or unrelated Shape was clicked",
+      "passed": true
+    }
+  ]
+}

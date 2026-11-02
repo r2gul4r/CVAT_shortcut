@@ -1,0 +1,51 @@
+{
+  "environment": "Disposable Chrome MV3 with localhost-only pregrant, synthetic CVAT DOM. No company data or personal browser; deployed CVAT/OpenCV initialization not tested.",
+  "passed": 11,
+  "failed": 0,
+  "results": [
+    {
+      "name": "actual popup injects both display worlds and connects the Job catalog",
+      "passed": true
+    },
+    {
+      "name": "screen overlay exposes automatic grouping with current-frame default",
+      "passed": true
+    },
+    {
+      "name": "trusted scan previews box plus skeleton and leaves empty box unchanged",
+      "passed": true
+    },
+    {
+      "name": "trusted apply invokes native group once and never groups the empty box",
+      "passed": true
+    },
+    {
+      "name": "repeated inspection preserves existing groups and disables duplicate apply",
+      "passed": true
+    },
+    {
+      "name": "lock change between preview and apply is blocked in actual MV3 bridge",
+      "passed": true
+    },
+    {
+      "name": "Job-wide grouping creates independent per-box groups across frames",
+      "passed": true
+    },
+    {
+      "name": "preview adds polygon to existing box group and finds polygon-only frame",
+      "passed": true
+    },
+    {
+      "name": "apply preserves every object and coordinate while grouping old box plus polygon and new polygon plus two skeletons",
+      "passed": true
+    },
+    {
+      "name": "repeated polygon grouping does not replace completed groups",
+      "passed": true
+    },
+    {
+      "name": "Job navigation invalidates old grouping results",
+      "passed": true
+    }
+  ]
+}

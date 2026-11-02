@@ -1,0 +1,37 @@
+{
+  "version": "2.12.1",
+  "passed": 634,
+  "failed": 0,
+  "checks": [
+    {
+      "suite": "DOM 회귀",
+      "passed": 572,
+      "failed": 0,
+      "report": "tests/test-results.json"
+    },
+    {
+      "suite": "화면 실제 MV3",
+      "passed": 14,
+      "failed": 0,
+      "report": "tests/view-extension-results.json"
+    },
+    {
+      "suite": "그룹 실제 MV3",
+      "passed": 8,
+      "failed": 0,
+      "report": "tests/group-extension-results.json"
+    },
+    {
+      "suite": "문맥 만료",
+      "passed": 1,
+      "failed": 0,
+      "report": "tests/context-view-results.json"
+    },
+    {
+      "suite": "릴리스",
+      "passed": 39,
+      "failed": 0
+    }
+  ],
+  "limits": "Synthetic CVAT and disposable Chrome MV3. Exact live customer canvas mode and real persisted annotations not inspected. No push or store submission."
+}

@@ -1,0 +1,12 @@
+{
+  "version": "2.15.0",
+  "passed": 703,
+  "failed": 0,
+  "checks": {
+    "groupAndPolygonUnit": 81,
+    "groupMV3": 11,
+    "domRegression": 572,
+    "releaseUnit": 39
+  },
+  "scope": "Synthetic CVAT and disposable Chrome; no company annotations or production persistence tested."
+}

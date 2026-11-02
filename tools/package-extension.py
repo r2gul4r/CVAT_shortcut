@@ -20,7 +20,7 @@ expected = {'manifest.json', 'common.js', 'content.js', 'native-repeat.js',
             'overlay.js', 'popup.js', 'popup.html', 'popup.css', 'guide.html', 'guide.css', 'updates.html', 'updates.css',
             'health-core.js', 'health-worker.js', 'health-popup.js', 'health-page.js', 'paste-repeat.js',
             'review-core.js', 'review-api.js', 'review-native.js', 'bulk-native.js', 'bulk-panel.js', 'review-popup.js',
-            'workspace-views.js', 'workspace-panels.js'}
+            'workspace-views.js', 'workspace-panels.js', 'view-native.js', 'view-tools.js', 'group-native.js', 'group-panel.js', 'location-native.js', 'prefetch-native.js', 'location-panel.js', 'prefetch-panel.js'}
 expected.update(f'icons/icon{size}.png' for size in [16, 32, 48, 128])
 expected.update(f'guide-images/{name}.jpg' for name in [
     '01-enable', '02-label', '03-ai-key', '04-brush-key',

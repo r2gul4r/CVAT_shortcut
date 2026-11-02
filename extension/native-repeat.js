@@ -47,6 +47,11 @@
     if (!Array.isArray(binding?.sequences)) return unsupported("SHORTCUTS");
     if (binding.nonActive || !binding.sequences.some((value) => typeof value === "string" && value.toLowerCase() === "n")) return "native";
     if (canvas.ready !== true || job.fetching || job.saving || annotation.player?.frame?.fetching || annotation.player?.frame?.data?.deleted) return "busy";
+    // These native tools use their fixed CVAT label, including on N repeat.
+    // AI interactors still follow the overlay, even if their output is a rectangle.
+    if (!drawing.activeInteractor && ["shape","track"].includes(drawing.activeObjectType) &&
+        ["rectangle","skeleton"].includes(drawing.activeShapeType)) return "native";
+    if (!request.label) return "label";
     if (!Array.isArray(job.labels)) return unsupported("LABELS");
     const matches = job.labels.filter((label) => label.name === request.label);
     if (matches.length !== 1 || !Number.isSafeInteger(matches[0].id) || matches[0].id <= 0) return "label";
@@ -84,7 +89,7 @@
     try {
       const request = JSON.parse(encoded);
       if (request?.version === 1 && typeof request.path === "string" && typeof request.label === "string" &&
-          request.label.length > 0 && request.label.length <= 128 && !/[\u0000-\u001f\u007f]/.test(request.label)) {
+          request.label.length <= 128 && !/[\u0000-\u001f\u007f]/.test(request.label)) {
         result = prepare(request,(code) => { reason = code; return "unsupported"; });
       }
     } catch { reason = "RUNTIME"; /* A missing/changed private API never starts a tool or sends annotation data. */ }

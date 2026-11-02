@@ -1,0 +1,18 @@
+{
+  "version": "2.11.0",
+  "environment": "Disposable local Chrome and synthetic CVAT DOM/store/canvas. Actual MV3 extension APIs and trusted pointer input; no company images or deployed CVAT validation.",
+  "passed": 864,
+  "failed": 0,
+  "suites": {
+    "dom": 552,
+    "display_mv3": 9,
+    "shapes_mv3": 7,
+    "review_mv3": 45,
+    "bulk_mv3": 15,
+    "execution_worlds": 17,
+    "label_logic": 12,
+    "context_reload": 4,
+    "health_review_bulk_logic": 164,
+    "release": 39
+  }
+}

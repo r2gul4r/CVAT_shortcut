@@ -10,7 +10,7 @@
     width: Number.isFinite(value?.width) ? Math.max(220, Math.min(2400, value.width)) : 248,
     height: Number.isFinite(value?.height) ? Math.max(320, Math.min(2400, value.height)) : 480,
     view: ["collapsed", "launcher"].includes(value?.view) ? "launcher" : "panel",
-    screen: ["review", "health"].includes(value?.screen) ? value.screen : "labels",
+    screen: ["review", "health", "view"].includes(value?.screen) ? value.screen : "labels",
     transparency: Number.isFinite(value?.transparency) ? Math.max(0, Math.min(70, Math.round(value.transparency / 5) * 5)) : 0
   });
   function create({shared, getState, onSelect, onInvalidated}) {
@@ -32,6 +32,14 @@
       .selected strong {color:#204e8c;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .body {flex:1;min-height:0;display:flex;flex-direction:column;}
       .list {flex:1;min-height:0;overflow:auto;padding:7px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(160px,100%),1fr));grid-auto-rows:minmax(38px,max-content);align-content:start;gap:6px;overscroll-behavior:contain;scrollbar-gutter:stable;}
+      .label-row {display:flex;min-width:0;gap:3px;} .label-row .choice {flex:1;}
+      .label-eye {width:32px;flex-shrink:0;background:#f0f5fb;color:#4f6886;border:1px solid #d8e1eb;padding:5px;}
+      .label-eye svg {width:18px;height:18px;display:block;} .label-eye[aria-pressed=true] {background:#fff2dd;color:#94631d;} .label-eye:disabled {opacity:.4;cursor:default;}
+      .view-angle-buttons,.view-angle-input {display:flex;align-items:center;gap:5px;margin:10px 0;}
+      .view-angle-buttons button {flex:1;padding:9px;background:#eaf2ff;color:#20599c;} .view-angle-buttons output {min-width:58px;text-align:center;font-size:19px;font-weight:650;}
+      .view-angle-input input {width:70px;min-width:0;} .view-angle-input button {padding:6px;background:#edf3fa;}
+      .view-field {display:flex;align-items:center;justify-content:space-between;margin:10px 0;} .view-field select {max-width:100px;}
+      .view-help {color:#61748c;font-size:11px;} .view-status {overflow-wrap:anywhere;} .workspace-content button:disabled {opacity:.45;cursor:default;}
       .choice {min-width:0;display:flex;align-items:center;gap:8px;text-align:left;padding:8px;background:#fff;color:#263449;border:1px solid #d8e1eb;}
       .choice[aria-pressed=true] {border-color:#3979cf;background:#edf4ff;box-shadow:inset 0 0 0 1px #3979cf;}
       .choice:disabled {opacity:.5;cursor:default;} .swatch {width:14px;height:14px;border:1px solid #6b7a8c;border-radius:4px;flex-shrink:0;}
@@ -77,7 +85,7 @@
     const header = el("header"), dragHandle = control("⠿ 라벨 선택", "drag", "drag", "라벨창 이동: 드래그 또는 방향키");
     const fold = control("−", "fold", "icon", "라벨창 최소화");
     const hide = control("×", "hide", "icon", "라벨 선택창 끄기"); header.append(dragHandle, fold, hide);
-    const screenNames={labels:'라벨 선택',review:'검수',health:'연결 상태'};
+    const screenNames={labels:'라벨 선택',review:'검수',health:'연결 상태',view:'화면'};
     const tabs=el('nav','workspace-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','작업 화면');
     const tabButtons=Object.entries(screenNames).map(([name,text])=>{const button=control(text,'screen-'+name);button.setAttribute('role','tab');button.id='workspace-tab-'+name;button.setAttribute('aria-controls',name==='labels'?'workspace-labels':name+'-screen');tabs.append(button);return button;});
     const selected = el("div", "selected"), selectedName = el("strong");
@@ -86,8 +94,10 @@
     list.id='workspace-labels';
     const workspaceContent=el('div','workspace-content');workspaceContent.hidden=true;
     const workspace=globalThis.CVATWorkspacePanels?.create(workspaceContent);
+    const viewContent=el('div','workspace-content');viewContent.id='view-screen';viewContent.hidden=true;
+    const viewTools=globalThis.CVATViewTools?.create(viewContent,()=>{if(ready&&!dead)render();});
     const footer = el("footer"), hint = el("div", null, "현재 그리는 객체는 그대로 유지됩니다.");
-    const refresh = control("목록 새로고침", "refresh", "refresh"); footer.append(hint, refresh); body.append(list, workspaceContent, footer);
+    const refresh = control("목록 새로고침", "refresh", "refresh"); footer.append(hint, refresh); body.append(list, workspaceContent, viewContent, footer);
     const transparency = el("label", "transparency"), transparencyTitle = el("span", "transparency-title"), transparencyValue = el("span");
     const slider = el("input"); slider.type = "range"; slider.min = "0"; slider.max = "70"; slider.step = "5"; slider.setAttribute("aria-label", "오버레이 투명도");
     transparencyTitle.append(el("span", null, "오버레이 투명도"), transparencyValue);
@@ -113,7 +123,7 @@
     function destroy() {
       if (dead) return;
       dead = true; enabled = false; clearInterval(timer);
-      workspace?.destroy(); resetInteraction(false); host.remove();
+      workspace?.destroy(); viewTools?.destroy(); resetInteraction(false); host.remove();
       for (const remove of listeners) remove();
       // Chrome also rejects listener cleanup after extension reload/unload.
       try { chrome.storage.onChanged.removeListener?.(storage); } catch {}
@@ -198,12 +208,12 @@
       applyTransparency();
       const catalog = state.catalog;
       workspace?.setView(prefs.view==='panel'&&!document.hidden?prefs.screen:null);
-      const nextSignature = JSON.stringify([state.path, state.selected, state.shortcuts, catalog, prefs.view,prefs.screen]);
+      const nextSignature = JSON.stringify([state.path, state.selected, state.shortcuts, catalog, prefs.view,prefs.screen,viewTools?.getState()]);
       if (!force && nextSignature === signature) { if (!drag) place(); return; }
       signature = nextSignature;
       panel.hidden = prefs.view === "launcher"; launcher.hidden = !panel.hidden;
       body.hidden = prefs.view !== "panel";
-      selected.hidden=prefs.screen!=='labels';list.hidden=prefs.screen!=='labels';workspaceContent.hidden=prefs.screen==='labels';
+      selected.hidden=prefs.screen!=='labels';list.hidden=prefs.screen!=='labels';workspaceContent.hidden=!['review','health'].includes(prefs.screen);viewContent.hidden=prefs.screen!=='view';
       hint.hidden=refresh.hidden=prefs.screen!=='labels';
       dragHandle.textContent='⠿ '+screenNames[prefs.screen];launcher.textContent=screenNames[prefs.screen];
       dragHandle.setAttribute('aria-label','작업창 이동: 드래그 또는 방향키');fold.setAttribute('aria-label','작업창 최소화');hide.setAttribute('aria-label','작업창 끄기');launcher.setAttribute('aria-label',screenNames[prefs.screen]+' 작업창 펼치기');
@@ -221,7 +231,17 @@
         const name = el("span", "name", label.name + (label.duplicate ? " (이름 중복)" : "")); button.append(swatch, name);
         const binding = state.shortcuts.find((entry) => entry.name === label.name);
         if (binding) button.append(el("kbd", null, shared.format(binding.shortcut)));
-        list.append(button);
+        const row=el('div','label-row');row.append(button);
+        if(viewTools){
+          const visibility=viewTools.getState(),matches=visibility.labels.filter(item=>item.name===label.name&&item.type!=='tag');
+          const hidden=matches.length===1&&visibility.hidden.includes(matches[0].id),eye=control('', 'visibility', 'label-eye', label.name+(hidden?' 다시 표시':' 전체 숨기기'));
+          eye.value=label.name;eye.disabled=label.duplicate||!visibility.ready||matches.length!==1;eye.setAttribute('aria-pressed',String(hidden));eye.title=eye.getAttribute('aria-label');
+          const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+          for(const [name,value]of Object.entries({viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':'1.7','aria-hidden':'true'}))svg.setAttribute(name,value);
+          for(const [tag,attrs]of [['path',{d:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z'}],['circle',{cx:'12',cy:'12',r:'3'}],...(hidden?[['path',{d:'m3 3 18 18'}]]:[])]){const node=document.createElementNS(svg.namespaceURI,tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);svg.append(node);}
+          eye.append(svg);row.append(eye);
+        }
+        list.append(row);
       }
       hint.textContent = catalog.state !== "ready" ? "CVAT의 Labels 또는 Overview를 열고 새로고침하세요." :
         !available.length ? "이 작업에 등록된 라벨이 없습니다." :
@@ -250,6 +270,7 @@
     }
     function action(button) {
       if (!live() || button.disabled || !enabled || !overlayEnabled || !getState().supported) return;
+      if (button.dataset.action === "visibility") { viewTools?.toggle(button.value); return; }
       if (button.dataset.action === "select") { onSelect(button.value); render(true); return; }
       if (button.dataset.action === "refresh") { render(true); return; }
       if(button.dataset.action.startsWith('screen-')){prefs.screen=button.dataset.action.slice(7);render(true);save();return;}
@@ -304,8 +325,8 @@
         // Keep native range dragging; capture prevents CVAT from receiving the pointer.
         return;
       }
-      if(!drag && event.composedPath().includes(workspaceContent)){
-        const target=event.composedPath().find(node=>node instanceof Element && workspaceContent.contains(node));
+      if(!drag && (event.composedPath().includes(workspaceContent)||event.composedPath().includes(viewContent))){
+        const target=event.composedPath().find(node=>node instanceof Element && (workspaceContent.contains(node)||viewContent.contains(node)));
         const nativeInput=target?.closest('select,textarea,input:not([type=checkbox]):not([type=range])');
         if(nativeInput){if(event.type==='pointerdown')nativeInput.focus({preventScroll:true});return;}
         // A checkbox is already toggled by the browser before its click listener.
@@ -349,9 +370,9 @@
         event.preventDefault(); event.stopImmediatePropagation(); return true;
       }
       if (!ownsEvent(event)) return false;
-      if(event.composedPath().includes(workspaceContent)){
+      if(event.composedPath().includes(workspaceContent)||event.composedPath().includes(viewContent)){
         event.stopImmediatePropagation();
-        const target=event.composedPath().find(node=>node instanceof Element && workspaceContent.contains(node));
+        const target=event.composedPath().find(node=>node instanceof Element && (workspaceContent.contains(node)||viewContent.contains(node)));
         if(target?.matches('button,input[type=checkbox],summary')&&['Space','Enter'].includes(event.code)){
           event.preventDefault();
           if(event.type==='keydown'&&!event.repeat&&!target.disabled){if(target.tagName==='SUMMARY')target.parentElement.open=!target.parentElement.open;else target.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:false,cancelable:true}));}
@@ -365,7 +386,7 @@
       }
       const button = event.composedPath().find((node) => node instanceof HTMLButtonElement && root.contains(node));
       if(button?.dataset.action.startsWith('screen-')&&['ArrowLeft','ArrowRight','Home','End'].includes(event.code)){
-        event.preventDefault();event.stopImmediatePropagation();if(event.type==='keydown'){const index=tabButtons.indexOf(button),next=event.code==='Home'?0:event.code==='End'?2:(index+(event.code==='ArrowRight'?1:2))%3;action(tabButtons[next]);tabButtons[next].focus({preventScroll:true});}return true;
+        event.preventDefault();event.stopImmediatePropagation();if(event.type==='keydown'){const index=tabButtons.indexOf(button),next=event.code==='Home'?0:event.code==='End'?tabButtons.length-1:(index+(event.code==='ArrowRight'?1:tabButtons.length-1))%tabButtons.length;action(tabButtons[next]);tabButtons[next].focus({preventScroll:true});}return true;
       }
       if (!button || !["Space", "Enter", "Escape", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.code)) return false;
       event.preventDefault(); event.stopImmediatePropagation();
@@ -408,8 +429,8 @@
     return {
       ownsEvent, handleKey, status, isDragging: () => Boolean(drag),
       refresh: () => render(),
-      enable() { if (!live()) return; enabled = true; clearInterval(timer); timer = setInterval(render, 500); render(true); },
-      disable() { enabled = false; clearInterval(timer); workspace?.setView(null);resetInteraction(true); host.remove(); },
+      enable() { if (!live()) return; enabled = true; viewTools?.enable(); clearInterval(timer); timer = setInterval(render, 500); render(true); },
+      disable() { enabled = false; viewTools?.disable(); clearInterval(timer); workspace?.setView(null);resetInteraction(true); host.remove(); },
       show({recover = false,screen} = {}) {
         if (!live()) return;
         if (recover) {

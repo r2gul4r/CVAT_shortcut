@@ -1,0 +1,37 @@
+{
+  "version": "2.11.1",
+  "passed": 622,
+  "failed": 0,
+  "checks": [
+    {
+      "suite": "DOM 회귀 검사",
+      "passed": 563,
+      "failed": 0,
+      "report": "tests/test-results.json"
+    },
+    {
+      "suite": "실제 MV3 화면 도구",
+      "passed": 12,
+      "failed": 0,
+      "report": "tests/view-extension-results.json"
+    },
+    {
+      "suite": "실제 MV3 도구 단축키",
+      "passed": 7,
+      "failed": 0,
+      "report": "tests/new-shapes-extension-results.json"
+    },
+    {
+      "suite": "실제 MV3 다시 로드",
+      "passed": 1,
+      "failed": 0,
+      "report": "tests/context-view-results.json"
+    },
+    {
+      "suite": "릴리스 자동화 단위 검사",
+      "passed": 39,
+      "failed": 0
+    }
+  ],
+  "limits": "Local synthetic CVAT contract and disposable Chrome MV3. Company CVAT annotation creation/save/reopen not verified. No push or Web Store submission."
+}

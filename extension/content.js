@@ -18,7 +18,17 @@
       panelMarker: ".cvat-draw-polygon-shape-button",
       content: ".cvat-draw-shape-popover-content",
       start: ".cvat-draw-shape-popover-content button.cvat-draw-polygon-shape-button",
-      startLabel: "Shape", label: "새 폴리곤", configurePolygon: true}
+      startLabel: "Shape", label: "새 폴리곤", configurePolygon: true},
+    rectangle: {selector: ".cvat-draw-rectangle-control", panel: ".cvat-draw-shape-popover",
+      panelMarker: ".cvat-draw-rectangle-shape-button",
+      content: ".cvat-draw-shape-popover-content",
+      start: ".cvat-draw-shape-popover-content button.cvat-draw-rectangle-shape-button",
+      startLabel: "Shape", label: "회전 사각형", configureRectangle: true, preserveLabel: true},
+    skeleton: {selector: ".cvat-draw-skeleton-control", panel: ".cvat-draw-shape-popover",
+      panelMarker: ".cvat-draw-skeleton-shape-button",
+      content: ".cvat-draw-shape-popover-content",
+      start: ".cvat-draw-shape-popover-content button.cvat-draw-skeleton-shape-button",
+      startLabel: "Shape", label: "새 스켈레톤", preserveLabel: true}
   });
   const SIDEBAR = ".cvat-canvas-controls-sidebar";
   const DISABLED = "[disabled], [aria-disabled='true'], [inert], .cvat-disabled-canvas-control, .ant-btn-loading";
@@ -237,7 +247,7 @@
     const matches = options.filter((element) => element.getAttribute("data-label") === operation.labelName);
     if (matches.length !== 1) {
       cancelPending(matches.length ? "동일한 기본 라벨이 여러 개라 시작하지 않았습니다. 확장의 라벨 설정을 확인하세요." :
-        "기본 라벨을 찾지 못해 시작하지 않았습니다. 확장 팝업에서 정확한 이름을 확인하세요."); return false;
+        `${operation.tool.label}에서 선택한 라벨을 찾지 못해 시작하지 않았습니다. 확장 팝업·오버레이에서 이 도구에 맞는 라벨을 고르세요.`); return false;
     }
     const option = matches[0];
     if (option.matches(".ant-select-item-option-disabled") || option.closest(DISABLED)) {
@@ -295,6 +305,35 @@
     return !toggle.closest(DISABLED);
   }
 
+  function ensureRectangleOptions(operation, panel) {
+    if (!operation.tool.configureRectangle) return true;
+    const groups = [...panel.querySelectorAll(".cvat-draw-shape-popover-drawing-method-selector")].filter(visible);
+    if (groups.length !== 1) {
+      cancelPending("회전 사각형의 Drawing method 설정을 확인하지 못했습니다. 직접 실행하세요."); return false;
+    }
+    const group = groups[0];
+    // CVAT RectDrawingMethod.ROTATED_POINTS. Match the value, not translated text.
+    // Ant Design makes the actual radio input transparent; inspect its visible label.
+    const radios = [...group.querySelectorAll('input[type="radio"][value="Rotated points"]')];
+    const radio = radios[0], wrapper = radio?.closest('label.ant-radio-button-wrapper');
+    if (radios.length !== 1 || !wrapper || !group.contains(wrapper) || !visible(wrapper)) {
+      cancelPending("이 사각형 메뉴에서 Rotated를 확인하지 못했습니다. CVAT의 회전 사각형 지원 여부를 확인하세요."); return false;
+    }
+    if (radio.closest(DISABLED) || wrapper.matches('.ant-radio-button-wrapper-disabled') ||
+        (operation.drawingMethodGroup && operation.drawingMethodGroup !== group) ||
+        (operation.rotatedRadio && operation.rotatedRadio !== radio)) {
+      cancelPending("Rotated 설정이 변경되었거나 비활성화되어 있습니다. 직접 실행하세요."); return false;
+    }
+    operation.drawingMethodGroup = group; operation.rotatedRadio = radio;
+    // Native checked can change before React commits the selected method. Require
+    // the controlled wrapper class too, and wait at least one tick after clicking.
+    if (radio.checked && wrapper.classList.contains('ant-radio-button-wrapper-checked') &&
+        group.querySelectorAll('input[type="radio"]:checked').length === 1 &&
+        group.querySelectorAll('.ant-radio-button-wrapper-checked').length === 1) return true;
+    if (!operation.rotatedClicked) { operation.rotatedClicked = true; radio.click(); }
+    return false;
+  }
+
   function startWhenReady(operation) {
     if (pending !== operation) return;
     const {tool, side, target} = operation;
@@ -330,7 +369,8 @@
           cancelPending(`${tool.startLabel} 버튼이 비활성화되어 있습니다. CVAT 라벨·모델을 확인하고 직접 실행하세요.`);
           return;
         }
-        if (!ensureDefaultLabel(operation, panel, button)) {
+        // Fixed-label tools keep CVAT's selection; do not open or require a label selector.
+        if (!tool.preserveLabel && !ensureDefaultLabel(operation, panel, button)) {
           if (pending !== operation) return;
           if (performance.now() >= operation.deadline) {
             cancelPending("기본 라벨 선택을 확인하지 못해 시작하지 않았습니다."); return;
@@ -338,15 +378,15 @@
           operation.timer = setTimeout(() => startWhenReady(operation), READY_POLL_MS); return;
         }
         try {
-          if (!ensurePolygonOptions(operation, panel)) {
+          if (!ensurePolygonOptions(operation, panel) || !ensureRectangleOptions(operation, panel)) {
             if (pending !== operation) return;
             if (performance.now() >= operation.deadline) {
-              cancelPending("Number of points 공란 / Simplify OFF를 확인하지 못해 폴리곤을 시작하지 않았습니다."); return;
+              cancelPending(tool.configureRectangle ? "Rotated 선택을 확인하지 못해 사각형을 시작하지 않았습니다." : "Number of points 공란 / Simplify OFF를 확인하지 못해 폴리곤을 시작하지 않았습니다."); return;
             }
             operation.timer = setTimeout(() => startWhenReady(operation), READY_POLL_MS); return;
           }
-        } catch { cancelPending("폴리곤 옵션을 변경하지 못했습니다. 직접 실행하세요."); return; }
-        // Label/model remain scoped to this menu. Only polygon has forced drawing options.
+        } catch { cancelPending(`${tool.label} 옵션을 변경하지 못했습니다. 직접 실행하세요.`); return; }
+        // Label/model and forced polygon/rectangle options stay scoped to this menu.
         if (operation.labelSelector?.contains(focusedElement())) {
           focusedElement()?.blur?.();
           operation.previousFocus?.focus?.({preventScroll: true});
@@ -359,7 +399,7 @@
       }
     }
     if (performance.now() >= operation.deadline) {
-      cancelPending(panel ? `이 메뉴에서 ${tool.startLabel}을 사용할 수 없습니다. ${tool.startLabel === "Interact" ? "AI Interactors 탭에서 모델·라벨을 확인하세요." : tool.configurePolygon ? "Draw new polygon 메뉴를 확인하세요." : "Draw new mask 메뉴를 확인하세요."} 직접 실행하세요.` :
+      cancelPending(panel ? `이 메뉴에서 ${tool.startLabel}을 사용할 수 없습니다. ${tool.startLabel === "Interact" ? "AI Interactors 탭에서 모델·라벨을 확인하세요." : `${tool.label} 메뉴를 확인하세요.`} 직접 실행하세요.` :
         `${tool.label} 메뉴를 확인하지 못했습니다. 지원하지 않는 CVAT 버전일 수 있으니 직접 여세요.`);
       return;
     }
@@ -500,7 +540,7 @@
       return;
     }
     const operation = {tool, side, target, generation, deadline: performance.now() + READY_TIMEOUT_MS,
-      panel: null, timer: null, labelName: chosenLabel(), previousFocus: focusedElement(), jobPath: location.pathname};
+      panel: null, timer: null, labelName: tool.preserveLabel ? null : chosenLabel(), previousFocus: focusedElement(), jobPath: location.pathname};
     pending = operation;
     wheelSession = null;
     try {

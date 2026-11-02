@@ -48,6 +48,22 @@ jobs:
         run: python -m unittest discover -s tests -p test_release.py -v
       - name: Test extension in isolated Chrome
         run: node tests/run-tests.mjs
+      - name: Test rectangle and skeleton in real Chrome extension
+        run: node tests/run-shapes-extension.mjs
+      - name: Test label visibility and image alignment in real Chrome extension
+        run: node tests/run-view-extension.mjs
+      - name: Test automatic box and skeleton grouping
+        run: node --test tests/test-group.cjs tests/test-polygon-group.cjs
+      - name: Test grouping in real Chrome extension
+        run: node tests/run-group-extension.mjs
+      - name: Test image prefetch cache
+        run: node --test tests/test-prefetch.cjs tests/test-prefetch-context.cjs
+      - name: Test image prefetch in real Chrome extension
+        run: node tests/run-prefetch-extension.mjs
+      - name: Test skeleton location edits
+        run: node --test tests/test-location.cjs
+      - name: Test skeleton location in real Chrome extension
+        run: node tests/run-location-extension.mjs
       - name: Test label logic
         run: node tests/test-label-logic.cjs
       - name: Test passive connection monitoring
@@ -62,7 +78,7 @@ jobs:
         run: node tests/run-review-extension.mjs
       - name: Test extension reload with each overlay view
         run: |
-          foreach ($screen in @('labels', 'review', 'health')) {
+          foreach ($screen in @('labels', 'review', 'health', 'view')) {
             node tests/run-context-extension.mjs $screen
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }

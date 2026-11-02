@@ -40,7 +40,7 @@ const child=spawn(process.env.CVAT_TEST_CHROME||'C:\\Program Files\\Google\\Chro
   '--disable-background-networking','--disable-component-update','--disable-sync','--disable-default-apps','--remote-debugging-port=0','--remote-debugging-address=127.0.0.1',
   '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1',`--user-data-dir=${profile}`,'about:blank'
 ],{windowsHide:true,stdio:'ignore'});
-const screen=process.argv[2]||'labels';assert(['labels','review','health'].includes(screen));
+const screen=process.argv[2]||'labels';assert(['labels','review','health','view'].includes(screen));
 const sockets=[],results=[],exceptions=[];let port,browser,popup,extensionId,jobTab,jobPage;
 async function connect(url){
   const socket=new WebSocket(url);sockets.push(socket);await new Promise((r,j)=>{socket.onopen=r;socket.onerror=j;});
@@ -57,8 +57,8 @@ async function open(){
 }
 async function activate(send){
   await evaluate(send,`(async()=>{const [tab]=await chrome.tabs.query({url:${JSON.stringify(origin+'/tasks/1/jobs/12')}});if(!tab)throw Error('Fixture Job not found');
-    await chrome.scripting.executeScript({target:{tabId:tab.id},world:'MAIN',files:['native-repeat.js']});
-    await chrome.scripting.executeScript({target:{tabId:tab.id},world:'ISOLATED',files:['common.js','review-core.js','review-api.js','bulk-panel.js','review-popup.js','workspace-views.js','workspace-panels.js','overlay.js','paste-repeat.js','content.js']});
+    await chrome.scripting.executeScript({target:{tabId:tab.id},world:'MAIN',files:['native-repeat.js','view-native.js','group-native.js','location-native.js', 'prefetch-native.js']});
+    await chrome.scripting.executeScript({target:{tabId:tab.id},world:'ISOLATED',files:['common.js','review-core.js','review-api.js','bulk-panel.js','review-popup.js','workspace-views.js','workspace-panels.js','group-panel.js','location-panel.js', 'prefetch-panel.js','view-tools.js','overlay.js','paste-repeat.js','content.js']});
   })()`);
 }
 

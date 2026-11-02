@@ -1,0 +1,63 @@
+{
+  "environment": "Disposable Chrome MV3 with localhost-only pregrant, synthetic CVAT DOM. No company data or personal browser; deployed CVAT/OpenCV initialization not tested.",
+  "passed": 14,
+  "failed": 0,
+  "results": [
+    {
+      "name": "actual popup injects both display worlds and connects the Job catalog",
+      "passed": true
+    },
+    {
+      "name": "screen panel is injected in actual MV3 extension",
+      "passed": true
+    },
+    {
+      "name": "old grouping sentinel without shared context is repaired during injection",
+      "passed": true
+    },
+    {
+      "name": "prefetch runs with shared context deliberately removed",
+      "passed": true
+    },
+    {
+      "name": "background prefetch continues while label tab is selected",
+      "passed": true
+    },
+    {
+      "name": "background download prepares ten frames without navigating or editing annotations",
+      "passed": true
+    },
+    {
+      "name": "native consumer receives retained bytes without network and may detach them safely",
+      "passed": true
+    },
+    {
+      "name": "clear restores native loading and removes only extension cache",
+      "passed": true
+    },
+    {
+      "name": "stop prevents further downloads while retaining prepared chunks",
+      "passed": true
+    },
+    {
+      "name": "resume completes missing chunks",
+      "passed": true
+    },
+    {
+      "name": "Job navigation clears retained data and old native hook",
+      "passed": true
+    },
+    {
+      "name": "no annotation writes",
+      "passed": true
+    },
+    {
+      "name": "unsupported API error remains visible across status polls",
+      "passed": true
+    },
+    {
+      "name": "actual extension reload releases the active native cache hook",
+      "passed": true
+    }
+  ]
+}

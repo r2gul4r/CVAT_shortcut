@@ -1,0 +1,48 @@
+{
+  "version": "2.12.0",
+  "passed": 685,
+  "failed": 0,
+  "checks": [
+    {
+      "suite": "DOM 회귀",
+      "passed": 563,
+      "failed": 0,
+      "report": "tests/test-results.json"
+    },
+    {
+      "suite": "그룹화 실제 MV3",
+      "passed": 8,
+      "failed": 0,
+      "report": "tests/group-extension-results.json"
+    },
+    {
+      "suite": "화면 도구 실제 MV3",
+      "passed": 12,
+      "failed": 0,
+      "report": "tests/view-extension-results.json"
+    },
+    {
+      "suite": "도구 단축키 실제 MV3",
+      "passed": 7,
+      "failed": 0,
+      "report": "tests/new-shapes-extension-results.json"
+    },
+    {
+      "suite": "문맥 만료·다시 로드",
+      "passed": 1,
+      "failed": 0,
+      "report": "tests/context-view-results.json"
+    },
+    {
+      "suite": "그룹 논리·서비스",
+      "passed": 55,
+      "failed": 0
+    },
+    {
+      "suite": "릴리스 자동화",
+      "passed": 39,
+      "failed": 0
+    }
+  ],
+  "limits": "Local synthetic CVAT and disposable Chrome MV3 only. Company CVAT save/reopen not verified. No push/deployment."
+}

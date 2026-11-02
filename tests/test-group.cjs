@@ -1,0 +1,49 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const {planFrame,inside,createService}=require('../extension/group-native.js');
+const {create,box,skeleton}=require('./group-fixture.js');
+const clone=v=>JSON.parse(JSON.stringify(v));
+function setup(records){
+ global.location={origin:'http://cvat.test',pathname:'/tasks/1/jobs/18'};
+ const f=create(records);let shields=0;
+ const run=createService(()=>f,()=>{shields++;return()=>shields--;});
+ const call=(action,extra={},alive)=>run({version:1,origin:location.origin,path:location.pathname,action,...extra},alive);
+ return {f,call,preview:scope=>call('preview',{scope:scope||'current'}),apply:p=>call('apply',{token:p.token}),shields:()=>shields};
+}
+test('one box with several skeletons gets one group; empty box untouched',()=>{const r=planFrame([box(1),skeleton(2),skeleton(3),box(4,[200,0,300,100])],0);assert.deepEqual(r.groups,[{frame:0,box:1,skeletons:[2,3]}]);assert.equal(r.empty,1);});
+test('multiple independent boxes form independent groups',()=>{const r=planFrame([box(1),skeleton(2),box(3,[200,0,300,100]),skeleton(4,[[210,10],[290,90]])],0);assert.equal(r.groups.length,2);});
+test('every joint must be inside, not merely center',()=>{const r=planFrame([box(1),skeleton(2,[[20,20],[101,80]])],0);assert.equal(r.groups.length,0);assert.match(r.skipped[0].reason,/경계/);});
+test('shared boundary counts as inside',()=>assert.equal(planFrame([box(1),skeleton(2,[[0,0],[100,100]])],0).groups.length,1));
+for(const angle of [1,17,45,90,179,270,343,-17])test('rotated box exact polygon '+angle,()=>{
+ const b=box(1,[0,0,100,40],{rotation:angle}),r=angle*Math.PI/180;
+ const rotate=([x,y])=>[50+(x-50)*Math.cos(r)-(y-20)*Math.sin(r),20+(x-50)*Math.sin(r)+(y-20)*Math.cos(r)];
+ assert.equal(planFrame([b,skeleton(2,[[5,5],[95,35]].map(rotate))],0).groups.length,1);
+ assert.equal(inside(b,rotate([101,20])),false);
+});
+test('rotated box axis-aligned bounding rectangle is not used',()=>{const b=box(1,[0,0,100,100],{rotation:45});assert(!inside(b,[-15,-15]));});
+test('overlapping boxes are ambiguous even when one is locked/grouped',()=>{for(const extra of [{},{lock:true},{group:{id:55}}]){const r=planFrame([box(1),box(2,[0,0,100,100],extra),skeleton(3)],0);assert.equal(r.groups.length,0);assert.equal(r.skipped[0].reason,'여러 박스에 포함');}});
+for(const [name,modify]of [['box group',o=>o[0].group.id=8],['skeleton group',o=>o[1].group.id=8],['box lock',o=>o[0].lock=true],['joint lock',o=>o[1].elements[0].lock=true],['ground truth',o=>o[1].isGroundTruth=true],['box track',o=>o[0].objectType='track'],['skeleton track',o=>o[1].objectType='track']])test('preserve '+name,()=>{const o=[box(1),skeleton(2)];modify(o);assert.equal(planFrame(o,0).groups.length,0);});
+test('already grouped sibling prevents replacing part of a box group',()=>{const r=planFrame([box(1),skeleton(2),skeleton(3,undefined,{group:{id:10}})],0);assert.equal(r.groups.length,0);assert.equal(r.skipped.length,2);});
+for(const mutate of [s=>s.elements=[],s=>s.elements[0].outside=true,s=>s.elements[0].points=[NaN,3],s=>s.elements[0].points=[1,2,3,4]])test('invalid or outside joints are excluded '+mutate.toString(),()=>{const s=skeleton(2);mutate(s);assert.equal(planFrame([box(1),s],0).groups.length,0);});
+test('malformed box prevents guessing around unknown boundaries',()=>{const b=box(3);b.rotation=NaN;const r=planFrame([box(1),b,skeleton(2)],0);assert.equal(r.groups.length,0);assert.equal(r.skipped[0].reason,'박스 좌표 오류');});
+test('duplicate ID and cross-frame values fail before grouping',()=>{assert.throws(()=>planFrame([box(1),skeleton(1)],0));assert.throws(()=>planFrame([box(1,undefined,{frame:1})],0));});
+test('hidden/filter display does not prevent geometric matching',()=>assert.equal(planFrame([box(1,undefined,{hidden:true}),skeleton(2,undefined,{hidden:true})],0).groups.length,1));
+test('preview is read-only and apply keeps empty box, points and labels',async()=>{const s=setup(),before=clone(s.f.records()),p=await s.preview();assert(!p.error,p.error);assert.equal(s.f.count(),0);assert.equal(p.groups.length,1);const r=await s.apply(p);assert(!r.error,r.error);assert.equal(r.applied,1);assert.equal(s.f.records()[0].group.id,s.f.records()[1].group.id);assert.equal(s.f.records()[2].group.id,0);const after=clone(s.f.records());for(const o of after)o.group.id=0;assert.deepEqual(after,before);assert.equal(s.shields(),0);});
+test('unsaved objects without server IDs can group and native undo restores them',async()=>{const s=setup(),p=await s.preview();assert.equal((await s.apply(p)).applied,1);await s.f.job.actions.undo();assert(s.f.records().every(o=>o.group.id===0));});
+test('whole Job groups each frame separately without changing viewer frame',async()=>{const s=setup([box(1),skeleton(2),box(3,undefined,{frame:2}),skeleton(4,undefined,{frame:2})]);const p=await s.preview('all');assert(!p.error,p.error);assert.deepEqual(p.groups.map(g=>g.frame),[0,2]);assert.equal((await s.apply(p)).applied,2);assert.notEqual(s.f.records()[0].group.id,s.f.records()[2].group.id);assert.equal(s.f.a.player.frame.number,0);});
+test('current scope does not touch another frame',async()=>{const s=setup([box(1),skeleton(2),box(3,undefined,{frame:2}),skeleton(4,undefined,{frame:2})]);assert.equal((await s.apply(await s.preview())).applied,1);assert.equal(s.f.records()[2].group.id,0);});
+test('deleted frames excluded without requesting any image data',async()=>{const s=setup([box(1),skeleton(2),box(3,undefined,{frame:2}),skeleton(4,undefined,{frame:2})]);s.f.deleteFrame(2);const p=await s.preview('all');assert.equal(p.deleted,1);assert.equal(p.groups.length,1);assert.equal((await s.apply(p)).applied,1);});
+for(const [name,change]of [['geometry',s=>s.f.records()[0].points[0]=4],['lock',s=>s.f.records()[0].lock=true],['group',s=>s.f.records()[1].group.id=7],['new object',s=>s.f.records().push(skeleton(8))],['deleted frame',s=>s.f.deleteFrame(0)],['frame',s=>s.f.a.player.frame.number=1],['Job',s=>s.f.a.job.instance={...s.f.job}],['path',()=>location.pathname='/tasks/1/jobs/19']])test('stale preview rejects '+name,async()=>{const s=setup(),p=await s.preview();change(s);assert((await s.apply(p)).error);assert.equal(s.f.count(),0);assert.equal(s.shields(),0);});
+test('single-use token rejects replay and forged token',async()=>{const s=setup(),p=await s.preview();assert((await s.apply({token:'x'})).error);assert.equal((await s.apply(p)).applied,1);assert((await s.apply(p)).error);});
+test('already grouped matches are left unchanged on repeat',async()=>{const s=setup();await s.apply(await s.preview());const p=await s.preview();assert.equal(p.groups.length,0);assert.match(p.skipped[0].reason,/기존/);assert.equal(s.f.count(),1);});
+test('unsupported group method/refresh fail before mutation',async()=>{for(const field of ['group','refresh']){const s=setup();if(field==='group')delete s.f.job.annotations.group;else s.f.unsupported(true);assert((await s.preview()).error);assert.equal(s.f.count(),0);}});
+test('busy drawing and saving prevent preview',async()=>{for(const change of [f=>f.mode='draw',f=>f.a.job.saving=true,f=>f.a.player.playing=true,f=>f.a.player.frame.data.deleted=true]){const s=setup();change(s.f);assert((await s.preview()).error);assert.equal(s.f.count(),0);}});
+test('concurrent requests cannot interleave',async()=>{const s=setup();let release;const gate=new Promise(r=>release=r);s.f.onExport=()=>gate;const p=s.preview();assert.match((await s.preview()).error,/작업 중/);release();assert(!(await p).error);});
+test('mutation during scan invalidates candidate plan',async()=>{const s=setup();s.f.onGet=()=>{s.f.records()[0].points[0]++;};assert((await s.preview()).error);assert.equal(s.f.count(),0);});
+test('removed bridge request prevents applying',async()=>{const s=setup(),p=await s.preview();const r=await s.call('apply',{token:p.token},()=>false);assert(r.error);assert.equal(s.f.count(),0);});
+test('partial failure is reported and input shield is released',async()=>{const s=setup([box(1),skeleton(2),box(3,[200,0,300,100]),skeleton(4,[[210,10],[290,90]])]);const p=await s.preview();s.f.failAt(2);const r=await s.apply(p);assert.equal(r.partial,true);assert.equal(r.applied,1);assert.equal(s.shields(),0);assert.equal(s.f.records()[2].group.id,0);});
+test('unexpected native geometry mutation is detected after application',async()=>{const s=setup(),p=await s.preview();s.f.onGroup=()=>s.f.records()[0].points[0]++;const r=await s.apply(p);assert(r.error&&r.partial);});
+
+test('native live group getters do not corrupt post-apply comparison',async()=>{const s=setup();const get=s.f.job.annotations.get;s.f.job.annotations.get=async(...args)=>{const values=await get(...args);for(const o of values)Object.defineProperty(o.group,'id',{get:()=>s.f.records().find(r=>r.clientID===o.clientID).group.id});return values;};const p=await s.preview();const r=await s.apply(p);assert(!r.error,r.error);assert.equal(r.applied,1);});
+test('unrelated existing group is preserved and never reused',async()=>{const s=setup([box(1),skeleton(2),box(3,[200,0,300,100],{group:{id:100}})]);const p=await s.preview(),r=await s.apply(p);assert(!r.error,r.error);assert.equal(s.f.records()[2].group.id,100);assert.notEqual(s.f.records()[0].group.id,100);});
+test('unexpected native changes to another frame group are reported',async()=>{const s=setup([box(1),skeleton(2),box(3,undefined,{frame:2})]);const p=await s.preview();s.f.onGroup=()=>{s.f.records()[2].group.id=44;};assert((await s.apply(p)).partial);});
+test('cancel invalidates a pending preview',async()=>{const s=setup(),p=await s.preview();await s.call('cancel');assert((await s.apply(p)).error);assert.equal(s.f.count(),0);});

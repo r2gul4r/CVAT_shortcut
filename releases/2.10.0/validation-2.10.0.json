@@ -1,0 +1,13 @@
+{
+  "version": "2.10.0",
+  "environment": "Synthetic local CVAT fixtures; disposable Chrome, no company data or personal browser. Actual deployed CVAT and OpenCV loading not tested.",
+  "passed": 595,
+  "failed": 0,
+  "suites": {
+    "dom": 520,
+    "label_logic": 12,
+    "execution_worlds": 17,
+    "actual_mv3_new_shapes": 7,
+    "release": 39
+  }
+}

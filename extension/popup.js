@@ -254,10 +254,10 @@
     try {
       let repeatBridgeLoaded = true;
       try {
-        await chrome.scripting.executeScript({target:{tabId:activeTab.id},files:["native-repeat.js"],world:"MAIN"});
+        await chrome.scripting.executeScript({target:{tabId:activeTab.id},files:["native-repeat.js", "view-native.js", "group-native.js", "location-native.js", "prefetch-native.js"],world:"MAIN"});
       } catch { repeatBridgeLoaded = false; }
       const results = await chrome.scripting.executeScript({
-        target: {tabId: activeTab.id}, files: ["common.js", "review-core.js", "review-api.js", "bulk-panel.js", "review-popup.js", "workspace-views.js", "workspace-panels.js", "overlay.js", "paste-repeat.js", "content.js"], world: "ISOLATED"
+        target: {tabId: activeTab.id}, files: ["common.js", "review-core.js", "review-api.js", "bulk-panel.js", "review-popup.js", "workspace-views.js", "workspace-panels.js", "group-panel.js", "location-panel.js", "prefetch-panel.js", "view-tools.js", "overlay.js", "paste-repeat.js", "content.js"], world: "ISOLATED"
       });
       const status = results.find((entry) => entry.frameId === 0)?.result;
       showTabStatus(status);

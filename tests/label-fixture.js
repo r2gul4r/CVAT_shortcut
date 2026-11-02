@@ -1,7 +1,7 @@
 /* Synthetic Ant Select markup based on public CVAT LabelSelector/rc-select source. */
 (() => {
   const fixtures = [];
-  for (const id of ["ai-label", "mask-label", "polygon-label"]) {
+  for (const id of ["ai-label", "mask-label", "polygon-label", "rectangle-label", "skeleton-label"]) {
     const original = document.getElementById(id);
     if (!original) continue;
     const root = document.createElement("div"); root.id = id; root.className = "ant-select";

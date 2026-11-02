@@ -1,9 +1,9 @@
 {
-  "testedAt": "2026-10-18T23:42:34.970Z",
+  "testedAt": "2026-11-02T09:01:01.044Z",
   "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
   "staticChecks": "passed",
-  "passed": 478,
+  "passed": 572,
   "failed": 0,
   "suites": [
     {
@@ -310,7 +310,7 @@
     },
     {
       "suite": "popup",
-      "passed": 44,
+      "passed": 46,
       "failed": 0,
       "results": [
         {
@@ -479,6 +479,14 @@
         },
         {
           "name": "Polygon shortcut can be assigned, changed, cleared and blocks tool duplicates",
+          "passed": true
+        },
+        {
+          "name": "rectangle shortcut supports assignment, modifier change, duplicates and clear",
+          "passed": true
+        },
+        {
+          "name": "skeleton shortcut supports assignment, modifier change, duplicates and clear",
           "passed": true
         },
         {
@@ -1643,7 +1651,7 @@
     },
     {
       "suite": "native N label synchronization",
-      "passed": 38,
+      "passed": 42,
       "failed": 0,
       "results": [
         {
@@ -1687,7 +1695,23 @@
           "passed": true
         },
         {
-          "name": "A skeleton repeat uses a compatible label and preserves drawing parameters",
+          "name": "rectangle native N preserves its fixed label and options then finishes normally",
+          "passed": true
+        },
+        {
+          "name": "rectangle native N does not require an overlay label or read the label catalog",
+          "passed": true
+        },
+        {
+          "name": "skeleton native N preserves its fixed label and options then finishes normally",
+          "passed": true
+        },
+        {
+          "name": "skeleton native N does not require an overlay label or read the label catalog",
+          "passed": true
+        },
+        {
+          "name": "An AI interactor returning rectangles still follows the overlay label",
           "passed": true
         },
         {
@@ -2060,6 +2084,374 @@
         },
         {
           "name": "Explicit Escape during delayed setup prevents later Shape",
+          "passed": true
+        }
+      ],
+      "platformValidation": "Windows Chrome synthetic DOM"
+    },
+    {
+      "suite": "rotated rectangle and skeleton",
+      "passed": 36,
+      "failed": 0,
+      "results": [
+        {
+          "name": "Old settings retain existing shortcuts and leave both new tools unassigned",
+          "passed": true
+        },
+        {
+          "name": "Both new shortcuts reject collisions with every existing tool and label binding",
+          "passed": true
+        },
+        {
+          "name": "Rectangle preserves its CVAT label then commits Rotated and starts only Shape once",
+          "passed": true
+        },
+        {
+          "name": "An existing 4 Points setting is replaced with Rotated",
+          "passed": true
+        },
+        {
+          "name": "Already Rotated starts without toggling or touching other methods",
+          "passed": true
+        },
+        {
+          "name": "Rotated waits for controlled wrapper state, not transient native checked",
+          "passed": true
+        },
+        {
+          "name": "Rejected Rotated selection times out without fallback or repeated clicks",
+          "passed": true
+        },
+        {
+          "name": "Missing Rotated value stops instead of guessing by display text",
+          "passed": true
+        },
+        {
+          "name": "Disabled Rotated control never starts another drawing method",
+          "passed": true
+        },
+        {
+          "name": "Hidden Rotated wrapper is not actionable",
+          "passed": true
+        },
+        {
+          "name": "Duplicate method groups are rejected",
+          "passed": true
+        },
+        {
+          "name": "Duplicate Rotated options are rejected",
+          "passed": true
+        },
+        {
+          "name": "Skeleton preserves its existing CVAT label and starts Shape",
+          "passed": true
+        },
+        {
+          "name": "Skeleton does not wait for or change the overlay label",
+          "passed": true
+        },
+        {
+          "name": "An unrelated rectangle overlay label does not block skeleton",
+          "passed": true
+        },
+        {
+          "name": "An unrelated skeleton overlay label does not block rectangle",
+          "passed": true
+        },
+        {
+          "name": "rectangle ignores overlay label changes without changing the saved overlay choice",
+          "passed": true
+        },
+        {
+          "name": "rectangle starts with an empty overlay label",
+          "passed": true
+        },
+        {
+          "name": "rectangle starts with a single disabled fixed-label selector",
+          "passed": true
+        },
+        {
+          "name": "rectangle starts even without a label selector in the menu",
+          "passed": true
+        },
+        {
+          "name": "rectangle cancels an active brush before selecting its own Shape",
+          "passed": true
+        },
+        {
+          "name": "rectangle ignores another tool's visible Shape popover",
+          "passed": true
+        },
+        {
+          "name": "rectangle refuses disabled Shape",
+          "passed": true
+        },
+        {
+          "name": "rectangle refuses multiple matching popovers",
+          "passed": true
+        },
+        {
+          "name": "skeleton ignores overlay label changes without changing the saved overlay choice",
+          "passed": true
+        },
+        {
+          "name": "skeleton starts with an empty overlay label",
+          "passed": true
+        },
+        {
+          "name": "skeleton starts with a single disabled fixed-label selector",
+          "passed": true
+        },
+        {
+          "name": "skeleton starts even without a label selector in the menu",
+          "passed": true
+        },
+        {
+          "name": "skeleton cancels an active brush before selecting its own Shape",
+          "passed": true
+        },
+        {
+          "name": "skeleton ignores another tool's visible Shape popover",
+          "passed": true
+        },
+        {
+          "name": "skeleton refuses disabled Shape",
+          "passed": true
+        },
+        {
+          "name": "skeleton refuses multiple matching popovers",
+          "passed": true
+        },
+        {
+          "name": "Unknown skeleton toolbar support leaves existing work untouched",
+          "passed": true
+        },
+        {
+          "name": "Typing and modal dialogs preserve native keys for both tools",
+          "passed": true
+        },
+        {
+          "name": "Escape cancels a pending rotated setup before it starts",
+          "passed": true
+        },
+        {
+          "name": "Job navigation cancels pending rotation without starting in the next Job",
+          "passed": true
+        }
+      ],
+      "platformValidation": "Windows Chrome synthetic DOM"
+    },
+    {
+      "suite": "Job display and alignment",
+      "passed": 52,
+      "failed": 0,
+      "results": [
+        {
+          "name": "Hiding a label affects every matching current-frame shape without changing geometry",
+          "passed": true
+        },
+        {
+          "name": "Restore preserves objects manually hidden before extension hiding",
+          "passed": true
+        },
+        {
+          "name": "Skeleton hiding and restore preserve each original joint visibility",
+          "passed": true
+        },
+        {
+          "name": "Tags and invalid label IDs are not hidden",
+          "passed": true
+        },
+        {
+          "name": "Frame navigation and newly created objects receive the active hide filter",
+          "passed": true
+        },
+        {
+          "name": "An object relabeled away from a hidden class becomes visible again",
+          "passed": true
+        },
+        {
+          "name": "A new Job does not inherit the old Job hide filter",
+          "passed": true
+        },
+        {
+          "name": "A reused canvas adopts the next Job angle when retiring its fine-angle adapter",
+          "passed": true
+        },
+        {
+          "name": "Mismatched Job request cannot hide or rotate",
+          "passed": true
+        },
+        {
+          "name": "Fine rotation updates only the current native frame angle and model geometry",
+          "passed": true
+        },
+        {
+          "name": "Negative and 360-degree values normalize without rounding to 90",
+          "passed": true
+        },
+        {
+          "name": "Fractional, non-finite and out-of-range angle inputs are rejected",
+          "passed": true
+        },
+        {
+          "name": "Drawing, editing, playback and frame loading block angle changes",
+          "passed": true
+        },
+        {
+          "name": "Unsupported rotation adapter fails before mutating frame angles",
+          "passed": true
+        },
+        {
+          "name": "SVG skeleton source points remain under the same rendered positions after inverse mapping",
+          "passed": true
+        },
+        {
+          "name": "Fine-angle zoom keeps the cursor source point stationary on the screen",
+          "passed": true
+        },
+        {
+          "name": "Fit accounts for arbitrary-angle image bounds",
+          "passed": true
+        },
+        {
+          "name": "Mask drawing resets fine rotation to zero before its native handler",
+          "passed": true
+        },
+        {
+          "name": "AI interaction and mask editing reset the fine angle before raster handlers",
+          "passed": true
+        },
+        {
+          "name": "Grid remains horizontal, fixed-pitch and pointer-transparent during rotation and zoom",
+          "passed": true
+        },
+        {
+          "name": "Grid cannot inject arbitrary CSS and disabling removes its DOM",
+          "passed": true
+        },
+        {
+          "name": "Stop restores native methods, angles and extension-hidden objects",
+          "passed": true
+        },
+        {
+          "name": "Stopping during a skeleton stroke defers cleanup until idle",
+          "passed": true
+        },
+        {
+          "name": "A rejecting rotation reducer leaves geometry and frame angles unchanged",
+          "passed": true
+        },
+        {
+          "name": "A rendering exception rolls back the current frame angle",
+          "passed": true
+        },
+        {
+          "name": "Native quarter-turn controls remain exact and clean up after fine rotation",
+          "passed": true
+        },
+        {
+          "name": "Current command-based AI interaction resets fine rotation",
+          "passed": true
+        },
+        {
+          "name": "Fine-angle adaptive zoom and clamped zoom preserve the cursor anchor",
+          "passed": true
+        },
+        {
+          "name": "Hiding waits until the active stroke finishes",
+          "passed": true
+        },
+        {
+          "name": "Rotated new skeleton previews stay horizontal and vertical at every angle",
+          "passed": true
+        },
+        {
+          "name": "Two clicks emit six original-coordinate joints whose screen locations match the level preview",
+          "passed": true
+        },
+        {
+          "name": "Drag release completes once and still reaches the normal mouse-release tracker",
+          "passed": true
+        },
+        {
+          "name": "Native Done ends the level skeleton through the original callback",
+          "passed": true
+        },
+        {
+          "name": "Escape cancellation emits no skeleton and removes temporary preview listeners",
+          "passed": true
+        },
+        {
+          "name": "Original zero-degree drawing, paste and redraw stay on native handlers",
+          "passed": true
+        },
+        {
+          "name": "A frame change cancels a pending skeleton before any old-frame points can be created",
+          "passed": true
+        },
+        {
+          "name": "Out-of-image joints are rejected instead of silently clipping the skeleton",
+          "passed": true
+        },
+        {
+          "name": "Screen-level drawing compensates native SVG image offsets",
+          "passed": true
+        },
+        {
+          "name": "Panning and zooming retain the first source anchor while keeping the preview level",
+          "passed": true
+        },
+        {
+          "name": "Unsupported skeleton handlers stop rotated creation instead of returning an angled template",
+          "passed": true
+        },
+        {
+          "name": "Zero reset cancels tool modes through native cancel without changing completed objects",
+          "passed": true
+        },
+        {
+          "name": "Zero reset stays available when fine-angle support becomes unavailable",
+          "passed": true
+        },
+        {
+          "name": "Zero reset does not cancel during saving loading playback or deleted frames",
+          "passed": true
+        },
+        {
+          "name": "Zero reset blocks active drag resize rotation and unknown modes",
+          "passed": true
+        },
+        {
+          "name": "Failed native cancellation never forces idle or changes angle",
+          "passed": true
+        },
+        {
+          "name": "Job or frame changes during native cancellation stop reset",
+          "passed": true
+        },
+        {
+          "name": "Unavailable cancel implementation keeps reset disabled with a recovery message",
+          "passed": true
+        },
+        {
+          "name": "Zero reset cancels unfinished screen skeleton without emitting a new object",
+          "passed": true
+        },
+        {
+          "name": "Overlay keeps reset clickable while regular angle controls are locked by a tool",
+          "passed": true
+        },
+        {
+          "name": "Overlay eye toggles hiding without changing the selected drawing label",
+          "passed": true
+        },
+        {
+          "name": "Screen tab angle and grid controls work through the shared pointer isolation",
+          "passed": true
+        },
+        {
+          "name": "Hidden labels and grid persist on reactivation and restore separately per Job",
           "passed": true
         }
       ],

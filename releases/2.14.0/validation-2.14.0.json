@@ -1,0 +1,13 @@
+{
+  "version": "2.14.0",
+  "passed": 645,
+  "failed": 0,
+  "checks": {
+    "prefetchUnit": 21,
+    "prefetchMV3": 12,
+    "domRegression": 572,
+    "contextMV3": 1,
+    "releaseUnit": 39
+  },
+  "scope": "Disposable Chrome and synthetic CVAT API; no company annotations or personal browser; deployed CVAT performance not measured."
+}

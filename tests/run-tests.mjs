@@ -22,7 +22,7 @@ for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js",
 }
 
 const files = new Map();
-for(const name of ['workspace-views.js','workspace-panels.js','bulk-native.js','bulk-panel.js']){
+for(const name of ['workspace-views.js','workspace-panels.js','bulk-native.js','bulk-panel.js','view-native.js','view-tools.js','group-native.js','group-panel.js','location-native.js', 'prefetch-native.js','location-panel.js', 'prefetch-panel.js']){
   const source=await readFile(path.join(root,'extension',name),'utf8');
   assert(!/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon)\s*\(/.test(source),name);
   execFileSync(process.execPath,['--check',path.join(root,'extension',name)],{windowsHide:true});
@@ -30,16 +30,20 @@ for(const name of ['workspace-views.js','workspace-panels.js','bulk-native.js','
 for(const name of ['review-core.js','review-api.js','review-native.js','review-popup.js','bulk-native.js','bulk-panel.js'])files.set('/extension/'+name,path.join(root,'extension',name));
 for (const name of ["common.js", "overlay.js", "content.js", "native-repeat.js", "popup.js", "popup.css", "health-popup.js", "health-core.js", "paste-repeat.js"]) files.set("/extension/" + name, path.join(root, "extension", name));
 files.set('/tests/test-health-popup.js',path.join(root,'tests/test-health-popup.js'));
-for (const name of ["chrome-shim.js", "label-fixture.js", "mac-platform.js", "test-content.js", "test-popup.js", "test-popup-mac.js", "test-wheel.js", "test-conflicts.js", "test-space-pan.js", "test-label-shortcuts.js", "test-overlay.js", "test-native-repeat.js", "test-polygon.js", "test-paste.js"]) files.set("/tests/" + name, path.join(root, "tests", name));
+for (const name of ["chrome-shim.js", "label-fixture.js", "mac-platform.js", "test-content.js", "test-popup.js", "test-popup-mac.js", "test-wheel.js", "test-conflicts.js", "test-space-pan.js", "test-label-shortcuts.js", "test-overlay.js", "test-native-repeat.js", "test-polygon.js", "test-new-shapes.js", "test-paste.js"]) files.set("/tests/" + name, path.join(root, "tests", name));
 files.set("/tests/mousetrap-1.6.5.js", path.join(root, "reference", "mousetrap-1.6.5.js"));
 files.set("/tests/polygon-fixture.js", path.join(root, "tests", "polygon-fixture.js"));
+files.set("/tests/new-shapes-fixture.js", path.join(root, "tests", "new-shapes-fixture.js"));
 files.set("/tests/popup-demo.js", path.join(root, "tests", "popup-demo.js"));
 for (const name of ["guide.html", "guide.css", "updates.html", "updates.css"]) files.set("/tests/" + name, path.join(root, "extension", name));
 for (const name of ["01-enable", "02-label", "03-ai-key", "04-brush-key", "05-wheel", "06-space-pan", "07-label-keys", "08-overlay-demo"]) {
   files.set(`/tests/guide-images/${name}.jpg`, path.join(root, "extension", "guide-images", name + ".jpg"));
 }
+for(const name of ['view-tools.js','view-native.js','group-native.js','group-panel.js','location-native.js', 'prefetch-native.js','location-panel.js', 'prefetch-panel.js'])files.set('/extension/'+name,path.join(root,'extension',name));
+for(const name of ['test-view-tools.js','view-fixture.js'])files.set('/tests/'+name,path.join(root,'tests',name));
 const fixture = await readFile(path.join(root, "tests", "fixture.html"), "utf8");
 const popup = await readFile(path.join(root, "extension", "popup.html"), "utf8");
+assert(popup.includes(`<small>${manifest.version}</small>`), "Popup must display the packaged version");
 const popupFixture = (run, unrelated = false, mac = false) => popup
   .replace(/src="((?:review|bulk)-[\w-]+\.js)"/g,'src="/extension/$1"')
   .replace('src="health-popup.js"', 'src="/extension/health-popup.js"')
@@ -53,6 +57,9 @@ const server = createServer(async (request, response) => {
     if (route === '/tasks/1/jobs/15' || route === '/tests/health-demo') text = popupFixture(false).replace('</body>', route.includes('/jobs/')?'<script src="/tests/test-health-popup.js" defer></script></body>':'<script>window.addEventListener("load",()=>document.getElementById("screen-health").click());</script></body>');
     else if (route === "/tasks/1/jobs/16") text = fixture.replace("/tests/test-content.js", "/tests/test-paste.js").replace('<script src="/extension/common.js"></script>', '<script src="/tests/mousetrap-1.6.5.js"></script><script src="/extension/common.js"></script>');
     else if (route === "/tasks/1/jobs/1") text = fixture;
+    else if (route === "/tasks/1/jobs/18") text = fixture.replace("/tests/test-content.js", "/tests/test-view-tools.js").replace('<script src="/tests/label-fixture.js"></script>', '<script src="/tests/label-fixture.js"></script><script src="/tests/view-fixture.js"></script>');
+    else if (route === "/tasks/1/jobs/17") text = fixture.replace("/tests/test-content.js", "/tests/test-new-shapes.js")
+      .replace('<script src="/tests/label-fixture.js"></script>', '<script src="/tests/new-shapes-fixture.js"></script><script src="/tests/label-fixture.js"></script>');
     else if (route === "/tasks/1/jobs/11") text = fixture.replace("/tests/test-content.js", "/tests/test-polygon.js")
       .replace('<script src="/tests/label-fixture.js"></script>', '<script src="/tests/polygon-fixture.js"></script><script src="/tests/label-fixture.js"></script>');
     else if (route === "/tasks/1/jobs/10") text = fixture.replace("/tests/test-content.js", "/tests/test-native-repeat.js")
@@ -89,8 +96,8 @@ if (process.argv.includes("--serve")) {
 await mkdir(path.join(root, "tests", ".browser-profiles"), {recursive: true});
 const summaries = [];
 try {
-  const routes = ["/tasks/1/jobs/1", "/tests/popup-test", "/tasks/1/jobs/2", "/tests/popup-mac", "/tasks/1/jobs/3", "/tasks/1/jobs/4", "/tasks/1/jobs/5", "/tasks/1/jobs/6", "/tasks/1/jobs/8", "/tasks/1/jobs/9", "/tasks/1/jobs/10", "/tasks/1/jobs/15", "/tasks/1/jobs/16", "/tasks/1/jobs/11"];
-  for (const route of process.argv.includes("--paste-only") ? ["/tasks/1/jobs/16"] : process.argv.includes("--health-only") ? ["/tasks/1/jobs/15"] : process.argv.includes("--native-only") ? ["/tasks/1/jobs/10"] : process.argv.includes("--popup-only") ? ["/tests/popup-test"] : process.argv.includes("--polygon-only") ? routes.slice(-1) : routes) {
+  const routes = ["/tasks/1/jobs/1", "/tests/popup-test", "/tasks/1/jobs/2", "/tests/popup-mac", "/tasks/1/jobs/3", "/tasks/1/jobs/4", "/tasks/1/jobs/5", "/tasks/1/jobs/6", "/tasks/1/jobs/8", "/tasks/1/jobs/9", "/tasks/1/jobs/10", "/tasks/1/jobs/15", "/tasks/1/jobs/16", "/tasks/1/jobs/11", "/tasks/1/jobs/17", "/tasks/1/jobs/18"];
+  for (const route of process.argv.includes("--view-only") ? ["/tasks/1/jobs/18"] : process.argv.includes("--paste-only") ? ["/tasks/1/jobs/16"] : process.argv.includes("--health-only") ? ["/tasks/1/jobs/15"] : process.argv.includes("--native-only") ? ["/tasks/1/jobs/10"] : process.argv.includes("--popup-only") ? ["/tests/popup-test"] : process.argv.includes("--polygon-only") ? ["/tasks/1/jobs/11"] : process.argv.includes("--shapes-only") ? ["/tasks/1/jobs/17"] : routes) {
     const profile = await mkdtemp(path.join(root, "tests", ".browser-profiles", "isolated-"));
     const args = ["--headless=new", "--disable-gpu", "--disable-gpu-compositing", "--disable-software-rasterizer",
       "--no-first-run", "--no-default-browser-check", "--disable-extensions",
@@ -120,7 +127,7 @@ try {
   }
 } finally {await new Promise((resolve) => server.close(resolve));}
 const report = {testedAt: new Date().toISOString(), browser: chromePath, environment: "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data", staticChecks: "passed", passed: summaries.reduce((count, suite) => count + suite.passed, 0), failed: summaries.reduce((count, suite) => count + suite.failed, 0), suites: summaries};
-const reportName=process.argv.includes('--paste-only')?'paste-results.json':process.argv.includes('--health-only')?'health-popup-results.json':'test-results.json';
+const reportName=process.argv.includes('--view-only')?'view-results.json':process.argv.includes('--shapes-only')?'new-shapes-results.json':process.argv.includes('--paste-only')?'paste-results.json':process.argv.includes('--health-only')?'health-popup-results.json':'test-results.json';
 await writeFile(path.join(root, "tests", reportName), JSON.stringify(report, null, 2) + "\n");
 console.log(`Report: ${path.join(root, "tests", reportName)}`);
 if (report.failed) process.exitCode = 1;

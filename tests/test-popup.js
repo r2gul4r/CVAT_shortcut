@@ -77,9 +77,9 @@
     await test("Popup enable explicitly injects the MAIN adapter before isolated controls in the same tab, and can pause", async () => {
       assert(fixtureAPI.metrics.injections === 0); $("enable").click(); await delay(20);
       assert(fixtureAPI.metrics.injections === 2 && fixtureAPI.metrics.world === "ISOLATED");
-      assert(fixtureAPI.metrics.history[0].world === "MAIN" && fixtureAPI.metrics.history[0].files.join(",") === "native-repeat.js");
+      assert(fixtureAPI.metrics.history[0].world === "MAIN" && fixtureAPI.metrics.history[0].files.join(",") === "native-repeat.js,view-native.js,group-native.js,location-native.js,prefetch-native.js");
       assert(fixtureAPI.metrics.history.slice(0,2).every(entry => entry.tabId === 7));
-      assert(fixtureAPI.metrics.files.join(",") === "common.js,review-core.js,review-api.js,bulk-panel.js,review-popup.js,workspace-views.js,workspace-panels.js,overlay.js,paste-repeat.js,content.js" && !$("disable").hidden);
+      assert(fixtureAPI.metrics.files.join(",") === "common.js,review-core.js,review-api.js,bulk-panel.js,review-popup.js,workspace-views.js,workspace-panels.js,group-panel.js,location-panel.js,prefetch-panel.js,view-tools.js,overlay.js,paste-repeat.js,content.js" && !$("disable").hidden);
       $("disable").click(); await delay(20); assert($("disable").hidden && !$("enable").disabled);
     });
     await test("MAIN adapter injection failure retains existing tool shortcuts and reports N limitation", async () => {
@@ -287,6 +287,18 @@
       $("polygon-clear").click(); await delay(20); assert(fixtureAPI.read()[S.STORAGE_KEY].shortcuts.polygon === null && $("polygon-key").textContent === "미지정");
       assert(fixtureAPI.read()[S.STORAGE_KEY].shortcuts.ai.code === "KeyV" && fixtureAPI.read()[S.STORAGE_KEY].shortcuts.brush.code === "KeyB");
     });
+    for (const [action, code, title] of [['rectangle','KeyR','사각형'],['skeleton','KeyK','스켈레톤']]) {
+      await test(`${action} shortcut supports assignment, modifier change, duplicates and clear`, async () => {
+        await chrome.storage.local.set({[S.STORAGE_KEY]: S.normalize({shortcuts:{ai:{code:'KeyV'},brush:{code:'KeyB'},polygon:{code:'KeyP'}}})});
+        assert($(action+'-key').textContent==='미지정');
+        $(action+'-assign').click();assert($('recording-text').textContent.includes(title));
+        key('KeyP');await delay(20);assert($('notice').textContent.includes('이미')&&!$('recording').hidden);
+        key(code);await delay(20);assert($(action+'-key').textContent===code.slice(3));
+        $(action+'-assign').click();key(code,{altKey:true});await delay(20);assert($(action+'-key').textContent==='Alt + '+code.slice(3));
+        $(action+'-clear').click();await delay(20);assert(fixtureAPI.read()[S.STORAGE_KEY].shortcuts[action]===null);
+        assert(fixtureAPI.read()[S.STORAGE_KEY].shortcuts.ai.code==='KeyV'&&fixtureAPI.read()[S.STORAGE_KEY].shortcuts.polygon.code==='KeyP');
+      });
+    }
     await test("A narrow initial popup viewport cannot collapse tool names into vertical text", async () => {
       const frame = document.createElement("iframe"); frame.style.cssText = "width:200px;height:600px;border:0";
       frame.src = "/tests/popup-view";

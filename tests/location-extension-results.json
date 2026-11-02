@@ -1,0 +1,39 @@
+{
+  "environment": "Disposable Chrome MV3 with localhost-only pregrant, synthetic CVAT DOM. No company data or personal browser; deployed CVAT/OpenCV initialization not tested.",
+  "passed": 8,
+  "failed": 0,
+  "results": [
+    {
+      "name": "actual popup injects both display worlds and connects the Job catalog",
+      "passed": true
+    },
+    {
+      "name": "screen panel loads actual location choices from the active Job",
+      "passed": true
+    },
+    {
+      "name": "trusted preview includes all Job frames and preserves original per-label value spelling",
+      "passed": true
+    },
+    {
+      "name": "trusted apply changes location only and preserves coordinates group other attributes and boxes",
+      "passed": true
+    },
+    {
+      "name": "already equal skeletons are not saved again",
+      "passed": true
+    },
+    {
+      "name": "changed locks invalidate a pending location edit without writing",
+      "passed": true
+    },
+    {
+      "name": "tag can be applied back to all three skeletons across the Job",
+      "passed": true
+    },
+    {
+      "name": "Job navigation clears the old preview and chosen location",
+      "passed": true
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "version": "2.15.4",
   "zip": "cvat-sidebar-shortcuts-2.15.4-ko.zip",
-  "sha256": "c80d8cd547db4f1b3c4f02d38d63ffa65c3698418d4a29c379a45954e722fd4b",
+  "sha256": "4bdd1ab6eb4c39ed858245307928ba2ffc79a3e862f4361aa39250f84f36bf3d",
   "files": {
     "bulk-native.js": "3bf28b83346c49741dd4acb3f20676dc88ed91225f4257712f694d1706aa38b8",
     "bulk-panel.js": "e37e19881caafc8b97ddd67e42703645401578e3e62a20a41c5ec8a4517b929e",
@@ -34,7 +34,7 @@
     "overlay.js": "46ff75c5b057619d430d5d7323aa28d05a715490152d86d172d05a9950c0ba6a",
     "paste-repeat.js": "aad28701bd14f8ebf8af011a15dd527fed055b691097e6a1cbf96c7d08884484",
     "popup.css": "8292909fe0a558c39378e1d315f52dcee99cda91b1a862d2825fff155c2a261e",
-    "popup.html": "98e635b06ca3098f34df9fe6e63e63f9ef75189aa770bf5b4b6c56d8e9cb26e7",
+    "popup.html": "a3f47254e8f7400073338b87799a06d98a851bbd9edf08ba96dfc4b2776ee77c",
     "popup.js": "04e1243a48b6e1a88f632d6d8e27e9c92ac9cfa2d99781a398471877789af0cc",
     "prefetch-native.js": "bbb1777420674da4efb48aa4e34f59e0c6e5dffb82b7d2dcf06d9830a3e87fb8",
     "prefetch-panel.js": "9f3618bd0903fa8805f9260c2f6c5ab43126179d41a38179e0b38518b59263a3",

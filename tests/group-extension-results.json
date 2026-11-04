@@ -1,6 +1,6 @@
 {
   "environment": "Disposable Chrome MV3 with localhost-only pregrant, synthetic CVAT DOM. No company data or personal browser; deployed CVAT/OpenCV initialization not tested.",
-  "passed": 11,
+  "passed": 15,
   "failed": 0,
   "results": [
     {
@@ -13,6 +13,10 @@
     },
     {
       "name": "trusted scan previews box plus skeleton and leaves empty box unchanged",
+      "passed": true
+    },
+    {
+      "name": "updated bridge ignores the legacy sentinel and never invokes the old handler without page reload",
       "passed": true
     },
     {
@@ -41,6 +45,18 @@
     },
     {
       "name": "repeated polygon grouping does not replace completed groups",
+      "passed": true
+    },
+    {
+      "name": "self-crossing polygon agrees with native SVG fill and groups without geometry edits",
+      "passed": true
+    },
+    {
+      "name": "native undo restores the entire self-crossing grouping snapshot",
+      "passed": true
+    },
+    {
+      "name": "partially visible skeleton joins polygon and box, repeat preserves groups and undo restores all geometry",
       "passed": true
     },
     {

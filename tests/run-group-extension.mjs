@@ -36,11 +36,16 @@ try{
  const job=await browser('Target.createTarget',{url:origin+'/tasks/1/jobs/18'});jobPage=await page(job.targetId);await until(jobPage,'window.ready');
  ({id:extensionId}=await browser('Extensions.loadUnpacked',{path:extension}));const {targetInfos}=await browser('Target.getTargets',{filter:[{type:'tab'}]});jobTarget=targetInfos.find(t=>t.url===origin+'/tasks/1/jobs/18');assert(jobTarget);
 
+ // Reproduce an already-open Job after the extension has been updated.
+ await evaluate(jobPage,`window.__cvatShortcutsGroupV1=true;window.staleGroupCalls=0;document.addEventListener('cvat-shortcuts-group-v1',e=>{staleGroupCalls++;e.target.setAttribute('data-response',JSON.stringify({error:'OLD GROUP HANDLER'}));},true);`);
  let send=await open();
  const selectedBefore=await evaluate(send,"chrome.storage.local.get('cvatSidebarShortcutsV1').then(x=>x.cvatSidebarShortcutsV1?.defaultLabelName)");
  await evaluate(send,"document.getElementById('enable').click()");
  await until(jobPage,"Boolean(document.getElementById('cvat-shortcuts-label-overlay')?.shadowRoot.querySelector('[data-group=scan]:not(:disabled)'))");
  pass('actual popup injects both display worlds and connects the Job catalog');
+ // Duplicate injection of this build must still leave exactly one active handler.
+ await evaluate(send,`chrome.tabs.query({url:${JSON.stringify(origin+'/*')}}).then(async tabs=>{await chrome.scripting.executeScript({target:{tabId:tabs[0].id},files:['group-native.js'],world:'MAIN'});})`);
+
  await browser('Target.closeTarget',{targetId:popup.id});await pause(100);
  const shadow="document.getElementById('cvat-shortcuts-label-overlay').shadowRoot";
  async function click(selector){
@@ -56,13 +61,15 @@ try{
  assert.equal(await evaluate(jobPage,'groupFixture.count()'),0);
  assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="results"]').textContent.includes('박스 #1 + 스켈레톤 #2')`));
  pass('trusted scan previews box plus skeleton and leaves empty box unchanged');
+ assert.equal(await evaluate(jobPage,'staleGroupCalls'),0);
+ pass('updated bridge ignores the legacy sentinel and never invokes the old handler without page reload');
  const shot=await jobPage('Page.captureScreenshot',{format:'png'});await writeFile(path.join(root,'tests/group-preview.png'),Buffer.from(shot.data,'base64'));
  await click('[data-group="apply"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('1그룹 완료')`);
  assert.deepEqual(await evaluate(jobPage,'groupFixture.records().map(o=>o.group.id)'),[100,100,0]);
  assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="apply"]').disabled`));
  pass('trusted apply invokes native group once and never groups the empty box');
  await click('[data-group="scan"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('매칭 0그룹')`);
- assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="results"]').textContent.includes('기존 그룹 유지')`));
+ assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="results"]').textContent.includes('이미 같은 그룹')`));
  pass('repeated inspection preserves existing groups and disables duplicate apply');
  await evaluate(jobPage,'groupFixture.job.actions.undo()');
  await click('[data-group="scan"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('매칭 1그룹')`);
@@ -75,8 +82,8 @@ try{
  await click('[data-group="apply"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('2그룹 완료')`);
  const ids=await evaluate(jobPage,'groupFixture.records().map(o=>o.group.id)');assert.equal(ids[0],ids[1]);assert.equal(ids[2],0);assert.equal(ids[3],ids[4]);assert.notEqual(ids[0],ids[3]);
  pass('Job-wide grouping creates independent per-box groups across frames');
- assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="extend"]').checked`));
- await evaluate(jobPage,`window.previousBoxGroup=groupFixture.records()[0].group.id;window.untouchedGroup=groupFixture.records()[3].group.id;groupFixture.records().push(groupFixture.box(30,[0,0,100,0,100,100,0,100],{shapeType:'polygon'}),groupFixture.box(31,[0,0,100,0,100,100,0,100],{shapeType:'polygon',frame:4}),groupFixture.skeleton(32,undefined,{frame:4}),groupFixture.skeleton(33,undefined,{frame:4}));window.beforePolygon=JSON.stringify(groupFixture.records());`);
+ assert(await evaluate(jobPage,`!${shadow}.querySelector('[data-group="extend"]')`));
+ await evaluate(jobPage,`window.previousBoxGroup=groupFixture.records()[0].group.id;window.untouchedGroup=groupFixture.records()[3].group.id;groupFixture.records().push(groupFixture.box(30,[0,0,100,0,100,100,0,100],{shapeType:'polygon'}),groupFixture.box(31,[0,0,100,0,100,100,0,100],{shapeType:'polygon',frame:4}),groupFixture.skeleton(32,undefined,{frame:4}),groupFixture.skeleton(33,undefined,{frame:4}));groupFixture.records().push(groupFixture.box(34,[200,0,300,100],{frame:8,group:{id:previousBoxGroup}}));window.beforePolygon=JSON.stringify(groupFixture.records());`);
  await click('[data-group="scan"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('매칭 2그룹')`);
  assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="results"]').textContent.includes('폴리곤 #30')&&${shadow}.querySelector('[data-group="results"]').textContent.includes('기존 그룹 #')`));
  pass('preview adds polygon to existing box group and finds polygon-only frame');
@@ -87,6 +94,30 @@ try{
  pass('apply preserves every object and coordinate while grouping old box plus polygon and new polygon plus two skeletons');
  await click('[data-group="scan"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('매칭 0그룹')`);
  pass('repeated polygon grouping does not replace completed groups');
+
+ // Independent browser SVG oracle: same nonzero fill as the actual CVAT polygon.
+ await evaluate(jobPage,`groupFixture.records().push(groupFixture.box(40,[0,0,100,100,0,100,100,0],{shapeType:'polygon',frame:6}),groupFixture.box(41,undefined,{frame:6}),groupFixture.skeleton(42,[[40,10],[60,30]],{frame:6}));window.crossingBefore=JSON.stringify(groupFixture.records());`);
+ assert(await evaluate(jobPage,`(()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(svg.namespaceURI,'polygon');p.setAttribute('points','0,0 100,100 0,100 100,0');svg.append(p);document.body.append(svg);const hit=p.isPointInFill(new DOMPoint(50,20));svg.remove();return hit;})()`));
+ await click('[data-group="scan"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('매칭 1그룹')`);
+ assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="results"]').textContent.includes('폴리곤 #40')`));
+ await click('[data-group="apply"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('1그룹 완료')`);
+ assert(await evaluate(jobPage,`(()=>{const a=groupFixture.records().filter(o=>[40,41,42].includes(o.clientID));return new Set(a.map(o=>o.group.id)).size===1&&JSON.stringify(a[0].points)==='[0,0,100,100,0,100,100,0]';})()`));
+ pass('self-crossing polygon agrees with native SVG fill and groups without geometry edits');
+ await evaluate(jobPage,'groupFixture.job.actions.undo()');
+ assert(await evaluate(jobPage,'JSON.stringify(groupFixture.records())===crossingBefore'));
+ pass('native undo restores the entire self-crossing grouping snapshot');
+
+ // Center outside; just one joint inside the clipped polygon.
+ await evaluate(jobPage,`groupFixture.records().push(groupFixture.box(50,[-50,-50,100,100],{frame:7}),groupFixture.box(51,[0,0,100,0,100,100,0,100],{shapeType:'polygon',frame:7}),groupFixture.skeleton(52,[[-30,-30],[-20,-30],[-30,-20],[10,10],[-10,-20],[-10,-10]],{frame:7}));window.partialBefore=JSON.stringify(groupFixture.records());`);
+ await click('[data-group="scan"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('매칭 2그룹')`);
+ assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="results"]').textContent.includes('박스 #50 + 폴리곤 #51 + 스켈레톤 #52')`));
+ await click('[data-group="apply"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('2그룹 완료')`);
+ assert(await evaluate(jobPage,`new Set(groupFixture.records().filter(o=>[50,51,52].includes(o.clientID)).map(o=>o.group.id)).size===1`));
+ await click('[data-group="scan"]');await until(jobPage,`${shadow}.querySelector('[data-group="status"]').textContent.includes('매칭 0그룹')`);
+ await evaluate(jobPage,'groupFixture.job.actions.undo();groupFixture.job.actions.undo()');
+ assert(await evaluate(jobPage,'JSON.stringify(groupFixture.records())===partialBefore'));
+ pass('partially visible skeleton joins polygon and box, repeat preserves groups and undo restores all geometry');
+
  await evaluate(jobPage,"history.pushState({},'', '/tasks/1/jobs/19');groupFixture.a.job.instance={...groupFixture.job,id:19}");await pause(950);
  assert(await evaluate(jobPage,`${shadow}.querySelector('[data-group="apply"]').disabled`));
  pass('Job navigation invalidates old grouping results');

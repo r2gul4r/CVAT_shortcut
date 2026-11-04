@@ -1,7 +1,8 @@
 /* MAIN: native CVAT grouping, original-coordinate containment; no HTTP writes. */
 (() => {
   'use strict';
-  const EVENT='cvat-shortcuts-group-v1';
+  // Keep new requests separate from anonymous handlers left by older extensions.
+  const EVENT='cvat-shortcuts-group-2.15.4';
   const clone=value=>JSON.parse(JSON.stringify(value));
   const groupID=o=>o.group?.id;
   function boxValid(b){return Array.isArray(b.points)&&b.points.length===4&&b.points.every(Number.isFinite)&&b.points[2]>b.points[0]&&b.points[3]>b.points[1]&&Number.isFinite(b.rotation);}
@@ -18,47 +19,52 @@
   function protectedObject(o){return o.lock||o.isGroundTruth||o.elements?.some(e=>e.lock||e.isGroundTruth);}
   const EPS=1e-7;
   function segment(a,b,p){const cross=(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);return Math.abs(cross)<=EPS*Math.max(1,Math.hypot(b[0]-a[0],b[1]-a[1]))&&p[0]>=Math.min(a[0],b[0])-EPS&&p[0]<=Math.max(a[0],b[0])+EPS&&p[1]>=Math.min(a[1],b[1])-EPS&&p[1]<=Math.max(a[1],b[1])+EPS;}
-  function crosses(a,b,c,d){
-    const side=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]);
-    return segment(a,b,c)||segment(a,b,d)||segment(c,d,a)||segment(c,d,b)||(Math.sign(side(a,b,c))!==Math.sign(side(a,b,d))&&Math.sign(side(c,d,a))!==Math.sign(side(c,d,b)));
-  }
-  function polygonPoints(o,spend){
-    const p=o.points;if(!Array.isArray(p)||p.length<6||p.length>2002||p.length%2||!p.every(Number.isFinite)||(o.rotation!=null&&o.rotation!==0))return null;
-    const v=[];for(let i=0;i<p.length;i+=2)v.push([p[i],p[i+1]]);
-    if(v.length>3&&v[0][0]===v.at(-1)[0]&&v[0][1]===v.at(-1)[1])v.pop();
-    let area=0;for(let i=0;i<v.length;i++){const a=v[i],b=v[(i+1)%v.length];if(Math.hypot(a[0]-b[0],a[1]-b[1])<=EPS)return null;area+=a[0]*b[1]-a[1]*b[0];}
-    if(Math.abs(area)<=EPS)return null;
-    for(let i=0;i<v.length;i++)for(let j=i+1;j<v.length;j++){if(j===i+1||(i===0&&j===v.length-1))continue;spend(1);if(crosses(v[i],v[(i+1)%v.length],v[j],v[(j+1)%v.length]))return null;}
-    return v;
+  function polygonPoints(o){
+    const p=o.points;
+    if(!Array.isArray(p)||p.length<6||p.length%2||!p.every(Number.isFinite))return {reason:'폴리곤 좌표를 읽을 수 없음'};
+    if(p.length>2002)return {reason:'폴리곤 꼭짓점 수가 1,001개를 초과함'};
+    if(o.rotation!=null&&o.rotation!==0)return {reason:'폴리곤 회전 미지원'};
+    // Normalize only the temporary membership geometry; never edit annotations.
+    const v=[];for(let i=0;i<p.length;i+=2){const last=v.at(-1);if(!last||last[0]!==p[i]||last[1]!==p[i+1])v.push([p[i],p[i+1]]);}
+    while(v.length>1&&v[0][0]===v.at(-1)[0]&&v[0][1]===v.at(-1)[1])v.pop();
+    if(v.length<3)return {reason:'폴리곤의 서로 다른 꼭짓점이 부족함'};
+    const a=v[0],b=v[1];
+    if(!v.slice(2).some(c=>Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))>EPS*Math.max(1,Math.hypot(b[0]-a[0],b[1]-a[1]))))return {reason:'폴리곤 꼭짓점이 한 직선에 있음'};
+    return {vertices:v};
   }
   function insidePolygon(vertices,p){
-    let hit=false;for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){
+    // CVAT SVG polygons use nonzero fill, including self-crossing contours.
+    let winding=0;for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){
       const a=vertices[j],b=vertices[i];if(segment(a,b,p))return true;
-      if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])hit=!hit;
-    }return hit;
+      const side=(b[0]-a[0])*(p[1]-a[1])-(p[0]-a[0])*(b[1]-a[1]);
+      if(a[1]<=p[1]){if(b[1]>p[1]&&side>0)winding++;}
+      else if(b[1]<=p[1]&&side<0)winding--;
+    }return winding!==0;
   }
-  function groupSizes(data){
-    const sizes=new Map();for(const kind of ['shapes','tracks','tags'])for(const o of data[kind])if(Number.isSafeInteger(o.group)&&o.group>0)sizes.set(o.group,(sizes.get(o.group)||0)+1);return sizes;
-  }
-  function planFrame(states,frame,options={}){
+  function planFrame(states,frame){
     if(!Array.isArray(states)||states.length>20000)throw Error('한 프레임의 객체 목록이 너무 크거나 읽을 수 없습니다.');
     const objects=states.filter(o=>o.parentID==null&&o.outside!==true&&['rectangle','polygon','skeleton'].includes(o.shapeType));
     if(objects.some(o=>!Number.isSafeInteger(o.clientID)||o.frame!==frame)||new Set(objects.map(o=>o.clientID)).size!==objects.length)throw Error('객체 ID 또는 프레임을 확인하지 못했습니다.');
-    const containers=objects.filter(o=>o.shapeType!=='skeleton'),skeletons=objects.filter(o=>o.shapeType==='skeleton'),groups=[],skipped=[],occupied=new Set();
+    const allContainers=objects.filter(o=>o.shapeType!=='skeleton'),containers=[],skeletons=objects.filter(o=>o.shapeType==='skeleton'),groups=[],skipped=[],invalid=[],occupied=new Set();
     let work=0;const spend=n=>{work+=n;if(work>5000000)throw Error('포함 관계가 너무 많습니다. 프레임의 객체 수나 폴리곤 꼭짓점 수를 줄여서 실행하세요.');};
     const polygons=new Map(),note=(o,reason)=>skipped.push({frame,id:o.clientID,reason});
-    for(const c of containers){
-      if(c.shapeType==='polygon')polygons.set(c,polygonPoints(c,spend));
-      if(c.shapeType==='rectangle'?!boxValid(c):!polygons.get(c)){
-        for(const s of skeletons)note(s,c.shapeType==='rectangle'?'박스 좌표 오류':'폴리곤 좌표 오류·자기 교차 또는 미지원 회전');
-        return {groups,skipped,empty:0,boxes:containers.length,skeletons:skeletons.length};
-      }
+    for(const c of allContainers){
+      let reason='';
+      if(c.shapeType==='polygon'){const parsed=polygonPoints(c);reason=parsed.reason||'';if(parsed.vertices)polygons.set(c,parsed.vertices);}
+      else if(!boxValid(c))reason='박스 좌표 오류';
+      if(reason){invalid.push({frame,id:c.clientID,reason});continue;}
+      containers.push(c);
     }
     const byContainer=new Map(),hitsBySkeleton=new Map();
     for(const s of skeletons){
       const points=joints(s);if(!points){note(s,'관절 좌표·Outside 확인 필요');continue;}
-      const hits=containers.filter(c=>{const poly=polygons.get(c);spend(points.length*(poly?.length||1));return points.every(p=>poly?insidePolygon(poly,p):inside(c,p));});
-      if(!hits.length){note(s,'박스·폴리곤 밖 또는 경계 걸침');continue;}
+      const center=[0,1].map(axis=>(Math.min(...points.map(p=>p[axis]))+Math.max(...points.map(p=>p[axis])))/2);
+      const hits=containers.filter(c=>{
+        const poly=polygons.get(c),contains=p=>{spend(poly?.length||1);return poly?insidePolygon(poly,p):inside(c,p);};
+        // A partially visible barcode can have its center outside the container.
+        return contains(center)||points.some(contains);
+      });
+      if(!hits.length){note(s,'스켈레톤 중심·모든 관절이 박스·폴리곤 밖');continue;}
       hitsBySkeleton.set(s,hits);for(const c of hits){occupied.add(c);const list=byContainer.get(c)||[];list.push(s);byContainer.set(c,list);}
     }
     const seen=new Set();
@@ -69,20 +75,20 @@
         const c=queue[cursor];cs.push(c);for(const s of byContainer.get(c)||[]){children.add(s);for(const next of hitsBySkeleton.get(s)){if(!seen.has(next)){seen.add(next);queue.push(next);}}}
       }
       const boxes=cs.filter(c=>c.shapeType==='rectangle'),polys=cs.filter(c=>c.shapeType==='polygon'),members=[...cs,...children];
-      let reason=boxes.length>1?'여러 박스에 포함':polys.length>1?'여러 폴리곤에 포함':members.some(o=>o.objectType!=='shape')?'Track 제외':members.some(protectedObject)?'잠금·보호 객체':'';
-      const existing=[...new Set(members.map(groupID).filter(id=>id>0))];let previousGroup;
+      let reason=members.some(o=>o.objectType!=='shape')?'Track 제외':members.some(protectedObject)?'잠금·보호 객체':'';
+      const existing=[...new Set(members.map(groupID).filter(id=>id>0))];
       if(!reason&&members.some(o=>!Number.isSafeInteger(groupID(o))||groupID(o)<0))reason='그룹 번호 확인 필요';
-      if(!reason&&existing.length){
-        const id=existing[0],old=members.filter(o=>groupID(o)===id);
-        // Extend only a complete box/skeleton group by exactly its new, ungrouped polygon.
-        const canExtend=options.extendExisting===true&&existing.length===1&&polys.length===1&&groupID(polys[0])===0&&boxes.length===1&&groupID(boxes[0])===id&&[...children].every(s=>groupID(s)===id)&&options.groupSizes?.get(id)===old.length;
-        if(canExtend)previousGroup=id;else reason='기존 그룹 유지';
-      }
+      // Existing membership elsewhere does not block regrouping the matched objects.
+      if(!reason&&existing.length===1&&members.every(o=>groupID(o)===existing[0]))reason='이미 같은 그룹';
       if(reason){for(const s of children)note(s,reason);continue;}
-      const group={frame,...(boxes.length?{box:boxes[0].clientID}:{}),...(polys.length?{polygon:polys[0].clientID}:{}),skeletons:[...children].map(s=>s.clientID)};
-      if(previousGroup)group.previousGroup=previousGroup;groups.push(group);
+      const group={frame,
+        ...(boxes.length===1?{box:boxes[0].clientID}:boxes.length?{boxes:boxes.map(o=>o.clientID)}:{}),
+        ...(polys.length===1?{polygon:polys[0].clientID}:polys.length?{polygons:polys.map(o=>o.clientID)}:{}),
+        skeletons:[...children].map(s=>s.clientID)};
+      if(existing.length)group.previousGroups=existing;
+      groups.push(group);
     }
-    return {groups,skipped,empty:containers.filter(c=>!occupied.has(c)).length,boxes:containers.length,skeletons:skeletons.length};
+    return {groups,skipped,invalid,empty:containers.filter(c=>!occupied.has(c)).length,boxes:allContainers.length,skeletons:skeletons.length};
   }
 
   function signature(states){
@@ -126,18 +132,18 @@
           const before=await snapshot();
           const frames=req.scope==='current'?[initial]:[...new Set(before.value.shapes.filter(o=>['rectangle','polygon','skeleton'].includes(o.type)).map(o=>o.frame))].sort((a,b)=>a-b);
           if(frames.length>2000||frames.some(f=>!Number.isSafeInteger(f)||f<ctx.job.startFrame||f>ctx.job.stopFrame))throw Error('프레임 범위를 확인하지 못했거나 2,000프레임을 초과했습니다. 현재 프레임으로 실행하세요.');
-          const groups=[],skipped=[],records=[];let empty=0,deleted=0;
+          const groups=[],skipped=[],invalid=[],records=[];let empty=0,deleted=0;
           for(const frame of frames){
             const objects=await read(frame);if(!objects){deleted++;continue;}
-            const row=planFrame(objects,frame,{extendExisting:req.extendExisting===true,groupSizes:groupSizes(before.value)});groups.push(...row.groups);skipped.push(...row.skipped);empty+=row.empty;records.push({frame,signature:signature(objects)});
-            if(groups.length>5000||skipped.length>20000)throw Error('검사 결과가 너무 많습니다. 현재 프레임으로 실행하세요.');
+            const row=planFrame(objects,frame);groups.push(...row.groups);skipped.push(...row.skipped);invalid.push(...row.invalid);empty+=row.empty;records.push({frame,signature:signature(objects)});
+            if(groups.length>5000||skipped.length+invalid.length>20000)throw Error('검사 결과가 너무 많습니다. 현재 프레임으로 실행하세요.');
           }
           if((await snapshot()).json!==before.json)throw Error('검사 중 주석이 바뀌었습니다. 다시 검사하세요.');
           await refresh();check();
           const token=Array.from(crypto.getRandomValues(new Uint8Array(16)),v=>v.toString(16).padStart(2,'0')).join('');
           plan={token,at:Date.now(),job:ctx.job,path:originalPath,frame:initial,before:before.json,records,groups};
           const owner=plan;const expiry=setTimeout(()=>{if(plan===owner)plan=null;},300000);expiry.unref?.();
-          return {token,jobId:ctx.job.id,frame:initial,scope:req.scope,groups,skipped,empty,deleted,tracks:before.value.tracks.filter(t=>t.elements?.length||t.shapes?.some(s=>['rectangle','polygon','skeleton'].includes(s.type))).length};
+          return {token,jobId:ctx.job.id,frame:initial,scope:req.scope,groups,skipped,invalid,empty,deleted,tracks:before.value.tracks.filter(t=>t.elements?.length||t.shapes?.some(s=>['rectangle','polygon','skeleton'].includes(s.type))).length};
         }
         const p=plan;
         if(!p||req.token!==p.token||p.job!==ctx.job||p.path!==originalPath||p.frame!==initial||Date.now()-p.at>300000)throw Error('검사 결과가 만료되었거나 화면이 바뀌었습니다. 다시 검사하세요.');
@@ -152,8 +158,8 @@
         const remember=o=>{if(Number.isSafeInteger(o.group)&&o.group>0)usedGroups.add(o.group);for(const e of o.elements||[])remember(e);};
         const original=JSON.parse(p.before);for(const kind of ['shapes','tracks','tags'])original[kind].forEach(remember);
         for(const group of p.groups){
-          check();const ids=[group.box,group.polygon,...group.skeletons].filter(Number.isSafeInteger),objects=byFrame.get(group.frame),members=ids.map(id=>objects.find(o=>o.clientID===id));
-          if(members.some(o=>!o||protectedObject(o)||(groupID(o)!==0&&groupID(o)!==group.previousGroup)))throw Error('대상 상태를 확인하지 못했습니다.');
+          check();const ids=[group.box,...(group.boxes||[]),group.polygon,...(group.polygons||[]),...group.skeletons].filter(Number.isSafeInteger),objects=byFrame.get(group.frame),members=ids.map(id=>objects.find(o=>o.clientID===id));
+          if(members.some(o=>!o||protectedObject(o)))throw Error('대상 상태를 확인하지 못했습니다.');
           started=true;const id=await ctx.job.annotations.group(members,false);check();
           if(!Number.isSafeInteger(id)||id<=0||usedGroups.has(id))throw Error('새 그룹 번호를 확인하지 못했습니다.');
           usedGroups.add(id);for(const member of members)assigned.set(member.clientID,id);changed++;
@@ -197,8 +203,9 @@
   if(typeof module==='object'&&module.exports){module.exports={inside,planFrame,signature,createService};return;}
   // Older injected grouping handlers may exist without the newer shared context.
   if(typeof globalThis.CVATBatchNativeContext?.find!=='function')globalThis.CVATBatchNativeContext=Object.freeze({find,lockInput});
-  if(globalThis.__cvatShortcutsGroupV1)return;
-  globalThis.__cvatShortcutsGroupV1=true;
+  const registrationKey='__'+EVENT;
+  if(globalThis[registrationKey])return;
+  globalThis[registrationKey]=true;
   const run=createService(find,lockInput);
   document.addEventListener(EVENT,async event=>{
     const node=event.target;if(!(node instanceof HTMLSpanElement)||!node.hidden||node.parentElement!==document.body)return;

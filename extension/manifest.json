@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CVAT Sidebar Shortcuts",
-  "version": "2.15.0",
+  "version": "2.15.4",
   "description": "CVAT 도구 단축키, 박스·폴리곤·스켈레톤 그룹화, 라벨 숨김, 1도 회전·격자, 라벨 찾기·누락 검수와 연결 상태 확인을 제공합니다.",
   "minimum_chrome_version": "102",
   "permissions": [

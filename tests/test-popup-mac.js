@@ -63,7 +63,7 @@
       $("ai-clear").click(); await delay();
       assert($("ai-key").textContent === "미지정" && $("shortcut-warning").hidden);
       const saved = fixtureAPI.read()[S.STORAGE_KEY];
-      assert(saved.shortcuts.brush.ctrl && saved.brushWheel.modifier === "alt" && saved.defaultLabelName === "obstacle");
+      assert(saved.shortcuts.brush.ctrl && saved.brushWheel.modifier === "alt" && saved.defaultLabelName === "");
     });
   } catch (error) {results.push({name: "Mac metadata simulation setup", passed: false, error: error.message});}
   const summary = {suite: "popup-mac", passed: results.filter((item) => item.passed).length,

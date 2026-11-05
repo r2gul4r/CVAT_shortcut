@@ -43,7 +43,7 @@ async function test(name, fn) {await fn();results.push({name,passed:true});}
  await test('List is unavailable before enabling the tab',()=>assert.equal(elements['label-colors'].hidden,true));
  await fire('enable');
  await test('Enable loads every available class including unused',()=>assert.deepEqual(choices().map(o=>o.value),['alpha','unused']));
- await test('Missing saved name does not silently select a class',()=>assert.equal(chosen(),undefined));
+ await test('First available class is selected before a preference is saved',()=>assert.equal(chosen().value,'alpha'));
  await choose('unused');
  await test('Selection saves its name without caching catalog or job',()=>{
    assert.equal(stored.defaultLabelName,'unused');assert.equal(stored.catalog,undefined);assert.equal(stored.jobPath,undefined);
@@ -51,7 +51,7 @@ async function test(name, fn) {await fn();results.push({name,passed:true});}
  const before=JSON.stringify(stored);
  catalog={state:'ready',labels:[{name:'alpha',duplicate:false},{name:'same',duplicate:true}]};await fire('label-refresh');
  await test('Refresh clears missing selection, disables duplicates and preserves settings',()=>{
-   assert.equal(chosen(),undefined);assert.equal(choices()[1].disabled,true);assert.equal(JSON.stringify(stored),before);
+   assert.equal(chosen().value,'alpha');assert.equal(choices()[1].disabled,true);assert.equal(JSON.stringify(stored),before);
  });
  catalog={state:'ready',labels:[]};await choose('alpha');
  await test('Removed class is rejected before saving',()=>assert.equal(JSON.stringify(stored),before));

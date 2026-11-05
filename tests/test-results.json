@@ -1,14 +1,14 @@
 {
-  "testedAt": "2026-11-02T09:01:01.044Z",
+  "testedAt": "2026-11-05T08:00:12.933Z",
   "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "environment": "Separate headless Chrome profiles; synthetic DOM only; Chrome extension APIs mocked; no desktop capture or company data",
   "staticChecks": "passed",
-  "passed": 572,
+  "passed": 575,
   "failed": 0,
   "suites": [
     {
       "suite": "content",
-      "passed": 71,
+      "passed": 72,
       "failed": 0,
       "results": [
         {
@@ -60,7 +60,11 @@
           "passed": true
         },
         {
-          "name": "Missing default label stops rather than falling back to person",
+          "name": "Missing saved label uses the first label in this tool",
+          "passed": true
+        },
+        {
+          "name": "Job catalog order wins over tool order and a returning saved label regains priority",
           "passed": true
         },
         {
@@ -88,7 +92,7 @@
           "passed": true
         },
         {
-          "name": "Invalid saved default-label setting fails closed",
+          "name": "First V selects the first usable tool label without opening the overlay",
           "passed": true
         },
         {
@@ -297,14 +301,14 @@
         }
       ],
       "totalClicks": {
-        "ai": 42,
+        "ai": 44,
         "brush": 10,
-        "interact": 24,
+        "interact": 29,
         "shape": 8,
         "wrong": 0,
         "save": 0,
         "inference": 0,
-        "optionChanges": 5
+        "optionChanges": 10
       },
       "platformValidation": "Windows Chrome synthetic DOM"
     },
@@ -689,7 +693,7 @@
     },
     {
       "suite": "content",
-      "passed": 71,
+      "passed": 72,
       "failed": 0,
       "results": [
         {
@@ -741,7 +745,11 @@
           "passed": true
         },
         {
-          "name": "Missing default label stops rather than falling back to person",
+          "name": "Missing saved label uses the first label in this tool",
+          "passed": true
+        },
+        {
+          "name": "Job catalog order wins over tool order and a returning saved label regains priority",
           "passed": true
         },
         {
@@ -769,7 +777,7 @@
           "passed": true
         },
         {
-          "name": "Invalid saved default-label setting fails closed",
+          "name": "First V selects the first usable tool label without opening the overlay",
           "passed": true
         },
         {
@@ -978,14 +986,14 @@
         }
       ],
       "totalClicks": {
-        "ai": 42,
+        "ai": 44,
         "brush": 10,
-        "interact": 24,
+        "interact": 29,
         "shape": 8,
         "wrong": 0,
         "save": 0,
         "inference": 0,
-        "optionChanges": 5
+        "optionChanges": 10
       },
       "platformValidation": "macOS metadata/input simulation in Windows Chrome; no Mac hardware"
     },
@@ -1154,7 +1162,7 @@
           "passed": true
         },
         {
-          "name": "Accepted activation with missing default label fails without native fallback",
+          "name": "Missing saved label starts once with first available label and retains key ownership",
           "passed": true
         },
         {
@@ -1651,7 +1659,7 @@
     },
     {
       "suite": "native N label synchronization",
-      "passed": 42,
+      "passed": 43,
       "failed": 0,
       "results": [
         {
@@ -1724,6 +1732,10 @@
         },
         {
           "name": "Incompatible label type blocks N including its keypress",
+          "passed": true
+        },
+        {
+          "name": "Native repeat uses the first Job label when no catalog or saved preference is available",
           "passed": true
         },
         {
@@ -2051,7 +2063,7 @@
           "passed": true
         },
         {
-          "name": "Missing label stops before changing options or starting",
+          "name": "A new Job selects the first polygon label and starts with configured options",
           "passed": true
         },
         {

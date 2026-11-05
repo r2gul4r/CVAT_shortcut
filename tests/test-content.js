@@ -54,7 +54,7 @@
   const up = (code = "KeyA", target = document.body) => target.dispatchEvent(new KeyboardEvent("keyup", {code, bubbles: true, composed: true}));
   const press = (code = "KeyA", options = {}, target = document.body) => {const event = down(code, options, target); up(code, target); return event;};
   const chord = (code, extra = {}) => S.sanitizeShortcut({code, ...extra});
-  const standard = () => ({shortcuts: {ai: chord("KeyA"), brush: chord("KeyB", {ctrl: true, shift: true})}});
+  const standard = () => ({defaultLabelName:"obstacle",shortcuts: {ai: chord("KeyA"), brush: chord("KeyB", {ctrl: true, shift: true})}});
   async function settings(value) {await chrome.storage.local.set({[S.STORAGE_KEY]: value}); await delay();}
   const focusBody = () => document.body.focus();
   function assert(value, message) {if (!value) throw new Error(message || "Assertion failed");}
@@ -164,10 +164,24 @@
       idle(); await delay(260); press("KeyB", {ctrlKey: true, shiftKey: true});
       assert($("#mask-label").value === "object" && counts.shape === 1);
     });
-    await test("Missing default label stops rather than falling back to person", () => {
+    await test("Missing saved label uses the first label in this tool", () => {
       const fixture = labelFixture.byID("ai-label"); fixture.options(["person", "obstacles", "Object"]); fixture.root.value = "person";
-      press(); noStarts(); assert(fixture.root.value === "person" && fixture.config.clicks === 0);
-      assert($("#cvat-sidebar-shortcuts-feedback").textContent.includes("찾지 못해"));
+      press(); assert(fixture.root.value === "person" && counts.interact === 1 && fixture.config.clicks === 1);
+    });
+    await test("Job catalog order wins over tool order and a returning saved label regains priority", async () => {
+      const catalog = document.createElement("div");
+      catalog.className = "cvat-objects-sidebar-labels-list test-extra";
+      catalog.innerHTML = '<div class="cvat-objects-sidebar-labels-list-header">Items: 2</div><div class="cvat-objects-sidebar-label-item"><span class="cvat-text">polybag</span></div><div class="cvat-objects-sidebar-label-item"><span class="cvat-text">person</span></div>';
+      document.body.append(catalog);
+      const fixture = labelFixture.byID("ai-label");
+      fixture.options(["person", "polybag", "obstacle"]);
+      press();
+      assert(counts.interact === 1 && fixture.root.value === "polybag");
+      assert(fixtureAPI.read()[S.STORAGE_KEY].defaultLabelName === "obstacle");
+      idle(); await delay(260);
+      catalog.querySelector(".cvat-text").textContent = "obstacle";
+      press();
+      assert(counts.interact === 2 && fixture.root.value === "obstacle");
     });
     await test("Duplicate exact label names stop without choosing either", () => {
       const fixture = labelFixture.byID("mask-label"); fixture.options(["person", "obstacle", "obstacle"]); fixture.root.value = "person";
@@ -182,7 +196,7 @@
     await test("Unrelated dropdown's obstacle cannot satisfy this popup's missing label", () => {
       const own = labelFixture.byID("ai-label"); own.options(["person"]); own.root.value = "person";
       labelFixture.byID("mask-label").dropdown.hidden = false;
-      press(); noStarts(); assert(own.root.value === "person" && own.config.clicks === 0);
+      press(); assert(own.root.value === "person" && own.config.clicks === 1 && counts.interact === 1);
     });
     await test("Delayed dropdown and selection are verified before Interact", async () => {
       const fixture = labelFixture.byID("ai-label"); fixture.root.value = "person";
@@ -200,9 +214,13 @@
       press(); down("KeyZ", {}, fixture.combo); up("KeyZ", fixture.combo); await delay(300); noStarts();
       assert(fixture.config.clicks === 0);
     });
-    await test("Invalid saved default-label setting fails closed", async () => {
-      await settings({...standard(), defaultLabelName: ""}); press(); noStarts();
-      assert($("#cvat-sidebar-shortcuts-feedback").textContent.includes("올바른 기본 라벨"));
+    await test("First V selects the first usable tool label without opening the overlay", async () => {
+      const fixture = labelFixture.byID("ai-label");
+      fixture.options(["disabled", "ambiguous", "ambiguous", "polybag", "obstacle"]);
+      fixture.list.firstElementChild.classList.add("ant-select-item-option-disabled");
+      await settings({shortcuts:{ai:chord("KeyV")}});
+      press("KeyV");
+      assert(counts.interact === 1 && fixture.root.value === "polybag" && fixture.config.clicks === 1);
     });
     await test("Repeated keydowns and competing shortcut during readiness run once", async () => {
       openDelay = 180; assert(down().defaultPrevented);

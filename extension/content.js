@@ -200,8 +200,8 @@
   }
 
   function ensureDefaultLabel(operation, panel, button) {
-    if (!operation.labelName) {
-      cancelPending("확장 팝업에 올바른 기본 라벨 이름을 먼저 입력하세요."); return false;
+    if (!operation.labelName && !operation.useMenuDefault) {
+      cancelPending("현재 Job에 선택할 수 있는 라벨이 없습니다."); return false;
     }
     const content = panel.querySelector(operation.tool.content);
     const scope = button.closest("[role='tabpanel']") || content;
@@ -244,6 +244,16 @@
     if (lists.length > 1) { cancelPending("라벨 목록이 여러 개여서 구분할 수 없습니다. 직접 실행하세요."); return false; }
     if (!lists.length) return false;
     const options = [...lists[0].querySelectorAll(".ant-select-item-option[role='option'][data-label]")];
+    // On first use the Job sidebar may not have mounted its Labels list yet.
+    // Resolve against this tool's own list, in CVAT display order.
+    if (operation.useMenuDefault && options.length && !options.some(option => option.dataset.label === operation.labelName)) {
+      const counts = new Map();
+      for (const option of options) counts.set(option.dataset.label, (counts.get(option.dataset.label) || 0) + 1);
+      const first = options.find(option => option.dataset.label.trim() && counts.get(option.dataset.label) === 1 &&
+        !option.matches(".ant-select-item-option-disabled") && !option.closest(DISABLED));
+      operation.labelName = first?.dataset.label || "";
+    }
+    if (!options.length) return false;
     const matches = options.filter((element) => element.getAttribute("data-label") === operation.labelName);
     if (matches.length !== 1) {
       cancelPending(matches.length ? "동일한 기본 라벨이 여러 개라 시작하지 않았습니다. 확장의 라벨 설정을 확인하세요." :
@@ -429,8 +439,9 @@
     } catch { cancelPending(`${tool.label}을 활성화하지 못했습니다. 직접 실행하세요.`); }
   }
 
-  function chosenLabel() {
-    return labelChoice?.path === location.pathname ? labelChoice.name : settings.defaultLabelName;
+  function chosenLabel(catalog) {
+    const preferred = labelChoice?.path === location.pathname ? labelChoice.name : settings.defaultLabelName;
+    return shared.effectiveLabel(preferred, catalog);
   }
 
   function prepareNativeRepeat(event, side) {
@@ -439,7 +450,9 @@
     let result = "busy", reason = "BRIDGE";
     if (!pending && !mouseButtons && !event.buttons && !panDrag && !panDrain && !overlay?.isDragging()) {
       const request = document.createElement("span"); request.hidden = true;
-      request.setAttribute("data-cvat-repeat-request",JSON.stringify({version:1,path:location.pathname,label:chosenLabel()}));
+      const catalog = shared.readLabelCatalog();
+      request.setAttribute("data-cvat-repeat-request",JSON.stringify({version:1,path:location.pathname,
+        label:chosenLabel(catalog),useJobDefault:catalog.state !== "ready"}));
       try {
         document.body.append(request);
         request.dispatchEvent(new Event("cvat-shortcuts-native-repeat-v1",{bubbles:true}));
@@ -539,8 +552,9 @@
       notify(`현재 작업 상태에서 ${tool.label}이 비활성화되어 있습니다.`);
       return;
     }
+    const catalog = tool.preserveLabel ? null : shared.readLabelCatalog();
     const operation = {tool, side, target, generation, deadline: performance.now() + READY_TIMEOUT_MS,
-      panel: null, timer: null, labelName: tool.preserveLabel ? null : chosenLabel(), previousFocus: focusedElement(), jobPath: location.pathname};
+      panel: null, timer: null, labelName: catalog ? chosenLabel(catalog) : null, useMenuDefault: catalog?.state === "unavailable", previousFocus: focusedElement(), jobPath: location.pathname};
     pending = operation;
     wheelSession = null;
     try {
@@ -792,8 +806,11 @@
   }
   overlay = globalThis.CVATLabelOverlay?.create({shared,
     onInvalidated,
-    getState: () => ({supported: Boolean(sidebar()), path: location.pathname, selected: chosenLabel(),
-      shortcuts: settings.labelShortcuts, catalog: shared.readLabelCatalog()}),
+    getState: () => {
+      const catalog = shared.readLabelCatalog();
+      return {supported: Boolean(sidebar()), path: location.pathname, selected: chosenLabel(catalog),
+        shortcuts: settings.labelShortcuts, catalog};
+    },
     onSelect: (name) => {
       if (!enabled || !sidebar() || mouseButtons || dialogOpen() || panDrag || panDrain || pending) {
         notify("마우스 버튼을 놓고 도구 전환이 끝난 뒤 라벨을 선택하세요."); return;

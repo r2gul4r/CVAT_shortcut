@@ -132,8 +132,8 @@
       linePanel.querySelector('button').onclick = () => wrong++; document.body.append(linePanel);
       press(); await delay(220); assert(starts.length === 1 && wrong === 0);
     });
-    await test('Missing label stops before changing options or starting', async () => {
-      label.options(['obstacle']); press(); await delay(180); assert(starts.length === 0 && points.value === '8' && clicks === 0);
+    await test('A new Job selects the first polygon label and starts with configured options', async () => {
+      label.options(['obstacle']); press(); await delay(180); assert(starts.length === 1 && starts[0].label === 'obstacle' && points.value === '' && clicks === 1);
     });
     await test('Missing Simplify control stops instead of guessing its state', async () => {
       toggle.remove(); press(); await delay(180); assert(starts.length === 0 && $('#cvat-sidebar-shortcuts-feedback').textContent.includes('Simplify'));

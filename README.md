@@ -1,6 +1,6 @@
 # CVAT Sidebar Shortcuts
 
-현재 소스 버전: **2.15.4** · Chrome Manifest V3 확장프로그램
+현재 소스 버전: **2.15.5** · Chrome Manifest V3 확장프로그램
 
 CVAT의 AI·새 마스크·폴리곤·회전 사각형·스켈레톤 도구 단축키, 라벨 선택·숨김 오버레이, 1도 화면 회전·수평 격자, 라벨 찾기·필수 라벨 누락 검수와 일괄 편집, 붙여넣기 반복, Space 화면 이동, 개인 연결 상태 확인과 한글 가이드를 제공합니다.
 
@@ -31,7 +31,7 @@ CVAT의 AI·새 마스크·폴리곤·회전 사각형·스켈레톤 도구 단�
 
 - 로컬 작업 폴더: `C:\git\cvat_shortcut`
 - 확장 소스: [`extension/`](extension/)
-- 배포 ZIP: [최신 GitHub 릴리스](https://github.com/r2gul4r/CVAT_shortcut/releases/latest) · 로컬 `releases/2.15.4/cvat-sidebar-shortcuts-2.15.4-ko.zip` (게시 여부는 GitHub에서 확인)
+- 배포 ZIP: [최신 GitHub 릴리스](https://github.com/r2gul4r/CVAT_shortcut/releases/latest) · 로컬 `releases/2.15.5/cvat-sidebar-shortcuts-2.15.5-ko.zip` (게시 여부는 GitHub에서 확인)
 - [2.2.0 패치노트](releases/2.2.0/release-notes-2.2.0.txt)
 - [적용 가이드](extension/guide.html)
 
@@ -181,6 +181,10 @@ python tools/package-extension.py
 ## 구현·업데이트 이력
 
 **최신 버전 → 이전 버전** 순서로 정리했습니다.
+
+### 2.15.5 — 현재 Job 첫 라벨 자동 선택
+
+- 첫 사용 또는 저장된 라벨이 없는 Job에서는 첫 번째 선택 가능한 라벨로 시작합니다. 현재 목록에 있는 수동 선택을 우선합니다.
 
 ### 2.15.4 — 이미지 가장자리 스켈레톤 그룹 누락 보완
 

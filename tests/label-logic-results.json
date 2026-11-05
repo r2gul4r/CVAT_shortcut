@@ -13,7 +13,7 @@
       "passed": true
     },
     {
-      "name": "Missing saved name does not silently select a class",
+      "name": "First available class is selected before a preference is saved",
       "passed": true
     },
     {

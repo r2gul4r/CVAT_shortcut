@@ -22,7 +22,7 @@
     await test("Popup starts with unassigned keys and Assign/Clear controls", () => {
       assert($("ai-key").textContent === "미지정" && $("brush-key").textContent === "미지정");
       assert($("ai-assign").textContent === "지정" && $("ai-clear").disabled);
-      assert($("default-label").value === "obstacle");
+      assert($("default-label").value === "");
     });
     await test("Popup overlay toggle saves independently from shortcuts and geometry", async () => {
       const before=JSON.stringify(fixtureAPI.read()[S.STORAGE_KEY]);
@@ -209,7 +209,7 @@
     await test("Refresh marks missing saved labels and disables duplicate names", async () => {
       window.testCatalog = {state:"ready", labels:[{name:"different", duplicate:false}, {name:"duplicate", duplicate:true}]};
       $("label-refresh").click(); await delay(20);
-      assert(!chosen() && fixtureAPI.read()[S.STORAGE_KEY].defaultLabelName === "unused-class");
+      assert(chosen()?.value === "different" && fixtureAPI.read()[S.STORAGE_KEY].defaultLabelName === "unused-class");
       assert(choices().length === 2 && choices()[1].disabled);
     });
     await test("A class removed after display cannot be saved", async () => {

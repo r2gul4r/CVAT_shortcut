@@ -20,7 +20,7 @@
     const available = ready ? catalog.labels : [];
     const displayed = ready ? [...available, ...settings.labelShortcuts.filter((entry) => !available.some((label) => label.name === entry.name))
       .map((entry) => ({name: entry.name, unavailable: true}))] : [];
-    const selected = available.some((label) => !label.duplicate && label.name === settings.defaultLabelName);
+    const selected = shared.effectiveLabel(settings.defaultLabelName, catalog);
     const disabled = !loaded || saving || refreshing || Boolean(recording) || !ready;
     $("label-colors").hidden = !ready || !displayed.length;
     $("label-color-list").replaceChildren();
@@ -33,7 +33,7 @@
       button.className = "label-color-choice secondary";
       button.disabled = disabled || label.duplicate || label.unavailable;
       button.value = label.name;
-      button.setAttribute("aria-pressed", String(selected && label.name === settings.defaultLabelName));
+      button.setAttribute("aria-pressed", String(!label.unavailable && !label.duplicate && label.name === selected));
       button.title = color || "색상 정보 없음";
       const swatch = document.createElement("span");
       swatch.className = "label-swatch" + (color ? "" : " unknown");
@@ -63,8 +63,8 @@
       "위의 사용 버튼을 누르면 이 작업의 전체 클래스 목록을 읽습니다." : !ready ?
       "CVAT의 Info → Overview를 열고 목록 새로고침을 눌러주세요. 계속 안 되면 직접 입력할 수 있습니다." : !available.length ?
       "이 작업에 등록된 라벨이 없습니다." : selected ?
-      `${available.length}개 클래스 · 선택하면 자동 저장됩니다.` :
-      `${available.length}개 클래스 · 저장된 라벨을 이 탭에서 선택할 수 없습니다. 사용할 라벨을 골라주세요.`;
+      `${available.length}개 클래스 · ${selected === settings.defaultLabelName ? "선택하면 자동 저장됩니다." : selected + " 자동 선택"}` :
+      `${available.length}개 클래스 · 선택할 수 있는 고유한 라벨이 없습니다.`;
   }
 
   async function currentStatus() {

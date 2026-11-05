@@ -150,6 +150,14 @@
     await test("Incompatible label type blocks N including its keypress",async()=>{
       await settings({defaultLabelName:"polygon-label"});assert(press().defaultPrevented);assert(starts.length===0&&actions.length===0&&$("#cvat-sidebar-shortcuts-feedback").textContent.includes("형식"));
     });
+    await test("Native repeat uses the first Job label when no catalog or saved preference is available",async()=>{
+      catalog.remove();
+      try {
+        await settings({defaultLabelName:""});
+        state.annotation.drawing.activeLabelID=2;
+        press();assert(starts.length===1&&starts[0].activeLabelID===1);
+      } finally {document.body.append(catalog);}
+    });
     await test("Missing and duplicate native labels block N before any dispatch",async()=>{
       await settings({defaultLabelName:"obstacle"});state.annotation.job.labels=[labels[0]];assert(press().defaultPrevented);assert(actions.length===0&&starts.length===0);
       state.annotation.job.labels=[...labels,{...labels[1],id:8}];assert(press().defaultPrevented);assert(actions.length===0&&starts.length===0);

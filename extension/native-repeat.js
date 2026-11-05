@@ -51,9 +51,15 @@
     // AI interactors still follow the overlay, even if their output is a rectangle.
     if (!drawing.activeInteractor && ["shape","track"].includes(drawing.activeObjectType) &&
         ["rectangle","skeleton"].includes(drawing.activeShapeType)) return "native";
-    if (!request.label) return "label";
     if (!Array.isArray(job.labels)) return unsupported("LABELS");
-    const matches = job.labels.filter((label) => label.name === request.label);
+    let name = request.label;
+    if (request.useJobDefault === true && !job.labels.some(label => label.name === name)) {
+      const counts = new Map();
+      for (const label of job.labels) counts.set(label.name, (counts.get(label.name) || 0) + 1);
+      name = job.labels.find(label => label.name && counts.get(label.name) === 1)?.name;
+    }
+    if (!name) return "label";
+    const matches = job.labels.filter((label) => label.name === name);
     if (matches.length !== 1 || !Number.isSafeInteger(matches[0].id) || matches[0].id <= 0) return "label";
     const label = matches[0];
     if (drawing.activeLabelID === label.id) return "ready";

@@ -107,10 +107,10 @@
       down(); up(); await delay(260); down(); up();
       assert(counts.extension === 2 && counts.nativeDown === 0 && counts.nativeUp === 0);
     });
-    await test("Accepted activation with missing default label fails without native fallback", () => {
+    await test("Missing saved label starts once with first available label and retains key ownership", () => {
       const label = labelFixture.byID("ai-label"); label.options(["person"]); label.root.value = "person";
       assert(down().defaultPrevented && up().defaultPrevented);
-      assert(counts.extension === 0 && counts.opens === 1); noNativeKey();
+      assert(label.root.value === "person" && counts.extension === 1 && counts.opens === 1); noNativeKey();
     });
     await test("Accepted activation timeout retains ownership through repeats and release", async () => {
       interact.hidden = true; down(); await delay(1300);

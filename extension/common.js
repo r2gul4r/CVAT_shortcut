@@ -39,7 +39,7 @@
     const duplicates = ACTIONS.filter((action) => shortcuts[action] && ACTIONS.some((other) =>
       other !== action && signature(shortcuts[other]) === signature(shortcuts[action])));
     for (const action of duplicates) shortcuts[action] = null;
-    const label = typeof value?.defaultLabelName === "string" ? value.defaultLabelName.trim() : "obstacle";
+    const label = typeof value?.defaultLabelName === "string" ? value.defaultLabelName.trim() : "";
     const defaultLabelName = label && label.length <= 128 && !/[\u0000-\u001f\u007f]/.test(label) ? label : "";
     const bindings = (Array.isArray(value?.labelShortcuts) ? value.labelShortcuts : []).filter((entry) =>
       typeof entry?.name === "string" && entry.name.trim() === entry.name && entry.name.length > 0 && entry.name.length <= 128 &&
@@ -132,6 +132,12 @@
     return null;
   }
 
+  function effectiveLabel(preferred, catalog) {
+    if (catalog.state !== "ready") return preferred;
+    const available = catalog.labels.filter(label => !label.duplicate);
+    return available.find(label => label.name === preferred)?.name || available[0]?.name || "";
+  }
+
   function readLabelCatalog(root = document) {
     // Job-level classes, including classes with zero annotations. Never read object rows.
     const lists = [...root.querySelectorAll(".cvat-objects-sidebar-labels-list")];
@@ -172,5 +178,5 @@
   }
 
   globalThis.CVATShortcuts = Object.freeze({ACTIONS, ACTION_LABELS, STORAGE_KEY, sanitizeShortcut, signature, assignLabel,
-    fromEvent, normalize, assign, format, isMac, wheelModifierName, shortcutWarning, supportedURL, readLabelCatalog, normalizeLabelColor});
+    fromEvent, normalize, assign, format, isMac, wheelModifierName, shortcutWarning, supportedURL, effectiveLabel, readLabelCatalog, normalizeLabelColor});
 })();
